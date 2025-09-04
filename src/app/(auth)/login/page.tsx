@@ -1,41 +1,31 @@
-
+// src/app/(auth)/login/page.tsx
 
 "use client";
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { FileText, Lock, Eye, LoaderCircle } from "lucide-react"; 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FileText, Lock, Eye, LoaderCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
-  
-
-  const [isLoading, setIsLoading] = useState(false); 
-  const [error, setError] = useState(''); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
-
     setError('');
     setIsLoading(true);
 
-  
     setTimeout(() => {
-  
       if (password === '123456') {
-      
         alert(`Login bem-sucedido!\nBem-vindo, CPF: ${cpf}`);
-        
       } else {
         setError('CPF ou senha inválidos. Tente novamente.');
       }
-
-      
       setIsLoading(false);
-    }, 2000); 
+    }, 2000);
   };
 
   return (
@@ -65,7 +55,7 @@ export default function LoginPage() {
               className="pl-10"
               value={cpf}
               onChange={(e) => setCpf(e.target.value)}
-              disabled={isLoading} 
+              disabled={isLoading}
             />
           </div>
 
@@ -79,21 +69,20 @@ export default function LoginPage() {
               className="pl-10 pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading} 
+              disabled={isLoading}
             />
             <Eye className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 cursor-pointer text-gray-500" />
           </div>
 
-          {}
           {error && (
             <p className="text-sm text-red-600 text-center">{error}</p>
           )}
 
           <Button type="submit" className="w-full !mt-6 bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>
             {isLoading ? (
-              <LoaderCircle className="animate-spin" /> 
+              <LoaderCircle className="animate-spin" />
             ) : (
-              'Entrar' 
+              'Entrar'
             )}
           </Button>
         </form>
