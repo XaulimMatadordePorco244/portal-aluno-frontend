@@ -1,8 +1,3 @@
 {
-  "files.associations": {
-    "*.css": "tailwindcss"
-  },
-  "editor.quickSuggestions": {
-    "strings": true
-  }
+  "css.lint.unknownAtRules": "ignore"
 }

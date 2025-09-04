@@ -37,13 +37,13 @@ export default function LoginPage() {
                         <Eye className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5  cursor-pointer text-gray-500" />
                     </div>
 
-                    <Button type="submit" className="w-full !mt-6 bg-blue-600 text-white hover:bg-blue-700">
+                    <Button type="submit" className="w-full !mt-6">
                         Entrar
                     </Button>
                 </form>
 
                 <div className="text-center">
-                    <a href="#" className="text-sm font-medium text-blue-600 hover:underline">
+                    <a href="/forgot-password" className="text-sm font-medium  hover:underline">
                         Esqueceu a Senha?
                     </a>
                 </div>
