@@ -1,6 +1,6 @@
 // src/app/(main)/dashboard/page.tsx
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 
 const ListItem = ({ title, date }: { title: string; date: string }) => (
