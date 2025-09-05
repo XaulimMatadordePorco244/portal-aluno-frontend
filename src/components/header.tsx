@@ -50,7 +50,7 @@ export function Header() {
               <DropdownMenuContent className="bg-slate-800">
                 <DropdownMenuItem className=" text-gray-300 hover:text-white focus:outline-none transition-colors">
                   <FileText className="mr-2 h-4 w-4 " />
-                  <span>Regulamento</span>
+                  <a href="regulations"><span>Regulamento</span></a>
                 </DropdownMenuItem>
                 <DropdownMenuItem className=" text-gray-300 hover:text-white focus:outline-none transition-colors ">
                   <Calendar className="mr-2 h-4 w-4" />
@@ -62,7 +62,7 @@ export function Header() {
         </div>
         
         <div  className="flex items-center">
-          <UserCircle href="/profile"  className="h-8 w-8 text-gray-300 hover:text-white transition-colors cursor-pointer" />
+          <a href="/profile"><UserCircle  className="h-8 w-8 text-gray-300 hover:text-white transition-colors cursor-pointer" /></a>
         </div>
       </div>
     </header>
