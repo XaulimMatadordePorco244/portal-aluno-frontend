@@ -3,8 +3,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { FileText, Lock, Eye, LoaderCircle } from "lucide-react";
 
 export default function LoginPage() {
