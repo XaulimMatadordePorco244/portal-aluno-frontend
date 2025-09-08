@@ -6,11 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Home, UserCircle, FileText, Calendar, Shield } from "lucide-react";
+import { ChevronDown, Home, UserCircle, FileText, Calendar } from "lucide-react";
 
 export function Header() {
   return (
@@ -18,7 +16,8 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <a href="/dashboard" className="text-xl font-bold flex items-center gap-2">
-            <img src="/logo.png" className="h-10  w-10"/>
+            {}
+            <img src="/logo.png" alt="Logo da Guarda Mirim" className="h-10 w-10"/>
             Guarda Mirim
           </a>
           <nav className="hidden md:flex items-center gap-4">
@@ -27,42 +26,49 @@ export function Header() {
               Início
             </a>
 
-            {/* Menu Meus Dados */}
+            {}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors">
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
                 Meus Dados <ChevronDown className="h-4 w-4 ml-1" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-slate-800">
-                <DropdownMenuLabel>Minhas Informações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-gray-300 hover:text-white focus:outline-none transition-colors">Minha Ficha</DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-300 hover:text-white focus:outline-none transition-colors">Frequência</DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-300 hover:text-white focus:outline-none transition-colors">Avaliações</DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-300 hover:text-white focus:outline-none transition-colors">Gerar Parte</DropdownMenuItem>
+              <DropdownMenuContent className="bg-slate-800 text-white">
+              
+                
+                <DropdownMenuItem className="cursor-pointer" asChild><a href="/profile">Minha Ficha</a></DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" asChild><a href="/frequency">Frequência</a></DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" asChild><a href="notes">Anotações</a></DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" asChild><a href="/generate-report">Gerar Parte</a></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             {}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors">
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
                 Institucional <ChevronDown className="h-4 w-4 ml-1" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-slate-800">
-                <DropdownMenuItem className=" text-gray-300 hover:text-white focus:outline-none transition-colors">
-                  <FileText className="mr-2 h-4 w-4 " />
-                  <a href="regulations"><span>Regulamento</span></a>
+              <DropdownMenuContent className="bg-slate-800 text-white">
+                <DropdownMenuItem asChild>
+                  <a href="/regulations" className="flex items-center w-full cursor-pointer">
+                    
+                    <span>Regulamento</span>
+                  </a>
                 </DropdownMenuItem>
-                <DropdownMenuItem className=" text-gray-300 hover:text-white focus:outline-none transition-colors ">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <span>Calendário de Eventos</span>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="flex items-center w-full cursor-pointer">
+                    
+                    <span>Calendário de Eventos</span>
+                  </a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
         </div>
         
-        <div  className="flex items-center">
-          <a href="/profile"><UserCircle  className="h-8 w-8 text-gray-300 hover:text-white transition-colors cursor-pointer" /></a>
+        <div className="flex items-center">
+          {}
+          <a href="/profile">
+            <UserCircle className="h-8 w-8 text-gray-300 hover:text-white transition-colors cursor-pointer" />
+          </a>
         </div>
       </div>
     </header>
