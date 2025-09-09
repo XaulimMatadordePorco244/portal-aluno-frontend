@@ -20,7 +20,7 @@ export function Header() {
             <img src="/logo.png" alt="Logo da Guarda Mirim" className="h-10 w-10"/>
             Guarda Mirim
           </a>
-          <nav className="hidden md:flex items-center gap-4">
+          <nav className="hidden md:flex items-center  gap-6">
             <a href="/dashboard" className="flex items-center text-sm font-medium text-gray-300 hover:text-white transition-colors">
               <Home className="h-4 w-4 mr-1" />
               Início
