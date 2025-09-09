@@ -37,7 +37,7 @@ export function Header() {
                 <DropdownMenuItem className="cursor-pointer" asChild><a href="/profile">Minha Ficha</a></DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" asChild><a href="/frequency">Frequência</a></DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" asChild><a href="notes">Anotações</a></DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" asChild><a href="/generate-report">Gerar Parte</a></DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" asChild><a href="/my-reports">Minhas Partes</a></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
