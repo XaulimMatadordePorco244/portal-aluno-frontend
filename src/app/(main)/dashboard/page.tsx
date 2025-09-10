@@ -73,7 +73,7 @@ export default function DashboardPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <DashboardCard title="Classificação Geral" linkText="Ver classificação completa">
+        <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="classification">
             <RankingListItem rank={alunoAtual.rank - 1} nome="Fulano de Tal" numero="2024-010" cargo="Aluno Soldado" />
             <RankingListItem rank={alunoAtual.rank} nome={alunoAtual.nome} numero={alunoAtual.numero} cargo={alunoAtual.cargo} isCurrentUser={true} />
             <RankingListItem rank={alunoAtual.rank + 1} nome="Ciclano da Silva" numero="2024-021" cargo="Aluno Soldado" />
