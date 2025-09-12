@@ -1,15 +1,17 @@
 // src/app/(main)/layout.tsx
+import { Header } from "@/components/header";
+import { getCurrentUser } from "@/lib/auth";
 
-import { Header } from "@/components/header"; // Vamos criar este componente a seguir
-
-export default function MainLayout({
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      <Header user={user} />
       <main className="flex-grow bg-gray-100 p-6">
         {children}
       </main>
