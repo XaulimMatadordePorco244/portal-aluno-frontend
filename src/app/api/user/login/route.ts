@@ -30,12 +30,25 @@ export async function POST(request: Request) {
     }
     
     const token = jwt.sign(
-      { userId: user.id, nome: user.nome },
+      { userId: user.id, nome: user.nome, cargo: user.cargo },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
+    
 
-    return NextResponse.json({ message: 'Login bem-sucedido!', token });
+    const response = NextResponse.json({ message: 'Login bem-sucedido!' });
+
+
+    response.cookies.set('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        maxAge: 60 * 60 * 24, 
+        path: '/',
+    });
+
+
+    return response;
+
   } catch (error) {
     console.error("Erro no login:", error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
