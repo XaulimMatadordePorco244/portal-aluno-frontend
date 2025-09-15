@@ -1,18 +1,26 @@
 import { PrismaClient } from '@prisma/client';
 import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, ShieldX } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import FormattedName from '@/components/FormattedName'; 
 
 const prisma = new PrismaClient();
+
 
 async function getAlunoPorId(validationId: string) {
   const aluno = await prisma.user.findUnique({
     where: { validationId: validationId },
-    select: { nome: true, fotoUrl: true, status: true, cargo: true, numero: true }
+    select: { 
+      nome: true, 
+      nomeDeGuerra: true,
+      fotoUrl: true, 
+      status: true, 
+      cargo: true, 
+      numero: true 
+    }
   });
   return aluno;
 }
-
 
 export default async function PaginaValidacao({ params: { id } }: { params: { id: string } }) {
   
@@ -31,10 +39,11 @@ export default async function PaginaValidacao({ params: { id } }: { params: { id
   }
 
   const isAtivo = aluno.status === 'Ativo';
+
   const initials = aluno.nome.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div className="flex items-center justify-center  min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
         
         <div className="flex items-center justify-center mb-4">
@@ -42,7 +51,6 @@ export default async function PaginaValidacao({ params: { id } }: { params: { id
           <h1 className="text-2xl font-bold text-gray-800">Validação de Identidade</h1>
         </div>
         
-        {}
         <div className="flex justify-center mb-4">
           <Avatar className="h-40 w-40 border-4 border-gray-200 shadow-md">
             <AvatarImage src={aluno.fotoUrl || ''} alt={`Foto de ${aluno.nome}`} />
@@ -51,7 +59,10 @@ export default async function PaginaValidacao({ params: { id } }: { params: { id
         </div>
         
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900">{aluno.nome}</h2>
+          {}
+          <h2 className="text-2xl font-semibold text-gray-900">
+            <FormattedName fullName={aluno.nome} warName={aluno.nomeDeGuerra} />
+          </h2>
           <p className="text-md text-gray-600">{aluno.cargo}</p>
           <p className="text-sm text-gray-500 mt-1">Nº: {aluno.numero || 'N/A'}</p>
         </div>
