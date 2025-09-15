@@ -1,4 +1,3 @@
-// src/lib/auth.ts
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
@@ -25,14 +24,33 @@ export async function getCurrentUser() {
       throw new Error("JWT_SECRET não está definida.");
     }
     
-    // Decodifica e valida o token
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as UserPayload;
     
-    // Retorna os dados do usuário que já estão salvos dentro do token
+  
     return decoded;
 
   } catch (error) {
     console.error("Falha ao verificar o token:", error);
+    return null;
+  }
+}
+
+export async function getFullCurrentUser() {
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser?.userId) {
+    return null;
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: sessionUser.userId,
+      },
+    });
+    return user;
+  } catch (error) {
+    console.error("Erro ao buscar dados completos do usuário:", error);
     return null;
   }
 }

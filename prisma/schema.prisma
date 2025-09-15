@@ -17,7 +17,10 @@ model User {
   nome      String
   numero    String?  @unique 
   cargo     String   @default("Aluno Soldado")
-  
+  companhia   String? 
+  conceito    String? 
+  anoIngresso Int?    
+  email       String? @unique 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
