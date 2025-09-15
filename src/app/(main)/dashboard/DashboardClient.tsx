@@ -1,16 +1,14 @@
-
 "use client";
 
+import FormattedName from '@/components/FormattedName';
 import { Button } from "@/components/ui/Button"; 
 import { ArrowRight, Download, Eye, MoreHorizontal } from "lucide-react";
 
-
 interface User {
   nome: string;
-  cargo: string;
-
+  nomeDeGuerra: string | null;
+  cargo: string | null;
 }
-
 
 const UniversalListItem = ({ title, date }: { title: string; date: string }) => (
     <div className="border-b p-3 hover:bg-gray-50 flex justify-between items-center">
@@ -37,7 +35,8 @@ const AnnotationListItem = ({ title, date }: { title: string; date: string }) =>
     </div>
 );
 
-const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: number; nome: string; numero: string; cargo: string; isCurrentUser?: boolean }) => (
+
+const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: number; nome: React.ReactNode; numero: string | null; cargo: string | null; isCurrentUser?: boolean }) => (
     <div className={`border-b p-3 ${isCurrentUser ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -46,7 +45,7 @@ const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: n
                 </span>
                 <div>
                     <p className={`font-semibold ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>{nome}</p>
-                    <p className="text-xs text-gray-500">{cargo} - Nº {numero}</p>
+                    <p className="text-xs text-gray-500">{cargo} - Nº {numero || 'N/A'}</p>
                 </div>
             </div>
         </div>
@@ -69,27 +68,32 @@ const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: s
     </div>
 );
 
-
-//
 export default function DashboardClient({ user }: { user: User }) {
 
-  const alunoAtual = { rank: 15, nome: user.nome, numero: "2024-015", cargo: user.cargo };
+  const alunoAtual = { 
+    rank: 15, 
+    nome: user.nome, 
+    nomeDeGuerra: user.nomeDeGuerra,
+    numero: "2024-015", 
+    cargo: user.cargo 
+  };
 
   return (
     <div className="container mx-auto py-8">
       {}
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Mural do Aluno - Bem-vindo, {user.cargo} {user.nome}!
+        Mural do Aluno - Bem-vindo, {user.cargo} {user.nomeDeGuerra}!
       </h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="classification">
-            <RankingListItem rank={alunoAtual.rank - 1} nome="Fulano de Tal" numero="2024-010" cargo="Aluno Soldado" />
-            <RankingListItem rank={alunoAtual.rank} nome={alunoAtual.nome} numero={alunoAtual.numero} cargo={alunoAtual.cargo} isCurrentUser={true} />
-            <RankingListItem rank={alunoAtual.rank + 1} nome="Ciclano da Silva" numero="2024-021" cargo="Aluno Soldado" />
+        <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="/classification">
+          {}
+          <RankingListItem rank={alunoAtual.rank - 1} nome={<FormattedName fullName="Fulano de Tal" warName="Tal" />} numero="2024-010" cargo="Aluno Soldado" />
+          <RankingListItem rank={alunoAtual.rank} nome={<FormattedName fullName={alunoAtual.nome} warName={alunoAtual.nomeDeGuerra} />} numero={alunoAtual.numero} cargo={alunoAtual.cargo} isCurrentUser={true} />
+          <RankingListItem rank={alunoAtual.rank + 1} nome={<FormattedName fullName="Ciclano da Silva" warName="Silva" />} numero="2024-021" cargo="Aluno Soldado" />
         </DashboardCard>
-
+        
         {}
         <DashboardCard title="QES - Quadro de Estudo Semanal" linkText="Ver todos os QES">
             <UniversalListItem title="QES - 09/09 a 15/09" date="Publicado em: 08/09/2025" />

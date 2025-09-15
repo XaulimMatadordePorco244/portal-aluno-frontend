@@ -1,10 +1,11 @@
-// src/app/api/user/login/route.ts
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+
+
 
 export async function POST(request: Request) {
   try {
@@ -28,22 +29,27 @@ export async function POST(request: Request) {
     if (!process.env.JWT_SECRET) {
       throw new Error("A variável de ambiente JWT_SECRET não está definida.");
     }
-    
+
     const token = jwt.sign(
-      { userId: user.id, nome: user.nome, cargo: user.cargo },
+      {
+        userId: user.id,
+        nome: user.nome,
+        nomeDeGuerra: user.nomeDeGuerra,
+        cargo: user.cargo
+      },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
-    
+
 
     const response = NextResponse.json({ message: 'Login bem-sucedido!' });
 
 
     response.cookies.set('auth_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-        maxAge: 60 * 60 * 24, 
-        path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      maxAge: 60 * 60 * 24,
+      path: '/',
     });
 
 

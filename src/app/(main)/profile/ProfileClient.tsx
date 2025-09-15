@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -6,7 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from 'lucide-react';
-import { User } from '@prisma/client'; 
+import { User } from '@prisma/client';
+import FormattedName from '@/components/FormattedName';
 
 const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
   <div className="border-b py-3">
@@ -22,9 +22,10 @@ export default function ProfileClient({ user }: { user: User }) {
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
+   
     setTimeout(() => {
       console.log('Novo e-mail para salvar:', email);
-      alert('E-mail de recuperação atualizado com sucesso!');
+      alert('E-mail de recuperação atualizado com sucesso! (Simulação)');
       setIsLoading(false);
     }, 1500);
   };
@@ -36,7 +37,9 @@ export default function ProfileClient({ user }: { user: User }) {
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b">
           <UserCircle className="w-24 h-24 text-gray-400" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{user.nome}</h1>
+            <h1 className="text-3xl ">
+              <FormattedName fullName={user.nome} warName={user.nomeDeGuerra} />
+            </h1>
             <p className="text-md text-gray-600">Nº: {user.numero || 'N/A'}</p>
           </div>
         </div>

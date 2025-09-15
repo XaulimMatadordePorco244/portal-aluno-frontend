@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import FormattedName from '@/components/FormattedName';
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button"; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,14 +21,13 @@ import { LogOut } from "lucide-react";
 
 interface User {
   nome: string;
-  cargo: string;
+  nomeDeGuerra: string | null;
+  cargo: string | null;
 }
 
 export function UserNav({ user }: { user: User }) {
-
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -62,7 +62,10 @@ export function UserNav({ user }: { user: User }) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.nome}</p>
+            {}
+            <p className="text-sm font-medium leading-none">
+              <FormattedName fullName={user.nome} warName={user.nomeDeGuerra} />
+            </p>
             <p className="text-xs leading-none text-muted-foreground">{user.cargo}</p>
           </div>
         </DropdownMenuLabel>
@@ -72,7 +75,6 @@ export function UserNav({ user }: { user: User }) {
           <Link href="/my-reports"><DropdownMenuItem className="cursor-pointer">Meus Relatórios</DropdownMenuItem></Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        {}
         <DropdownMenuItem onSelect={handleLogout} disabled={isLoading} className="text-red-500 focus:text-red-500 cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           {isLoading ? "Saindo..." : "Sair"}

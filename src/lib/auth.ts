@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 interface UserPayload {
   userId: string;
   nome: string;
+  nomeDeGuerra: string | null;
   cargo: string;
 }
 
