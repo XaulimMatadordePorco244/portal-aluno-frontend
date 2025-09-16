@@ -10,19 +10,28 @@ import {
 } from "@/components/ui/table";
 import { BarChart3, CalendarDays } from "lucide-react";
 
-const cfcData = [
+
+interface Aluno {
+    rank: number;
+    nome: string;
+    numero: string;
+    cargo: string;
+}
+
+
+const cfcData: Aluno[] = [
     { rank: 1, nome: "Bruno Carvalho", numero: "155", cargo: "Aluno Soldado" },
     { rank: 2, nome: "Fulano de Tal", numero: "167", cargo: "Aluno Soldado" },
     { rank: 3, nome: "Michael Santos", numero: "172", cargo: "Aluno Soldado" },
     { rank: 4, nome: "Ciclano da Silva", numero: "180", cargo: "Aluno Soldado" },
 ];
 
-const cfsData = [
+const cfsData: Aluno[] = [
     { rank: 1, nome: "Ana Beatriz Costa", numero: "101", cargo: "Cabo Aluna" },
     { rank: 2, nome: "Mariana Oliveira", numero: "105", cargo: "Cabo Aluna" },
 ];
 
-const cfoData: any[] = [];
+const cfoData: Aluno[] = [];
 
 const allCourses = [
     { name: "Curso de Formação de Soldados (CFS)", data: cfcData },
@@ -32,7 +41,8 @@ const allCourses = [
 
 const alunoLogadoNumero = "172";
 
-const CourseRanking = ({ courseName, students }: { courseName: string, students: any[] }) => {
+
+const CourseRanking = ({ courseName, students }: { courseName: string, students: Aluno[] }) => {
     if (students.length === 0) {
         return null; 
     }
@@ -70,7 +80,7 @@ const CourseRanking = ({ courseName, students }: { courseName: string, students:
 };
 
 export default function ClassificationPage() {
-    const dataAtualizacao = "10/09/2025";
+    const dataAtualizacao = "16/09/2025"; 
 
     return (
         <div className="container mx-auto py-10 max-w-5xl">
