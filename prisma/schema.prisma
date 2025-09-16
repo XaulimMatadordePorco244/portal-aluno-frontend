@@ -1,0 +1,31 @@
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") 
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+model User {
+  id        String   @id @default(cuid()) 
+  cpf       String   @unique 
+  password  String   
+  nome      String
+  numero    String?  @unique 
+  cargo     String   @default("Aluno Soldado")
+  companhia   String? 
+  conceito    String? 
+  anoIngresso Int?    
+  email       String? @unique 
+  status        String   @default("Ativo") 
+  fotoUrl       String? 
+  validationId  String   @unique @default(cuid()) 
+  nomeDeGuerra  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
