@@ -1,40 +1,81 @@
-
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL") 
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-
-
 model User {
-  id        String   @id @default(cuid()) 
-  cpf       String   @unique 
-  password  String   
-  nome      String
-  numero    String?  @unique 
-  cargo     String   @default("Aluno Soldado")
-  companhia   String? 
-  conceito    String? 
-  anoIngresso Int?    
-  email       String? @unique 
-  status        String   @default("Ativo") 
-  fotoUrl       String? 
-  validationId  String   @unique @default(cuid()) 
-  nomeDeGuerra  String?
+  id           String  @id @default(cuid())
+  cpf          String  @unique
+  password     String
+  nome         String
+  numero       String? @unique
+  cargo        String  @default("Aluno Soldado")
+  companhia    String?
+  conceito     String?
+  anoIngresso  Int?
+  email        String? @unique
+  status       String  @default("Ativo")
+  fotoUrl      String?
+  validationId String  @unique @default(cuid())
+  nomeDeGuerra String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
+  anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
 }
+
 model Regulamento {
-  id              String   @id @default(cuid())
-  titulo          String   
-  arquivoUrl      String  
-  ativo           Boolean  @default(true)
+  id         String  @id @default(cuid())
+  titulo     String
+  arquivoUrl String
+  ativo      Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+enum CodigoAnotacao {
+  FO_POSITIVO 
+  FO_NEGATIVO 
+}
+
+
+model TipoDeAnotacao {
+  id        String         @id @default(cuid())
+  codigo    CodigoAnotacao 
+  titulo    String         @unique
+  descricao String         @db.Text
+  pontos    Float? 
+
+  registros Anotacao[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+
+model Anotacao {
+  id       String   @id @default(cuid())
+  pontos   Float
+  detalhes String?  @db.Text
+  data     DateTime
+
+  tipo   TipoDeAnotacao @relation(fields: [tipoId], references: [id])
+  tipoId String
+
+  aluno   User   @relation("AnotacoesDoAluno", fields: [alunoId], references: [id])
+  alunoId String
+
+  autor   User   @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
+  autorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
