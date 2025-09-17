@@ -1,7 +1,7 @@
 // src/app/(main)/regulations/page.tsx
 
 import { Button } from '@/components/ui/Button'; 
-import { Download, FileText } from 'lucide-react';
+import { Download,  } from 'lucide-react';
 
 
 const RegulationItem = ({ title, date }: { title: string; date: string }) => (
