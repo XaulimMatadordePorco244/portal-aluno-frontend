@@ -1,5 +1,3 @@
-// src/app/(main)/generate-report/page.tsx
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileDown, Eye, Trash2 } from 'lucide-react';
 
 export default function GenerateReportPage() {
-  const [nome, setNome] = useState('Michael Santos');
-  const [registro, setRegistro] = useState('2024-015');
+  const [nome] = useState('Michael Santos');
+  const [registro] = useState('2024-015');
   const [cargo, setCargo] = useState('');
   const [data, setData] = useState('');
   const [assunto, setAssunto] = useState('');
   const [descricao, setDescricao] = useState('');
   const [testemunhas, setTestemunhas] = useState('');
-  const [responsavel, setResponsavel] = useState('Michael Santos');
+  const [responsavel] = useState('Michael Santos');
   const [observacoes, setObservacoes] = useState('');
 
   useEffect(() => {
@@ -40,6 +38,7 @@ export default function GenerateReportPage() {
     const maxW = pageW - margin * 2;
     let y = 0;
 
+ 
     const logoGuardaMirim = new Image();
     logoGuardaMirim.src = '/logo.png'; 
     const brasaoMarcaDagua = new Image();
@@ -74,8 +73,10 @@ export default function GenerateReportPage() {
         const imgX = (pageW - imgWidth) / 2;
         const imgY = (pageH - imgHeight) / 2;
         doc.saveGraphicsState();
-        // AQUI ESTÁ A CORREÇÃO
+        
+        
         doc.setGState(new (doc as any).GState({ opacity: 0.1 }));
+        
         doc.addImage(brasaoMarcaDagua, 'PNG', imgX, imgY, imgWidth, imgHeight);
         doc.restoreGraphicsState();
     };
@@ -197,11 +198,11 @@ export default function GenerateReportPage() {
               <Label htmlFor="testemunhas">Testemunhas (Opcional)</Label>
               <Textarea id="testemunhas" value={testemunhas} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTestemunhas(e.target.value)} placeholder="Nome(s) e contato(s), se houver." />
             </div>
-             <div>
+              <div>
               <Label htmlFor="observacoes">Observações (Opcional)</Label>
               <Input id="observacoes" value={observacoes} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setObservacoes(e.target.value)} />
             </div>
-             <div>
+              <div>
               <Label htmlFor="responsavel">Responsável pelo Registro</Label>
               <Input id="responsavel" value={responsavel} disabled />
             </div>

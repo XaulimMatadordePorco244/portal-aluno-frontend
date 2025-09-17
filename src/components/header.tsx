@@ -1,4 +1,3 @@
-// src/components/header.tsx (VERSÃO COM ÍCONES E ESTILO ATUALIZADO)
 "use client";
 
 import {
@@ -12,78 +11,86 @@ import {
   Home, 
   FileText, 
   Calendar,
-  User, // Ícone para Ficha
-  ClipboardCheck, // Ícone para Frequência
-  FileWarning, // Ícone para Anotações
-  ClipboardList // Ícone para Minhas Partes
+  User,
+  ClipboardCheck, 
+  FileWarning, 
+  ClipboardList 
 } from "lucide-react";
 import { UserNav } from "@/components/UserNav";
+import Image from 'next/image';
+import Link from "next/link"; 
 
-export function Header({ user }: { user: any }) { 
+interface User {
+  nome: string;
+  nomeDeGuerra: string | null;
+  cargo: string | null;
+}
+
+
+export function Header({ user }: { user: User | null }) { 
   return (
     <header className="bg-slate-800 text-white shadow-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <a href="/dashboard" className="text-xl font-bold flex items-center gap-2">
-            <img src="/logo.png" alt="Logo da Guarda Mirim" className="h-10 w-10"/>
+          <Link href="/dashboard" className="text-xl font-bold flex items-center gap-2">
+            {}
+            <Image src="/logo.png" alt="Logo da Guarda Mirim" width={40} height={40} />
             Guarda Mirim
-          </a>
+          </Link>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="/dashboard" className="flex items-center text-sm font-medium text-gray-300 hover:text-white transition-colors">
+            <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-300 hover:text-white transition-colors">
               <Home className="h-4 w-4 mr-1" />
               Início
-            </a>
+            </Link>
 
-            {/* Menu "Meus Dados" com ÍCONES e ESTILO ATUALIZADO */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
                 Meus Dados <ChevronDown className="h-4 w-4 ml-1" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-slate-800 text-gray-300 border-slate-700">
                 <DropdownMenuItem asChild>
-                  <a href="/profile" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="/profile" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <User className="mr-2 h-4 w-4" />
                     <span>Minha Ficha</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="/frequency" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="/frequency" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <ClipboardCheck className="mr-2 h-4 w-4" />
                     <span>Frequência</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="/evaluations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="/evaluations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <FileWarning className="mr-2 h-4 w-4" />
                     <span>Anotações</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="/my-reports" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="/my-reports" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <ClipboardList className="mr-2 h-4 w-4" />
                     <span>Minhas Partes</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
                 Institucional <ChevronDown className="h-4 w-4 ml-1" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-slate-800 text-gray-300 border-slate-700">
                 <DropdownMenuItem asChild>
-                  <a href="/regulations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="/regulations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <FileText className="mr-2 h-4 w-4" />
                     <span>Regulamento</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
+                  <Link href="#" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white">
                     <Calendar className="mr-2 h-4 w-4" />
                     <span>Calendário de Eventos</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -94,7 +101,7 @@ export function Header({ user }: { user: any }) {
           {user ? (
             <UserNav user={user} />
           ) : (
-            <a href="/login" className="text-sm font-medium hover:text-white">Entrar</a>
+            <Link href="/login" className="text-sm font-medium hover:text-white">Entrar</Link>
           )}
         </div>
       </div>
