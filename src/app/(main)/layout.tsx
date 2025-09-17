@@ -1,4 +1,5 @@
 // src/app/(main)/layout.tsx
+// Forçando atualização do build - 17/09/2025
 import { Header } from "@/components/header";
 import { getCurrentUser } from "@/lib/auth";
 
