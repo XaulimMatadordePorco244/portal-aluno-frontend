@@ -74,7 +74,7 @@ export default function GenerateReportPage() {
         const imgY = (pageH - imgHeight) / 2;
         doc.saveGraphicsState();
         
-        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         doc.setGState(new (doc as any).GState({ opacity: 0.1 }));
         
         doc.addImage(brasaoMarcaDagua, 'PNG', imgX, imgY, imgWidth, imgHeight);
