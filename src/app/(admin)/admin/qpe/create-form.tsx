@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/qpe/create-form.tsx
 "use client";
 
 import { useEffect, useState, useRef, useActionState } from 'react';
@@ -37,7 +36,7 @@ export default function CreateQPEForm() {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-      {/* Campo oculto para passar o tipo de seleção para a action */}
+      {}
       <input type="hidden" name="selectionType" value={selectionType} />
 
       <div>
@@ -68,7 +67,7 @@ export default function CreateQPEForm() {
           </Select>
         </div>
         
-        {/* Input de pontos customizados que aparece condicionalmente */}
+        {}
         {showCustomPontos && (
           <div>
             <Label htmlFor="pontos">Pontos</Label>
@@ -81,11 +80,11 @@ export default function CreateQPEForm() {
                 name="pontos"
                 type="number"
                 step="0.1"
-                min="0" // Não permite negativos aqui, o sinal já está no prefixo
+                min="0" 
                 value={customPontos}
                 onChange={(e) => setCustomPontos(e.target.value)}
                 required
-                className="pl-7" // Espaço para o prefixo '+' ou '-'
+                className="pl-7" 
               />
             </div>
           </div>

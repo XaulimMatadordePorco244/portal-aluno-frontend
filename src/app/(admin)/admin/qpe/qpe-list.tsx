@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/qpe/qpe-list.tsx
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -11,7 +10,7 @@ import { deleteTipoDeAnotacao } from './actions';
 
 type FilterType = 'all' | 'elogios' | 'punicoes' | 'fo_positivo' | 'fo_negativo' | 'elogio_aberto' | 'punicao_aberta';
 
-// ===== MODIFICAÇÃO: Adicionando o prefixo '_' e garantindo o estilo =====
+
 const formatarPontosHeader = (pontos: number | null) => {
   if (pontos === null) return ' Aberto p/ Coordenação ';
   const pontosFormatados = Math.abs(pontos).toFixed(1);
@@ -24,7 +23,7 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
   const [managingGroupKey, setManagingGroupKey] = useState<string | null>(null);
 
   const itensFiltrados = useMemo(() => {
-    // ===== MODIFICAÇÃO: Lógica do filtro corrigida para ser mais específica =====
+  
     return itens.filter(item => {
       switch (filtro) {
         case 'elogios':
@@ -32,9 +31,9 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
         case 'punicoes':
           return item.pontos !== null && item.pontos <= -1;
         case 'fo_positivo':
-          return item.codigo === 'FO_POSITIVO' && item.pontos === 0.5; // Específico para FO+
+          return item.codigo === 'FO_POSITIVO' && item.pontos === 0.5; 
         case 'fo_negativo':
-          return item.codigo === 'FO_NEGATIVO' && item.pontos === -0.3; // Específico para FO-
+          return item.codigo === 'FO_NEGATIVO' && item.pontos === -0.3;
         case 'elogio_aberto':
           return item.abertoCoordenacao && item.codigo === 'FO_POSITIVO';
         case 'punicao_aberta':
@@ -81,11 +80,11 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
             
             return (
               <div key={key}>
-                {/* ===== MODIFICAÇÃO: Layout do cabeçalho corrigido para centralizar o título ===== */}
+                {}
                 <div className={`flex items-center p-2 rounded-t-lg ${groupColor}`}>
-                  <div className="w-1/3"></div> {/* Espaçador esquerdo */}
+                  <div className="w-1/3"></div> {}
                   <h3 className="w-1/3 text-center font-bold text-lg">{formatarPontosHeader(pontos)}</h3>
-                  <div className="w-1/3 flex justify-end"> {/* Container para o botão à direita */}
+                  <div className="w-1/3 flex justify-end"> {}
                     <Button variant="ghost" size="sm" onClick={() => setManagingGroupKey(isManaging ? null : key)}>
                       {isManaging ? <XCircle className="mr-2 h-4 w-4" /> : <Settings className="mr-2 h-4 w-4" />}
                       {isManaging ? 'Concluir' : 'Gerenciar'}

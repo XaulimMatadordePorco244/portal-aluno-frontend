@@ -1,10 +1,9 @@
-// src/app/(admin)/admin/qpe/page.tsx
 import prisma from '@/lib/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import CreateQPEForm from './create-form';
 import QPEList from './qpe-list';
 
-// A função de busca de dados permanece a mesma
+
 async function getTiposDeAnotacao() {
   return await prisma.tipoDeAnotacao.findMany({
     orderBy: { createdAt: 'desc' },
@@ -36,7 +35,7 @@ export default async function QPEPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* A página agora simplesmente usa o componente QPEList */}
+       
           <QPEList itens={tiposDeAnotacao} />
         </CardContent>
       </Card>

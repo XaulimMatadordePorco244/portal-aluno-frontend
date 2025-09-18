@@ -1,10 +1,10 @@
-// src/app/(admin)/admin/qpe/actions.ts
 "use server";
 
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { CodigoAnotacao } from '@prisma/client';
+import { redirect } from 'next/navigation'; 
 
 const FormSchema = z.object({
   titulo: z.string().min(3, 'O título é obrigatório.'),
@@ -36,7 +36,7 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     abertoCoordenacao: boolean;
   } = { titulo, descricao, codigo: null, pontos: null, abertoCoordenacao: false };
 
-  // ===== MODIFICAÇÃO: Salvando o código para os itens abertos =====
+ 
   switch (selectionType) {
     case 'FO_POSITIVO':
       data.codigo = CodigoAnotacao.FO_POSITIVO;
@@ -49,12 +49,12 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     case 'ELOGIO_COORDENACAO':
       data.abertoCoordenacao = true;
       data.pontos = null;
-      data.codigo = CodigoAnotacao.FO_POSITIVO; // Salva a natureza positiva
+      data.codigo = CodigoAnotacao.FO_POSITIVO; 
       break;
     case 'PUNICAO_COORDENACAO':
       data.abertoCoordenacao = true;
       data.pontos = null;
-      data.codigo = CodigoAnotacao.FO_NEGATIVO; // Salva a natureza negativa
+      data.codigo = CodigoAnotacao.FO_NEGATIVO;
       break;
     case 'ELOGIO_CUSTOM':
       if (!customPontos || parseFloat(customPontos) <= 0) {
@@ -107,4 +107,39 @@ export async function deleteTipoDeAnotacao(formData: FormData) {
   } catch (error) {
       console.error("Erro ao deletar item do QPE:", error);
   }
+}
+
+
+export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: FormData): Promise<CreateQPEState> {
+  const UpdateSchema = z.object({
+    id: z.string(),
+    titulo: z.string().min(3, 'O título é obrigatório.'),
+    descricao: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
+    pontos: z.string().optional().transform(val => (val !== '' && val !== undefined) ? parseFloat(val) : null),
+  });
+
+  const validatedFields = UpdateSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    const firstError = Object.values(validatedFields.error.flatten().fieldErrors)[0]?.[0];
+    return { message: firstError || "Erro de validação.", type: 'error' };
+  }
+
+  const { id, titulo, descricao, pontos } = validatedFields.data;
+
+  try {
+    await prisma.tipoDeAnotacao.update({
+      where: { id },
+      data: {
+        titulo,
+        descricao,
+        pontos,
+      },
+    });
+  } catch (error) {
+    return { message: 'Erro no servidor. Não foi possível atualizar o item.', type: 'error' };
+  }
+
+  revalidatePath('/admin/qpe');
+  redirect('/admin/qpe');
 }
