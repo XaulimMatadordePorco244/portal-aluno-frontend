@@ -4,7 +4,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { CodigoAnotacao } from '@prisma/client';
-import { redirect } from 'next/navigation'; 
+import { redirect } from 'next/navigation';
 
 const FormSchema = z.object({
   titulo: z.string().min(3, 'O título é obrigatório.'),
@@ -28,7 +28,7 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
 
   const { titulo, descricao, selectionType, pontos: customPontos } = validatedFields.data;
   
-  let data: {
+  const data: {
     titulo: string;
     descricao: string;
     codigo: CodigoAnotacao | null;
@@ -36,7 +36,6 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     abertoCoordenacao: boolean;
   } = { titulo, descricao, codigo: null, pontos: null, abertoCoordenacao: false };
 
- 
   switch (selectionType) {
     case 'FO_POSITIVO':
       data.codigo = CodigoAnotacao.FO_POSITIVO;
@@ -49,7 +48,7 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     case 'ELOGIO_COORDENACAO':
       data.abertoCoordenacao = true;
       data.pontos = null;
-      data.codigo = CodigoAnotacao.FO_POSITIVO; 
+      data.codigo = CodigoAnotacao.FO_POSITIVO;
       break;
     case 'PUNICAO_COORDENACAO':
       data.abertoCoordenacao = true;
@@ -77,38 +76,13 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     revalidatePath('/admin/qpe');
     return { message: `"${titulo}" foi adicionado com sucesso!`, type: 'success' };
   } catch (error: unknown) {
-    if (error instanceof Error && (error as any).code === 'P2002') {
+
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
       return { message: 'Já existe um item com este título.', type: 'error' };
     }
     return { message: 'Erro no servidor.', type: 'error' };
   }
 }
-
-export async function deleteTipoDeAnotacao(formData: FormData) {
-  const schema = z.object({
-    id: z.string(),
-  });
-  
-  const validatedFields = schema.safeParse({
-    id: formData.get('id'),
-  });
-
-  if (!validatedFields.success) {
-      return;
-  }
-  
-  const { id } = validatedFields.data;
-
-  try {
-    await prisma.tipoDeAnotacao.delete({
-      where: { id },
-    });
-    revalidatePath('/admin/qpe');
-  } catch (error) {
-      console.error("Erro ao deletar item do QPE:", error);
-  }
-}
-
 
 export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: FormData): Promise<CreateQPEState> {
   const UpdateSchema = z.object({
@@ -136,7 +110,7 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
         pontos,
       },
     });
-  } catch (error) {
+  } catch {
     return { message: 'Erro no servidor. Não foi possível atualizar o item.', type: 'error' };
   }
 
@@ -144,3 +118,27 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
   redirect('/admin/qpe');
 }
 
+export async function deleteTipoDeAnotacao(formData: FormData) {
+  const schema = z.object({
+    id: z.string(),
+  });
+  
+  const validatedFields = schema.safeParse({
+    id: formData.get('id'),
+  });
+
+  if (!validatedFields.success) {
+    return;
+  }
+  
+  const { id } = validatedFields.data;
+
+  try {
+    await prisma.tipoDeAnotacao.delete({
+      where: { id },
+    });
+    revalidatePath('/admin/qpe');
+  } catch {
+    console.error("Erro ao deletar item do QPE.");
+  }
+}
