@@ -49,10 +49,11 @@ enum CodigoAnotacao {
 
 model TipoDeAnotacao {
   id        String         @id @default(cuid())
-  codigo    CodigoAnotacao 
+  codigo    CodigoAnotacao? 
   titulo    String         @unique
   descricao String         @db.Text
   pontos    Float? 
+  abertoCoordenacao Boolean @default(false)
 
   registros Anotacao[]
   createdAt DateTime   @default(now())
