@@ -28,6 +28,7 @@ model User {
 
   anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
   anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
+  qesCriados QES[]
 }
 
 model Regulamento {
@@ -79,4 +80,16 @@ model Anotacao {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model QES {
+  id          String    @id @default(cuid())
+  titulo      String    
+  arquivoUrl  String    
+  autorId     String    
+  autor       User      @relation(fields: [autorId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 
