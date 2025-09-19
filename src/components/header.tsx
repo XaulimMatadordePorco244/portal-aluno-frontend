@@ -24,14 +24,16 @@ import Link from "next/link";
 import { Button } from "./ui/Button"; 
 import { Separator } from "./ui/separator";
 import React from "react";
+import { LogoutButton } from "./LogoutButton"; // Importamos o novo botão
 
+// A interface User pode ser simplificada
 interface User {
   nome: string;
   nomeDeGuerra: string | null;
   cargo: string | null;
 }
 
-
+// A estrutura de dados dos links do menu permanece a mesma
 const menuGroups = [
   {
     title: "Meus Dados",
@@ -62,7 +64,7 @@ export function Header({ user }: { user: User | null }) {
           </Link>
         </div>
         
-     
+        {/* Navegação de Desktop (sem alterações) */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-300 hover:text-white transition-colors">
             <Home className="h-4 w-4 mr-1" />
@@ -91,7 +93,10 @@ export function Header({ user }: { user: User | null }) {
         </nav>
         
         <div className="flex items-center gap-2">
-          {user ? <UserNav user={user} /> : <Link href="/login" className="text-sm font-medium hover:text-white">Entrar</Link>}
+          {/* ===== MODIFICAÇÃO 1: Escondemos o UserNav no mobile ===== */}
+          <div className="hidden md:block">
+            {user ? <UserNav user={user} /> : <Link href="/login" className="text-sm font-medium hover:text-white">Entrar</Link>}
+          </div>
 
           <div className="md:hidden">
             <Sheet>
@@ -101,7 +106,7 @@ export function Header({ user }: { user: User | null }) {
                 </Button>
               </SheetTrigger>
               
-          
+              {/* ===== MODIFICAÇÃO 2: Layout do Sheet ajustado e botão Sair adicionado ===== */}
               <SheetContent className="bg-slate-800 text-white border-l-slate-700 w-[280px] p-4 flex flex-col">
                 <SheetHeader>
                   <SheetTitle className="sr-only">Menu Principal</SheetTitle>
@@ -110,6 +115,7 @@ export function Header({ user }: { user: User | null }) {
                   </SheetDescription>
                 </SheetHeader>
                 
+                {/* O conteúdo principal do menu ocupa o espaço disponível */}
                 <nav className="flex flex-col gap-2 mt-4 text-base flex-1">
                   <Link href="/dashboard" className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-slate-700 transition-colors text-gray-200 hover:text-white font-medium">
                     <Home className="h-5 w-5" />
@@ -129,6 +135,15 @@ export function Header({ user }: { user: User | null }) {
                     </div>
                   ))}
                 </nav>
+
+                {/* Este `div` é empurrado para o final do menu */}
+                <div className="mt-auto pt-4 border-t border-slate-700">
+                  <div className="p-2 rounded-md hover:bg-slate-700 transition-colors text-sm text-red-400 hover:text-red-300">
+                    <LogoutButton>
+                      <span>Sair</span>
+                    </LogoutButton>
+                  </div>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
