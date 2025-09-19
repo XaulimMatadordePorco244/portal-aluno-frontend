@@ -3,7 +3,6 @@
 import { logout } from "@/app/actions";
 import { LogOut } from "lucide-react";
 
-
 export function LogoutButton({ children }: { children: React.ReactNode }) {
   return (
     <button
