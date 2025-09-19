@@ -10,6 +10,7 @@ interface UserPayload {
   nome: string;
   nomeDeGuerra: string | null;
   cargo: string;
+  role: string
 }
 
 export async function getCurrentUser() {
