@@ -22,6 +22,7 @@ model User {
   fotoUrl      String?
   validationId String  @unique @default(cuid())
   nomeDeGuerra String?
+  
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -29,6 +30,7 @@ model User {
   anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
   anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
   qesCriados QES[]
+   role      Role      @default(ALUNO)
 }
 
 model Regulamento {
@@ -92,4 +94,8 @@ model QES {
   updatedAt   DateTime  @updatedAt
 }
 
+enum Role {
+  ALUNO
+  ADMIN
+}
 
