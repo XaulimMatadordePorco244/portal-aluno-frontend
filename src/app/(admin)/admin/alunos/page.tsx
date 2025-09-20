@@ -58,7 +58,7 @@ export default async function AdminAlunosPage() {
                   <TableCell>{aluno.cpf}</TableCell>
                   <TableCell>{aluno.status}</TableCell>
                   <TableCell className="text-right">
-                    {/* Aqui adicionaremos o menu de ações (Editar/Apagar) */}
+                  
                   </TableCell>
                 </TableRow>
               ))}
