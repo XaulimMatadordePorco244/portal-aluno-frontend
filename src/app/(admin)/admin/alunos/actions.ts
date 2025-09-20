@@ -7,6 +7,7 @@ import { getFullCurrentUser } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { put } from "@vercel/blob"; 
+import { del } from "@vercel/blob"; 
 
 export type AlunoState = {
     errors?: {
@@ -91,4 +92,37 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
 
     revalidatePath("/admin/alunos");
     redirect("/admin/alunos");
+}
+
+
+export async function deleteAluno(formData: FormData) {
+  const user = await getFullCurrentUser();
+  if (!user || user.role !== 'ADMIN') {
+    throw new Error("Acesso negado.");
+  }
+
+  const id = formData.get('id') as string;
+  const fotoUrl = formData.get('fotoUrl') as string | null;
+
+  if (!id) {
+    throw new Error("ID do aluno não fornecido.");
+  }
+
+  try {
+ 
+    if (fotoUrl) {
+      await del(fotoUrl);
+    }
+
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    revalidatePath("/admin/alunos");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao deletar aluno:", error);
+    return { success: false, message: "Erro ao deletar o aluno." };
+  }
 }
