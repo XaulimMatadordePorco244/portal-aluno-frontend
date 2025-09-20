@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox"; // Adicionado
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -118,8 +119,18 @@ export default function AlunoForm() {
         <Input id="email" name="email" type="email" />
         {state?.errors?.email && <p className="text-sm text-red-500 mt-1">{state.errors.email[0]}</p>}
       </div>
+
+      <div className="flex items-center space-x-2 pt-2">
+        <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" />
+        <label
+          htmlFor="ingressoForaDeData"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Ingresso fora de data (conceito inicial 6.0)
+        </label>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
         <div className="space-y-2">
           <Label htmlFor="password">Senha Provisória</Label>
           <Input id="password" name="password" type="password" required />

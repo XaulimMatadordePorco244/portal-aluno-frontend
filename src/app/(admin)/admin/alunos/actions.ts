@@ -8,7 +8,6 @@ import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { put, del } from "@vercel/blob";
 
-
 export type AlunoState = {
   errors?: {
     nome?: string[];
@@ -19,12 +18,11 @@ export type AlunoState = {
     nomeDeGuerra?: string[];
     companhia?: string[];
     cargo?: string[];
-    cargoOutro?: string[]; 
+    cargoOutro?: string[];
     fotoUrl?: string[];
   };
   message?: string;
 } | undefined;
-
 
 const baseAlunoSchema = z.object({
   nome: z.string().min(3, "O nome completo é obrigatório."),
@@ -35,9 +33,10 @@ const baseAlunoSchema = z.object({
   companhia: z.string().min(1, "A companhia é obrigatória."),
   cargo: z.string().min(1, "O cargo é obrigatório."),
   cargoOutro: z.string().optional(),
+  ingressoForaDeData: z.string().optional(),
   fotoUrl: z
     .instanceof(File)
-    .refine((file) => file.size === 0 || file.type.startsWith("image/"), "O arquivo precisa ser uma imagem.")
+    .refine((file) => !file || file.size === 0 || file.type.startsWith("image/"), "O arquivo precisa ser uma imagem.")
     .optional(),
 }).refine(data => {
   if (data.cargo === 'OUTRO') {
@@ -49,11 +48,9 @@ const baseAlunoSchema = z.object({
   path: ["cargoOutro"],
 });
 
-
 const CreateAlunoSchema = baseAlunoSchema.safeExtend({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
 });
-
 
 const UpdateAlunoSchema = baseAlunoSchema.safeExtend({
   id: z.string(),
@@ -73,18 +70,16 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  const { cargo, cargoOutro, fotoUrl, password, ...data } = validatedFields.data;
+  const { cargo, cargoOutro, fotoUrl, password, ingressoForaDeData, ...data } = validatedFields.data;
   const finalCargo = cargo === 'OUTRO' ? cargoOutro! : cargo;
+  const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     let uploadedFotoUrl: string | null = null;
 
     if (fotoUrl && fotoUrl.size > 0) {
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, {
-        access: 'public',
-        addRandomSuffix: true,
-      });
+      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       uploadedFotoUrl = blob.url;
     }
 
@@ -93,6 +88,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
         ...data,
         password: hashedPassword,
         cargo: finalCargo,
+        conceito: conceitoInicial,
         fotoUrl: uploadedFotoUrl,
         status: "ATIVO",
         role: "ALUNO",
@@ -100,7 +96,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     });
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-      return { message: 'Já existe um usuário com este CPF.' };
+      return { message: 'Já existe um usuário com este CPF ou Número.' };
     }
     console.error(error);
     return { message: "Ocorreu um erro ao criar o aluno." };
@@ -124,23 +120,30 @@ export async function updateAluno(prevState: any, formData: FormData) {
   
   const { id, password, fotoUrl, cargo, cargoOutro, ...dataToUpdate } = validatedFields.data;
   const finalCargo = cargo === 'OUTRO' ? cargoOutro! : cargo;
-  (dataToUpdate as any).cargo = finalCargo;
 
   try {
+    const alunoAtual = await prisma.user.findUnique({ where: { id } });
+    if (!alunoAtual) {
+      return { message: "Aluno não encontrado." };
+    }
+    
+    if (alunoAtual.cargo !== finalCargo) {
+      (dataToUpdate as any).conceito = '7.0';
+      await prisma.anotacao.deleteMany({ where: { alunoId: id } });
+    }
+    
+    (dataToUpdate as any).cargo = finalCargo;
+
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       (dataToUpdate as any).password = hashedPassword;
     }
 
     if (fotoUrl && fotoUrl.size > 0) {
-      const alunoAntigo = await prisma.user.findUnique({ where: { id } });
-      if (alunoAntigo?.fotoUrl) {
-        await del(alunoAntigo.fotoUrl);
+      if (alunoAtual.fotoUrl) {
+        await del(alunoAtual.fotoUrl);
       }
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, {
-        access: 'public',
-        addRandomSuffix: true,
-      });
+      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       (dataToUpdate as any).fotoUrl = blob.url;
     }
 
@@ -175,9 +178,10 @@ export async function deleteAluno(formData: FormData) {
     if (fotoUrl) {
       await del(fotoUrl);
     }
-    await prisma.user.delete({
-      where: { id },
-    });
+    
+    await prisma.anotacao.deleteMany({ where: { alunoId: id } });
+    await prisma.user.delete({ where: { id } });
+
     revalidatePath("/admin/alunos");
     return { success: true };
   } catch (error) {
