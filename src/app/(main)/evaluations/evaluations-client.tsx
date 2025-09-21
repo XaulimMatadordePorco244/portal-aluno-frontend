@@ -34,12 +34,10 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  
   const conceitoBase = parseFloat(user.conceito || '0');
   const somaDosPontos = useMemo(() => anotacoes.reduce((sum, item) => sum + Number(item.pontos), 0), [anotacoes]);
   const conceitoReal = (conceitoBase + somaDosPontos).toFixed(2);
 
-  
   const filterAndCalculate = (filterType: AnnotationFilterType, source: AnotacaoComRelacoes[]) => {
     const filter = filterType.toLowerCase();
     
@@ -66,7 +64,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
     return { items: filtered, count, points };
   }
 
-  
   const filteredByDate = useMemo(() => {
     let items = [...anotacoes];
     if (startDate) {
@@ -80,10 +77,8 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
     return items;
   }, [anotacoes, startDate, endDate]);
 
-
   const { items: filteredAnnotations } = filterAndCalculate(activeFilter, filteredByDate);
   
-
   const { count: totalElogiosCount, points: totalElogiosPoints } = filterAndCalculate('Elogio', anotacoes);
   const { count: totalPunicoesCount, points: totalPunicoesPoints } = filterAndCalculate('Punição', anotacoes);
   const { count: totalFOPositivasCount, points: totalFOPositivasPoints } = filterAndCalculate('FO+', anotacoes);
