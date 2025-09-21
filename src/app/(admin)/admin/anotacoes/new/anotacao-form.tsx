@@ -30,7 +30,7 @@ function SubmitButton() {
 
 export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User[], tiposDeAnotacao: TipoDeAnotacao[] }) {
   const [state, formAction] = useActionState(createAnotacao, undefined);
-  
+
   const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
   const [selectedAlunos, setSelectedAlunos] = useState<User[]>([]);
 
@@ -45,7 +45,6 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
 
   const companhias = useMemo(() => [...new Set(alunos.map(a => a.companhia).filter(Boolean))], [alunos]) as string[];
 
-  // MODIFICAÇÃO: Lógica de separação corrigida para usar os pontos
   const { positivas, negativas } = useMemo(() => {
     const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0);
     const negativas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos < 0);
@@ -60,7 +59,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
   const handleAlunoSelect = (aluno: User) => {
     setSelectedAlunos(prev => prev.find(a => a.id === aluno.id) ? prev : [...prev, aluno]);
   };
-  
+
   const handleAlunoRemove = (alunoId: string) => {
     setSelectedAlunos(prev => prev.filter(a => a.id !== alunoId));
   };
@@ -69,7 +68,6 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
 
   return (
     <form action={formAction} className="space-y-6">
-      {/* SELEÇÃO DE ALUNOS */}
       <div className="space-y-3 rounded-md border p-4">
         <Label className="font-semibold">Aplicar para</Label>
         <RadioGroup value={selectionMode} onValueChange={(value: 'companhia' | 'individual') => { setSelectionMode(value); setSelectedAlunos([]); }}>
@@ -82,7 +80,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
             <Label htmlFor="companhia" className="font-normal">Companhia Inteira</Label>
           </div>
         </RadioGroup>
-        
+
         <div className="pt-2 animate-in fade-in">
           {selectionMode === 'companhia' && (
             <Select onValueChange={handleCompanhiaChange}>
@@ -94,7 +92,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
           )}
 
           {selectionMode === 'individual' && (
-             <Popover>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start font-normal">
                   Adicionar aluno...
@@ -118,7 +116,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
             </Popover>
           )}
         </div>
-        
+
         {selectedAlunos.length > 0 && (
           <div className="pt-3">
             <Label className="text-xs text-muted-foreground">Alunos selecionados ({selectedAlunos.length})</Label>
@@ -137,8 +135,8 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
         {selectedAlunos.map(aluno => <input key={aluno.id} type="hidden" name="alunoIds" value={aluno.id} />)}
         {state?.errors?.alunoIds && <p className="text-sm text-red-500 mt-1">{state.errors.alunoIds[0]}</p>}
       </div>
-      
-      {/* SELEÇÃO DE TIPO DE ANOTAÇÃO */}
+
+
       <div className="space-y-2">
         <Label htmlFor="tipoId">Tipo de Anotação</Label>
         <Popover open={isTipoComboboxOpen} onOpenChange={setIsTipoComboboxOpen}>
@@ -155,9 +153,9 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
               <CommandList>
                 <CommandGroup heading="Anotações Positivas">
                   {positivas.map((tipo) => (
-                    <CommandItem 
-                      key={tipo.id} 
-                      value={`${tipo.titulo} ${tipo.descricao}`} 
+                    <CommandItem
+                      key={tipo.id}
+                      value={`${tipo.titulo} ${tipo.descricao}`}
                       onSelect={() => { setSelectedTipo(tipo); setIsTipoComboboxOpen(false); }}
                     >
                       <Check className={cn("mr-2 h-4 w-4", selectedTipo?.id === tipo.id ? "opacity-100" : "opacity-0")} />
@@ -171,9 +169,9 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
                 <CommandSeparator />
                 <CommandGroup heading="Anotações Negativas">
                   {negativas.map((tipo) => (
-                    <CommandItem 
-                      key={tipo.id} 
-                      value={`${tipo.titulo} ${tipo.descricao}`} 
+                    <CommandItem
+                      key={tipo.id}
+                      value={`${tipo.titulo} ${tipo.descricao}`}
                       onSelect={() => { setSelectedTipo(tipo); setIsTipoComboboxOpen(false); }}
                     >
                       <Check className={cn("mr-2 h-4 w-4", selectedTipo?.id === tipo.id ? "opacity-100" : "opacity-0")} />
@@ -217,7 +215,6 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
               required
               value={pontos}
               onChange={(e) => setPontos(e.target.value)}
-              disabled={!selectedTipo || !selectedTipo.abertoCoordenacao}
               readOnly={!selectedTipo || !selectedTipo.abertoCoordenacao}
               className="pl-7"
             />
@@ -226,7 +223,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
           {state?.errors?.pontos && <p className="text-sm text-red-500 mt-1">{state.errors.pontos[0]}</p>}
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="detalhes">Descrição do Ocorrido (Obrigatório)</Label>
         <Textarea id="detalhes" name="detalhes" placeholder="Descreva a ocorrência..." required />
@@ -234,7 +231,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
       </div>
 
       {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-      
+
       <div className="flex gap-2 pt-4">
         <SubmitButton />
         <Button variant="outline" asChild><Link href="/admin/alunos">Cancelar</Link></Button>
