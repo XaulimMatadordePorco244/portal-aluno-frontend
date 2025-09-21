@@ -44,15 +44,10 @@ model Regulamento {
 }
 
 
-enum CodigoAnotacao {
-  FO_POSITIVO 
-  FO_NEGATIVO 
-}
 
 
 model TipoDeAnotacao {
   id        String         @id @default(cuid())
-  codigo    CodigoAnotacao? 
   titulo    String         @unique
   descricao String         @db.Text
   pontos    Float? 
