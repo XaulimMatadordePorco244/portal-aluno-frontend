@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const qesItems = await prisma.qES.findMany({
     take: 3,
     orderBy: {
-      dataInicio: 'desc', 
+      createdAt: 'desc', 
     },
   });
 
