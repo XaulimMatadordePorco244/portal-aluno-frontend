@@ -25,6 +25,7 @@ import { Button } from "./ui/Button";
 import { Separator } from "./ui/separator";
 import React from "react";
 import { LogoutButton } from "./LogoutButton";
+import { ThemeToggle } from "./ThemeToggle"; 
 
 interface User {
   nome: string;
@@ -90,6 +91,9 @@ export function Header({ user }: { user: User | null }) {
         </nav>
         
         <div className="flex items-center gap-2">
+  
+          <ThemeToggle />
+
           <div className="hidden md:block">
             {user ? <UserNav user={user} /> : <Link href="/login" className="text-sm font-medium hover:text-white">Entrar</Link>}
           </div>
