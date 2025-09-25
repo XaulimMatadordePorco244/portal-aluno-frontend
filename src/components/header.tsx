@@ -54,7 +54,8 @@ const menuGroups = [
 
 export function Header({ user }: { user: User | null }) { 
   return (
-    <header className="bg-slate-800 text-white shadow-md sticky top-0 z-50">
+ 
+    <header className="bg-slate-800 text-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-xl font-bold flex items-center gap-2">
@@ -72,59 +73,58 @@ export function Header({ user }: { user: User | null }) {
             <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
               Meus Dados <ChevronDown className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 text-gray-300 border-slate-700">
-              <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/frequency" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/evaluations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/my-reports" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
+            
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/frequency" className="flex items-center w-full cursor-pointer"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/evaluations" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/my-reports" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center text-sm font-medium text-gray-300 hover:text-white focus:outline-none transition-colors cursor-pointer">
               Institucional <ChevronDown className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 text-gray-300 border-slate-700">
-              <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><FileText className="mr-2 h-4 w-4" /><span>Regulamento</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="#" className="flex items-center w-full cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white hover:text-white"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Eventos</span></Link></DropdownMenuItem>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamento</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="#" className="flex items-center w-full cursor-pointer"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Eventos</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
         
         <div className="flex items-center gap-2">
-  
           <ThemeToggle />
-
           <div className="hidden md:block">
             {user ? <UserNav user={user} /> : <Link href="/login" className="text-sm font-medium hover:text-white">Entrar</Link>}
           </div>
-
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700 focus:ring-slate-600">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700 dark:text-gray-300 dark:hover:bg-gray-800 focus:ring-slate-600">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
               
-              <SheetContent className="bg-slate-800 text-white border-l-slate-700 w-[280px] p-4 flex flex-col">
+              <SheetContent className="w-[280px] p-4 flex flex-col">
                 <SheetHeader>
                   <SheetTitle className="sr-only">Menu Principal</SheetTitle>
                   <SheetDescription className="sr-only">Navegação principal do portal do aluno.</SheetDescription>
                 </SheetHeader>
                 
                 <nav className="flex flex-col gap-2 mt-4 text-base flex-1">
-                  <Link href="/dashboard" className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-slate-700 transition-colors text-gray-200 hover:text-white font-medium">
+                  <Link href="/dashboard" className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-accent transition-colors text-foreground font-medium">
                     <Home className="h-5 w-5" />
                     Início
                   </Link>
-                  <Separator className="my-2 bg-slate-700" />
+
+                  <Separator className="my-2" />
                   
                   {menuGroups.map((group) => (
                     <div key={group.title} className="flex flex-col gap-1">
-                      <h3 className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{group.title}</h3>
+                      <h3 className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.title}</h3>
                       {group.links.map(link => (
-                        <Link key={link.href} href={link.href} className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-slate-700 transition-colors text-gray-300 hover:text-white text-sm">
-                          <link.icon className="h-5 w-5 text-gray-400" />
+                        <Link key={link.href} href={link.href} className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground text-sm">
+                          <link.icon className="h-5 w-5 text-muted-foreground" />
                           {link.label}
                         </Link>
                       ))}
@@ -132,8 +132,8 @@ export function Header({ user }: { user: User | null }) {
                   ))}
                 </nav>
 
-                <div className="mt-auto pt-4 border-t border-slate-700">
-                  <div className="p-2 rounded-md hover:bg-slate-700 transition-colors text-sm text-red-400 hover:text-red-300">
+                <div className="mt-auto pt-4 border-t">
+                  <div className="p-2 rounded-md hover:bg-destructive/90 transition-colors text-sm text-destructive hover:text-destructive-foreground">
                     <LogoutButton>
                       <span>Sair</span>
                     </LogoutButton>
