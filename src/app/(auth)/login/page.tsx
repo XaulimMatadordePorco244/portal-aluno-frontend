@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from 'next/image'; 
-import { Button } from "@/components/ui/Button"; 
+import Image from 'next/image';
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       router.push('/dashboard');
 
-    } catch (err) { 
+    } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -46,22 +46,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        
-        {}
-        <Image 
-          src="/logo.png" 
-          alt="Logo da Guarda Mirim" 
-          width={120} 
-          height={120} 
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md border">
+
+        <Image
+          src="/logo.png"
+          alt="Logo da Guarda Mirim"
+          width={120}
+          height={120}
           className="mx-auto"
-          priority 
+          priority
         />
-        
+
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800">Mural do Aluno</h1>
-          <p className="text-gray-500">Acesse sua conta</p>
+          <h1 className="text-3xl font-bold text-foreground">Mural do Aluno</h1>
+          <p className="text-muted-foreground">Acesse sua conta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -92,7 +91,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="p-3 text-sm text-center text-red-800 bg-red-100 rounded-md">
+            <div className="p-3 text-sm text-center text-destructive-foreground bg-destructive rounded-md">
               {error}
             </div>
           )}
@@ -102,9 +101,9 @@ export default function LoginPage() {
           </Button>
         </form>
         <div className="text-center">
-            <a href="/forgot-password" className="text-sm text-primary hover:underline">
-              Esqueceu a Senha?
-            </a>
+          <a href="/forgot-password" className="text-sm text-primary hover:underline">
+            Esqueceu a Senha?
+          </a>
         </div>
       </div>
     </div>
