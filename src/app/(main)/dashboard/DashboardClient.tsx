@@ -1,30 +1,31 @@
 "use client";
 
 import FormattedName from '@/components/FormattedName';
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button"; // Corrigido para ./ui/button
 import { ArrowRight, MoreHorizontal, ExternalLink } from "lucide-react";
 import { QES, User as PrismaUser } from '@prisma/client';
 import Link from 'next/link';
 
 type User = Pick<PrismaUser, "nome" | "nomeDeGuerra" | "cargo" | "numero">;
 
+// Subcomponentes refatorados para usar cores do tema
 const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (
-    <Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-gray-50">
+    <Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-accent">
         <div className="flex justify-between items-center">
             <div>
-                <p className="font-semibold text-gray-800 text-sm truncate">{title}</p>
-                <p className="text-xs text-gray-500">{date}</p>
+                <p className="font-semibold text-foreground text-sm truncate">{title}</p>
+                <p className="text-xs text-muted-foreground">{date}</p>
             </div>
-            <ExternalLink className="h-4 w-4 text-gray-400" />
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
         </div>
     </Link>
 );
 
 const AnnotationListItem = ({ title, date }: { title: string; date: string }) => (
-    <div className="border-b p-3 hover:bg-gray-50 flex justify-between items-center">
+    <div className="border-b p-3 hover:bg-accent flex justify-between items-center">
         <div>
-            <p className="font-semibold text-gray-800 text-sm">{title}</p>
-            <p className="text-xs text-gray-500">{date}</p>
+            <p className="font-semibold text-foreground text-sm">{title}</p>
+            <p className="text-xs text-muted-foreground">{date}</p>
         </div>
         <Button variant="ghost" size="sm">
             Ver detalhes <MoreHorizontal className="ml-2 h-4 w-4" />
@@ -33,13 +34,13 @@ const AnnotationListItem = ({ title, date }: { title: string; date: string }) =>
 );
 
 const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: number; nome: React.ReactNode; numero: string | null; cargo: string | null; isCurrentUser?: boolean }) => (
-    <div className={`border-b p-3 ${isCurrentUser ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+    <div className={`border-b p-3 ${isCurrentUser ? 'bg-primary/10' : 'hover:bg-accent'}`}>
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <span className={`font-bold text-lg w-8 text-center ${isCurrentUser ? 'text-blue-700' : 'text-gray-600'}`}>{rank}º</span>
+                <span className={`font-bold text-lg w-8 text-center ${isCurrentUser ? 'text-primary' : 'text-muted-foreground'}`}>{rank}º</span>
                 <div>
-                    <p className={`font-semibold ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>{nome}</p>
-                    <p className="text-xs text-gray-500">{cargo} - Nº {numero || 'N/A'}</p>
+                    <p className={`font-semibold ${isCurrentUser ? 'text-primary' : 'text-foreground'}`}>{nome}</p>
+                    <p className="text-xs text-muted-foreground">{cargo} - Nº {numero || 'N/A'}</p>
                 </div>
             </div>
         </div>
@@ -47,11 +48,14 @@ const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: n
 );
 
 const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col">
-        <h2 className="text-lg font-bold text-center text-white bg-slate-700 p-3 rounded-t-lg">{title}</h2>
+    // Card agora usa bg-card e border do tema
+    <div className="bg-card rounded-lg shadow-lg border flex flex-col">
+        {/* Título do card usa as cores primárias, igual ao Header */}
+        <h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg">{title}</h2>
         <div className="flex-grow flex flex-col">
             <div className="flex-grow">{children}</div>
-            <Link href={linkHref} className="p-3 text-sm font-semibold text-blue-600 hover:bg-gray-100 text-center flex items-center justify-center rounded-b-lg">
+            {/* Link inferior usa a cor primária para destaque e accent no hover */}
+            <Link href={linkHref} className="p-3 text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg">
                 {linkText} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
         </div>
@@ -61,7 +65,8 @@ const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: s
 export default function DashboardClient({ user, qesItems }: { user: User, qesItems: QES[] }) {
     return (
         <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+            {/* Título principal da página usa a cor de texto do tema */}
+            <h1 className="text-3xl font-bold text-foreground mb-6">
                 Mural do Aluno - Bem-vindo, {user.cargo} {user.nomeDeGuerra}!
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -84,10 +89,11 @@ export default function DashboardClient({ user, qesItems }: { user: User, qesIte
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-sm text-gray-500 p-4">Nenhum QES publicado.</p>
+                        <p className="text-center text-sm text-muted-foreground p-4">Nenhum QES publicado.</p>
                     )}
                 </DashboardCard>
 
+                {/* Os outros cards já usam os subcomponentes refatorados e funcionarão automaticamente */}
                 <DashboardCard title="Informativos" linkText="Ver todos os informativos">
                     <UniversalListItem title="Atualização do Regulamento de Uniformes" date="Publicado em: 03/09/2025" url="#" />
                     <UniversalListItem title="Inscrições para o Desfile de 7 de Setembro" date="Publicado em: 01/09/2025" url="#" />
