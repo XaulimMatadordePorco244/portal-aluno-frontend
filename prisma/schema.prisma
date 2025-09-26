@@ -7,30 +7,53 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ALUNO
+  ADMIN
+}
+
+enum TipoCargo {
+  POSTO
+  GRADUACAO
+  CURSO
+}
+
+enum ClasseOficial {
+  SUPERIOR
+  INTERMEDIARIO
+  SUBALTERNO
+}
+
+enum CategoriaCargo {
+  FORMACAO
+  QUADRO
+}
+
 model User {
-  id           String  @id @default(cuid())
-  cpf          String  @unique
+  id           String   @id @default(cuid())
+  cpf          String   @unique
   password     String
   nome         String
-  numero       String? @unique
-  cargo        String  @default("Aluno Soldado")
+  numero       String?  @unique
   companhia    String?
   conceito     String?
   anoIngresso  Int?
-  email        String? @unique
-  status       String  @default("Ativo")
+  email        String?  @unique
+  status       String   @default("Ativo")
   fotoUrl      String?
-  validationId String  @unique @default(cuid())
+  validationId String   @unique @default(cuid())
   nomeDeGuerra String?
-  
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  cargoId      String?
+  funcaoId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
   anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
-  qesCriados QES[]
-   role      Role      @default(ALUNO)
+  funcao             Funcao?    @relation(fields: [funcaoId], references: [id])
+  cargo              Cargo?     @relation(fields: [cargoId], references: [id])
+  qesCriados         QES[]
+  role               Role       @default(ALUNO)
 }
 
 model Regulamento {
@@ -43,21 +66,17 @@ model Regulamento {
   updatedAt DateTime @updatedAt
 }
 
-
-
-
 model TipoDeAnotacao {
-  id        String         @id @default(cuid())
-  titulo    String         @unique
-  descricao String         @db.Text
-  pontos    Float? 
+  id                String  @id @default(cuid())
+  titulo            String  @unique
+  descricao         String  @db.Text
+  pontos            Float?
   abertoCoordenacao Boolean @default(false)
 
   registros Anotacao[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
-
 
 model Anotacao {
   id       String   @id @default(cuid())
@@ -79,18 +98,30 @@ model Anotacao {
 }
 
 model QES {
-  id          String    @id @default(cuid())
-  titulo      String    
-  arquivoUrl  String    
-  autorId     String    
-  autor       User      @relation(fields: [autorId], references: [id])
+  id         String @id @default(cuid())
+  titulo     String
+  arquivoUrl String
+  autorId    String
+  autor      User   @relation(fields: [autorId], references: [id])
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-enum Role {
-  ALUNO
-  ADMIN
+model Cargo {
+  id          String         @id @default(cuid())
+  nome        String         @unique
+  abreviacao  String         @unique
+  codigo      Int?            
+  categoria   CategoriaCargo
+  tipo        TipoCargo
+  precedencia Int            @unique
+  classe      ClasseOficial?
+  usuarios    User[]
 }
 
+model Funcao {
+  id       String @id @default(cuid())
+  nome     String @unique
+  usuarios User[]
+}
