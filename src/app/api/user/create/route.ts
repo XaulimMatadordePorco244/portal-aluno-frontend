@@ -1,39 +1,75 @@
-// src/app/api/user/create/route.ts
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { cpf, password, nome, numero, cargo } = body;
+    const body = await req.json();
 
-    if (!cpf || !password || !nome) {
-      return NextResponse.json({ error: 'CPF, senha e nome são obrigatórios' }, { status: 400 });
+   
+    if (Array.isArray(body)) {
+  
+      for (const user of body) {
+        if (!user.nome || !user.cpf || !user.password) {
+          return NextResponse.json(
+            { error: `Um dos usuários na lista está incompleto. Faltando nome, CPF ou senha.` },
+            { status: 400 }
+          );
+        }
+      }
+
+ 
+      const usersData = await Promise.all(
+        body.map(async (user) => {
+          const hashedPassword = await bcrypt.hash(user.password, 10);
+          return {
+            ...user,
+            password: hashedPassword,
+          };
+        })
+      );
+
+
+      const result = await prisma.user.createMany({
+        data: usersData,
+        skipDuplicates: true, 
+      });
+
+      return NextResponse.json({
+        message: `${result.count} usuários criados com sucesso.`,
+      });
     }
+    
 
-    const existingUser = await prisma.user.findUnique({ where: { cpf } });
-    if (existingUser) {
-      return NextResponse.json({ error: 'Um usuário com este CPF já existe' }, { status: 409 });
+    else {
+      const { nome, cpf, password, ...rest } = body;
+
+      if (!nome || !cpf || !password) {
+        return NextResponse.json(
+          { error: "CPF, senha e nome são obrigatórios" },
+          { status: 400 }
+        );
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const result = await prisma.user.create({
+        data: {
+          nome,
+          cpf,
+          password: hashedPassword,
+          ...rest,
+        }
+      });
+
+      return NextResponse.json(result);
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await prisma.user.create({
-      data: {
-        cpf,
-        password: hashedPassword,
-        nome,
-        numero,
-        cargo,
-      },
-    });
-
-    const  userWithoutPassword  = newUser;
-    return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    console.error("Erro na criação de usuário(s):", error);
+    
+    return NextResponse.json(
+      { error: 'Ocorreu um erro interno no servidor ao processar a requisição.' },
+      { status: 500 }
+    );
   }
 }
