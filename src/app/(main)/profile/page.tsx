@@ -1,7 +1,6 @@
-// src/app/(main)/profile/page.tsx
 import { getFullCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import ProfileClient from "./ProfileClient"; // Importa nosso novo componente de UI
+import ProfileClient from "./ProfileClient"; 
 
 export default async function ProfilePage() {
   const user = await getFullCurrentUser();

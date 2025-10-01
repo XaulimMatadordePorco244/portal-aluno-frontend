@@ -118,6 +118,7 @@ model Cargo {
   precedencia Int            @unique
   classe      ClasseOficial?
   usuarios    User[]
+  divisaUrl   String?
 }
 
 model Funcao {
