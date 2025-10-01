@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { 
   ChevronDown, Home, FileText, Calendar, User, ClipboardCheck, 
-  FileWarning, ClipboardList, Menu
+  FileWarning, TableProperties,ClipboardList, Menu
 } from "lucide-react";
 import { UserNav } from "@/components/UserNav";
 import Image from 'next/image';
@@ -48,6 +48,7 @@ const menuGroups = [
     links: [
       { href: "/regulations", label: "Regulamento", icon: FileText },
       { href: "#", label: "Calendário de Eventos", icon: Calendar },
+      { href: "/quadro", label: "QOGM e QPGM", icon: TableProperties  },
     ]
   }
 ];
@@ -88,6 +89,7 @@ export function Header({ user }: { user: User | null }) {
             <DropdownMenuContent>
               <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamento</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="#" className="flex items-center w-full cursor-pointer"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Eventos</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
