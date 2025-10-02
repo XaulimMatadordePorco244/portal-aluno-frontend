@@ -47,6 +47,8 @@ model User {
   funcaoId     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  passwordResetToken       String?   @unique
+  passwordResetExpires     DateTime?
 
   anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
   anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
