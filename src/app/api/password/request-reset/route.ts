@@ -8,51 +8,53 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { cpf } = await req.json();
 
-    if (!email) {
-      return NextResponse.json({ error: 'E-mail é obrigatório.' }, { status: 400 });
+    if (!cpf) {
+      return NextResponse.json({ error: 'CPF é obrigatório.' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { cpf } });
 
- 
-    if (!user) {
-      return NextResponse.json({ message: 'Se um e-mail cadastrado corresponder, um link de recuperação será enviado.' });
+
+    if (!user || !user.email) {
+      return NextResponse.json({ message: 'Se o CPF estiver em nosso sistema, um link será enviado para o e-mail associado.' });
     }
+
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    
-
     const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-
     const passwordResetExpires = new Date(Date.now() + 3600 * 1000); 
 
+   
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: {
         passwordResetToken,
         passwordResetExpires,
       },
     });
 
-
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${resetToken}`;
 
+    await resend.emails.send({
+      from: 'Portal do Aluno <onboarding@resend.dev>', 
+      to: user.email,
+      subject: 'Recuperação de Senha - Portal do Aluno',
+      react: ResetPasswordEmail({ resetLink: resetUrl }),
+    });
+    
+ 
+    const maskEmail = (email: string) => {
+        const [localPart, domain] = email.split('@');
+        if (localPart.length <= 2) {
+            return `${localPart.slice(0, 1)}***@${domain}`;
+        }
+        return `${localPart.slice(0, 2)}***@${domain}`;
+    };
 
-    try {
-      await resend.emails.send({
-        from: 'Portal do Aluno <nao-responda@seudominio.com>',
-        to: user.email as string,
-        subject: 'Recuperação de Senha - Portal do Aluno',
-        react: ResetPasswordEmail({ resetLink: resetUrl }),
-      });
-    } catch (emailError) {
-      console.error("Falha ao enviar e-mail:", emailError);
-    }
 
-    return NextResponse.json({ message: 'Se um e-mail cadastrado corresponder, um link de recuperação será enviado.' });
+    return NextResponse.json({ message: `Um link foi enviado para o e-mail: ${maskEmail(user.email)}` });
 
   } catch (error) {
     console.error("Erro na rota request-reset:", error);
