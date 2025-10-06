@@ -29,27 +29,43 @@ enum CategoriaCargo {
   QUADRO
 }
 
-model User {
-  id           String   @id @default(cuid())
-  cpf          String   @unique
-  password     String
-  nome         String
-  numero       String?  @unique
-  companhia    String?
-  conceito     String?
-  anoIngresso  Int?
-  email        String?  @unique
-  status       String   @default("Ativo")
-  fotoUrl      String?
-  validationId String   @unique @default(cuid())
-  nomeDeGuerra String?
-  cargoId      String?
-  funcaoId     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  passwordResetToken       String?   @unique
-  passwordResetExpires     DateTime?
+enum StatusParte {
+  RASCUNHO
+  ENVIADA
+  ANALISADA
+}
 
+enum ResultadoAnalise {
+  APROVADA
+  NEGADA
+  ARQUIVADA
+  ENCAMINHADA
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  cpf                  String    @unique
+  password             String
+  nome                 String
+  numero               String?   @unique
+  companhia            String?
+  conceito             String?
+  anoIngresso          Int?
+  email                String?   @unique
+  status               String    @default("Ativo")
+  fotoUrl              String?
+  validationId         String    @unique @default(cuid())
+  nomeDeGuerra         String?
+  cargoId              String?
+  funcaoId             String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
+  partesCriadas      Parte[]
+  analisesFeitas     Analise[]
+  logsAtor           LogParte[]
   anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
   anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
   funcao             Funcao?    @relation(fields: [funcaoId], references: [id])
@@ -114,7 +130,7 @@ model Cargo {
   id          String         @id @default(cuid())
   nome        String         @unique
   abreviacao  String         @unique
-  codigo      Int?            
+  codigo      Int?
   categoria   CategoriaCargo
   tipo        TipoCargo
   precedencia Int            @unique
@@ -127,4 +143,48 @@ model Funcao {
   id       String @id @default(cuid())
   nome     String @unique
   usuarios User[]
+}
+
+model Parte {
+  id       String      @id @default(cuid())
+  assunto  String
+  conteudo String      @db.Text
+  status   StatusParte @default(RASCUNHO)
+
+  autorId String
+  autor   User   @relation(fields: [autorId], references: [id])
+
+  analises Analise[]
+  logs     LogParte[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  dataEnvio DateTime?
+}
+model Analise {
+  id          String           @id @default(cuid())
+  observacoes String?          @db.Text
+  resultado   ResultadoAnalise
+  
+  parteId     String
+  parte       Parte            @relation(fields: [parteId], references: [id])
+  
+  analistaId  String
+  analista    User             @relation(fields: [analistaId], references: [id])
+  
+  createdAt   DateTime         @default(now())
+}
+
+model LogParte {
+  id        String   @id @default(cuid())
+  acao      String   
+  detalhes  String?  
+  
+  parteId   String
+  parte     Parte    @relation(fields: [parteId], references: [id])
+  
+  atorId    String
+  ator      User     @relation(fields: [atorId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
