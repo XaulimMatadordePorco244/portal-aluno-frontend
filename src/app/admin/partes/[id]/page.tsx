@@ -3,7 +3,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { notFound, redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnalysisForm } from './AnalysisForm'; 
+import { AnalysisForm } from './AnalysisForm';
+import { ReversalDialog } from './ReversalDialog';
 
 async function getParteParaAnalise(id: string) {
     const user = await getCurrentUser();
@@ -28,10 +29,7 @@ async function getParteParaAnalise(id: string) {
 export default async function AdminParteDetailsPage({ params }: { params: { id: string } }) {
     const parte = await getParteParaAnalise(params.id);
 
-    if (!parte) {
-        notFound();
-    }
-
+    if (!parte) { notFound(); }
     const ultimaAnalise = parte.analises[0];
 
     return (
@@ -57,6 +55,9 @@ export default async function AdminParteDetailsPage({ params }: { params: { id: 
                         <CardDescription>
                             Analisado por: {ultimaAnalise.analista.nome} em {new Date(ultimaAnalise.createdAt).toLocaleString('pt-BR')}
                         </CardDescription>
+                        <div>
+                            <ReversalDialog parteId={parte.id} />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <p className="font-semibold">Resultado: <Badge>{ultimaAnalise.resultado}</Badge></p>
