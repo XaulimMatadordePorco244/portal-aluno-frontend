@@ -6,7 +6,8 @@ import { StatusParte } from '@prisma/client';
 import { ArrowLeft, Send } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SendButton } from './SendButton'; 
+import { SendButton } from './SendButton';
+import { DownloadButton } from './DownloadButton';
 
 
 async function getParteDetails(id: string) {
@@ -14,11 +15,15 @@ async function getParteDetails(id: string) {
     const parte = await prisma.parte.findUnique({
         where: { id },
         include: {
-            autor: true, 
-        },
+            autor: {
+                include: {
+                    cargo: true
+                }
+            },
+        }
     });
 
-   
+
     if (!parte || parte.autorId !== user?.userId) {
         return null;
     }
@@ -26,15 +31,12 @@ async function getParteDetails(id: string) {
 }
 
 
-const getStatusVariant = (status: StatusParte) => {
-  
-};
 
 export default async function ParteDetailsPage({ params }: { params: { id: string } }) {
     const parte = await getParteDetails(params.id);
 
     if (!parte) {
-        notFound(); 
+        notFound();
     }
 
 
@@ -66,7 +68,7 @@ export default async function ParteDetailsPage({ params }: { params: { id: strin
                         {parte.conteudo}
                     </div>
 
-              
+
                     {parte.status === 'RASCUNHO' && (
                         <div className="mt-8 border-t pt-6 flex flex-col items-center text-center">
                             <p className="text-sm text-muted-foreground mb-4">

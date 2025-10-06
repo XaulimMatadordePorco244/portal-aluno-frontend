@@ -150,6 +150,7 @@ model Parte {
   assunto  String
   conteudo String      @db.Text
   status   StatusParte @default(RASCUNHO)
+  numeroDocumento String?   @unique
 
   autorId String
   autor   User   @relation(fields: [autorId], references: [id])
@@ -187,4 +188,8 @@ model LogParte {
   ator      User     @relation(fields: [atorId], references: [id])
   
   createdAt DateTime @default(now())
+}
+model Configuracao {
+  id                String @id @default("singleton") // Usamos um ID fixo para garantir que só haja uma linha
+  ultimaParteNumero Int    @default(0)
 }
