@@ -82,6 +82,7 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[200px] font-semibold">Nº do Documento</TableHead>
                                 <TableHead className="w-[250px] font-semibold">Aluno</TableHead>
                                 <TableHead className="font-semibold">Assunto</TableHead>
                                 <TableHead className="w-[150px] font-semibold">Status</TableHead>
@@ -92,6 +93,7 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
                         <TableBody>
                             {partes.map((parte) => (
                                 <TableRow key={parte.id}>
+                                    <TableCell className="font-mono">{parte.numeroDocumento || '-'}</TableCell>
                                     <TableCell className="font-medium">
                                         {parte.autor.nomeDeGuerra || parte.autor.nome}
                                     </TableCell>

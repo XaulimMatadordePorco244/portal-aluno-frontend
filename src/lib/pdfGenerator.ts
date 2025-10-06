@@ -19,14 +19,6 @@ const toBase64 = async (url: string) => {
 };
 
 
-function numeroAuto() {
-    let atual = parseInt(localStorage.getItem("numero_parte") || "0", 10);
-    atual++;
-    localStorage.setItem("numero_parte", atual.toString());
-    const numeroParte = String(atual).padStart(4, "0");
-    const timestamp = new Date().getFullYear();
-    return `DOC-${numeroParte}-${timestamp}`;
-}
 
 
 export async function generatePartePDF(data: ParteData) {
@@ -35,9 +27,10 @@ export async function generatePartePDF(data: ParteData) {
  
     const logoGuardaMirim = await toBase64('/img/logo.png'); 
     const brasaoMarcaDagua = await toBase64('/img/logo.png');
+    
 
     
-    const numero = numeroAuto(); 
+     const numero = data.numeroDocumento || 'DOC-S/N'; 
     const nome = data.autor.nome;
     const registro = data.autor.numero || 'N/A';
     const cargo = data.autor.cargo?.nome || 'Não informado';
@@ -46,7 +39,7 @@ export async function generatePartePDF(data: ParteData) {
     const descricao = data.conteudo;
     const responsavel = data.autor.nome; 
 
-    // Config PDF
+
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 25;

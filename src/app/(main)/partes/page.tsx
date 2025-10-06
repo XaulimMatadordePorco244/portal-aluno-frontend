@@ -70,6 +70,7 @@ export default async function MinhasPartesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[200px] font-semibold">Nº do Documento</TableHead>
                                 <TableHead className="w-[200px] font-semibold">Assunto</TableHead>
                                 <TableHead className="w-[150px] font-semibold">Data de Criação</TableHead>
                                 <TableHead className="w-[150px] font-semibold">Status</TableHead> 
@@ -81,6 +82,7 @@ export default async function MinhasPartesPage() {
                                 const statusInfo = getStatusVariant(parte.status);
                                 return (
                                     <TableRow key={parte.id}>
+                                        <TableCell className="font-mono">{parte.numeroDocumento || '-'}</TableCell>
                                         <TableCell className="font-medium">{parte.assunto}</TableCell>
                                         <TableCell>{new Date(parte.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                                         <TableCell>
