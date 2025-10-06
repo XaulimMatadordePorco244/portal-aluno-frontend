@@ -6,8 +6,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Parte, StatusParte } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { PartesFilters } from "./Filters"; 
+import { PartesFilters } from "./Filters";
 import { Button } from "@/components/ui/Button";
+import { StatsCards } from "./StatsCards";
 
 type SearchParams = {
     search?: string;
@@ -16,7 +17,6 @@ type SearchParams = {
 
 async function getPartes(searchParams: SearchParams) {
     const { search, status } = searchParams;
-
     const whereClause: any = {};
 
     if (status) {
@@ -40,6 +40,18 @@ async function getPartes(searchParams: SearchParams) {
 }
 
 
+async function getPartesStats() {
+
+    const [total, pendentes, aprovadas, negadas] = await prisma.$transaction([
+        prisma.parte.count(),
+        prisma.parte.count({ where: { status: 'ENVIADA' } }),
+        prisma.analise.count({ where: { resultado: 'APROVADA' } }),
+        prisma.analise.count({ where: { resultado: 'NEGADA' } }),
+    ]);
+
+
+    return { total, pendentes, aprovadas, negadas };
+}
 
 export default async function AdminPartesPage({ searchParams }: { searchParams: SearchParams }) {
     const user = await getCurrentUser();
@@ -47,7 +59,10 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
         redirect('/');
     }
 
-    const partes = await getPartes(searchParams);
+    const [partes, stats] = await Promise.all([
+        getPartes(searchParams),
+        getPartesStats()
+    ]);
 
     return (
         <div className="container mx-auto py-10 max-w-7xl">
@@ -58,7 +73,8 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
                 </div>
             </div>
             
-      
+            <StatsCards stats={stats} />
+            
             <PartesFilters />
 
             <div className="border rounded-lg overflow-hidden">
