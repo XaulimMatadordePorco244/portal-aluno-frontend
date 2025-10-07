@@ -1,77 +1,86 @@
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { notFound, redirect } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnalysisForm } from './AnalysisForm';
-import { ReversalDialog } from './ReversalDialog';
 import { DownloadButton } from '@/app/(main)/partes/[id]/DownloadButton';
+import { TipoProcesso } from '@prisma/client';
 
-async function getParteParaAnalise(id: string) {
+
+import { GenericProcessView } from './GenericProcessView';
+import { AtoDeBravuraProcessView } from './AtoDeBravuraProcessView';
+
+async function getProcessoDetails(id: string) {
     const user = await getCurrentUser();
     if (user?.role !== 'ADMIN') {
         redirect('/');
     }
 
-    const parte = await prisma.parte.findUnique({
+    const processo = await prisma.parte.findUnique({
         where: { id },
         include: {
-            autor: true,
+            autor: { include: { cargo: true } },
             analises: {
                 include: { analista: true },
                 orderBy: { createdAt: 'desc' }
             },
+            etapas: { 
+                include: { responsavel: true },
+                orderBy: { createdAt: 'asc' }
+            },
         },
     });
 
-    return parte;
+    return processo;
 }
 
-export default async function AdminParteDetailsPage({ params }: { params: { id: string } }) {
-    const parte = await getParteParaAnalise(params.id);
 
-    if (!parte) { notFound(); }
-    const ultimaAnalise = parte.analises[0];
+function ProcessView({ processo }: { processo: any }) {
+    switch (processo.tipo) {
+        case TipoProcesso.ATO_DE_BRAVURA:
+        case TipoProcesso.RECONSIDERACAO_ATO_DE_BRAVURA:
+            return <AtoDeBravuraProcessView processo={processo} />;
+        
+        case TipoProcesso.GENERICO:
+        case TipoProcesso.TROCA_DE_ESCALA:
+        case TipoProcesso.RECLAMACAO:
+        default:
+            return <GenericProcessView processo={processo} />;
+    }
+}
+
+
+export default async function AdminProcessoDetailsPage({ params }: { params: { id: string } }) {
+    const processo = await getProcessoDetails(params.id);
+
+    if (!processo) {
+        notFound();
+    }
+    
+    const nomeFormatado = `${processo.autor.cargo?.abreviacao || ''} GM ${processo.autor.nomeDeGuerra || processo.autor.nome}`;
 
     return (
-        <div >
+    
+        <>
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">{parte.assunto}</CardTitle>
-                    <CardDescription>
-                        Enviada por: {parte.autor.nomeDeGuerra || parte.autor.nome} em {parte.dataEnvio ? new Date(parte.dataEnvio).toLocaleString('pt-BR') : 'N/A'}
-                    </CardDescription>
-                    <div>
-                        <DownloadButton parteData={parte} />
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="text-2xl">{processo.assunto}</CardTitle>
+                        <DownloadButton parteData={processo} />
                     </div>
+                    <CardDescription>
+                        Enviada por: {nomeFormatado} em {processo.dataEnvio ? new Date(processo.dataEnvio).toLocaleString('pt-BR') : 'N/A'}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap border p-4 rounded-md">
-                        {parte.conteudo}
+                    <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap border p-4 rounded-md bg-muted/20">
+                        {processo.conteudo}
                     </div>
                 </CardContent>
             </Card>
 
-            {parte.status === 'ANALISADA' && ultimaAnalise ? (
-                <Card className="mt-6 bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="text-xl">Análise Concluída</CardTitle>
-                        <CardDescription>
-                            Analisado por: {ultimaAnalise.analista.nome} em {new Date(ultimaAnalise.createdAt).toLocaleString('pt-BR')}
-                        </CardDescription>
-                        <div>
-                            <ReversalDialog parteId={parte.id} />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="font-semibold">Resultado: <Badge>{ultimaAnalise.resultado}</Badge></p>
-                        <p className="mt-4 font-semibold">Observações:</p>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{ultimaAnalise.observacoes || "Nenhuma observação."}</p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <AnalysisForm parteId={parte.id} />
-            )}
-        </div>
+                   <div className="mt-6">
+                <ProcessView processo={processo} />
+            </div>
+        </>
     );
 }
