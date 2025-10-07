@@ -41,6 +41,13 @@ enum ResultadoAnalise {
   ARQUIVADA
   ENCAMINHADA
 }
+enum TipoProcesso {
+  GENERICO
+  TROCA_DE_ESCALA
+  RECLAMACAO
+  ATO_DE_BRAVURA
+  RECONSIDERACAO_ATO_DE_BRAVURA
+}
 
 model User {
   id                   String    @id @default(cuid())
@@ -72,6 +79,7 @@ model User {
   cargo              Cargo?     @relation(fields: [cargoId], references: [id])
   qesCriados         QES[]
   role               Role       @default(ALUNO)
+  etapasResponsavel  EtapaProcesso[]
 }
 
 model Regulamento {
@@ -151,6 +159,8 @@ model Parte {
   conteudo String      @db.Text
   status   StatusParte @default(RASCUNHO)
   numeroDocumento String?   @unique
+   tipo TipoProcesso @default(GENERICO)
+  etapas EtapaProcesso[]
 
   autorId String
   autor   User   @relation(fields: [autorId], references: [id])
@@ -190,6 +200,22 @@ model LogParte {
   createdAt DateTime @default(now())
 }
 model Configuracao {
-  id                String @id @default("singleton") // Usamos um ID fixo para garantir que só haja uma linha
+  id                String @id @default("singleton") 
   ultimaParteNumero Int    @default(0)
+}
+model EtapaProcesso {
+  id              String   @id @default(cuid())
+  processoId      String
+  processo        Parte    @relation(fields: [processoId], references: [id])
+  
+  titulo          String   
+  status          String   
+  responsavelId   String?  
+  responsavel     User?    @relation(fields: [responsavelId], references: [id])
+  
+  conteudo        String?  @db.Text 
+  decisao         String?  
+  dataConclusao   DateTime?
+  
+  createdAt       DateTime @default(now())
 }
