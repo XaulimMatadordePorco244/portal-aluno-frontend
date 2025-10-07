@@ -1,14 +1,15 @@
 import jsPDF from 'jspdf';
 import { Parte, User, Cargo } from '@prisma/client';
 
-
 type ParteData = Parte & {
     autor: User & { cargo: Cargo | null }
 };
 
-
 const toBase64 = async (url: string) => {
     const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Falha ao carregar a imagem: ${response.statusText}`);
+    }
     const blob = await response.blob();
     return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -18,19 +19,15 @@ const toBase64 = async (url: string) => {
     });
 };
 
-
-
-
 export async function generatePartePDF(data: ParteData) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
- 
-    const logoGuardaMirim = await toBase64('/img/logo.png'); 
-    const brasaoMarcaDagua = await toBase64('/img/logo.png');
+    const logoUrl = '/img/logo.png'; 
+    const logoGuardaMirim = await toBase64(logoUrl); 
+    const brasaoMarcaDagua = await toBase64(logoUrl);
     
-
-    
-     const numero = data.numeroDocumento || 'DOC-S/N'; 
+    // O resto do seu código continua igual
+    const numero = data.numeroDocumento || 'DOC-S/N';
     const nome = data.autor.nome;
     const registro = data.autor.numero || 'N/A';
     const cargo = data.autor.cargo?.nome || 'Não informado';
@@ -39,16 +36,12 @@ export async function generatePartePDF(data: ParteData) {
     const descricao = data.conteudo;
     const responsavel = data.autor.nome; 
 
-
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 25;
     const maxW = pageW - margin * 2;
     let y = 0;
 
-   
-    
- 
     const addHeader = () => {
         const logoY = margin - 20;
         const logoSize = 27;
@@ -84,7 +77,6 @@ export async function generatePartePDF(data: ParteData) {
     };
 
     addHeader();
-
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
     doc.text("PARTE", pageW / 2, y + 2, { align: 'center' });
@@ -92,7 +84,6 @@ export async function generatePartePDF(data: ParteData) {
     doc.setFontSize(10);
     doc.text(`Nº ${numero}`, pageW / 2, y, { align: 'center' });
     y += 10;
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.text(`Nome: ${nome}`, margin, y);
@@ -111,7 +102,6 @@ export async function generatePartePDF(data: ParteData) {
         doc.text(title, margin, y);
         y += 7;
         doc.setFont('helvetica', 'normal');
-
         const lines = doc.splitTextToSize(content, maxW);
         lines.forEach((line: string) => {
             if (y > pageH - margin - 20) {
@@ -128,8 +118,7 @@ export async function generatePartePDF(data: ParteData) {
     };
 
     addTextSection('HISTÓRICO:', descricao);
-
-   
+    
     const signatureY = pageH - margin - 20;
     if (y > signatureY - 10) {
         addFooter();
@@ -146,7 +135,6 @@ export async function generatePartePDF(data: ParteData) {
     doc.setFontSize(9);
     doc.text('Responsável pela Parte', pageW / 2, y + 9, { align: 'center' });
     
-
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);

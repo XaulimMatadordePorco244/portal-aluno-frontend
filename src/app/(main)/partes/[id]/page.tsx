@@ -3,7 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { StatusParte } from '@prisma/client';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SendButton } from './SendButton';
@@ -23,25 +23,25 @@ async function getParteDetails(id: string) {
         }
     });
 
-
     if (!parte || parte.autorId !== user?.userId) {
         return null;
     }
     return parte;
 }
 
-
-
 export default async function ParteDetailsPage({ params }: { params: { id: string } }) {
     const parte = await getParteDetails(params.id);
+    
 
     if (!parte) {
         notFound();
     }
-
+    const nomeFormatado = `${parte.autor.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome}`;
 
     return (
+        
         <div className="container mx-auto py-10 max-w-3xl">
+            
             <div className="mb-4">
                 <Link href="/partes" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -49,25 +49,33 @@ export default async function ParteDetailsPage({ params }: { params: { id: strin
                 </Link>
             </div>
 
+
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
+                            
                             <CardTitle className="text-2xl">{parte.assunto}</CardTitle>
+    
                             <CardDescription className="mt-2">
-                                Criado em: {new Date(parte.createdAt).toLocaleDateString('pt-BR')} por {parte.autor.nomeDeGuerra || parte.autor.nome}
+                                Criado em: {new Date(parte.createdAt).toLocaleDateString('pt-BR')} por {nomeFormatado}
                             </CardDescription>
                         </div>
-                        <Badge variant={parte.status === 'RASCUNHO' ? 'outline' : 'default'}>
-                            {parte.status.charAt(0).toUpperCase() + parte.status.slice(1).toLowerCase()}
-                        </Badge>
+
+
+                        <div className="flex items-center gap-2">
+                            <Badge variant={parte.status === 'RASCUNHO' ? 'outline' : 'default'}>
+                                {parte.status.charAt(0).toUpperCase() + parte.status.slice(1).toLowerCase()}
+                            </Badge>
+                            <DownloadButton parteData={parte} />
+                        </div>
+
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
                         {parte.conteudo}
                     </div>
-
 
                     {parte.status === 'RASCUNHO' && (
                         <div className="mt-8 border-t pt-6 flex flex-col items-center text-center">

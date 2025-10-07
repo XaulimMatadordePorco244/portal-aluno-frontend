@@ -65,7 +65,7 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
     ]);
 
     return (
-        <div className="container mx-auto py-10 max-w-7xl">
+        <div >
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                     <FileSearch className="w-8 h-8 text-foreground" />

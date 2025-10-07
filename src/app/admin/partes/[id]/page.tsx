@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnalysisForm } from './AnalysisForm';
 import { ReversalDialog } from './ReversalDialog';
+import { DownloadButton } from '@/app/(main)/partes/[id]/DownloadButton';
 
 async function getParteParaAnalise(id: string) {
     const user = await getCurrentUser();
@@ -33,13 +34,16 @@ export default async function AdminParteDetailsPage({ params }: { params: { id: 
     const ultimaAnalise = parte.analises[0];
 
     return (
-        <div className="container mx-auto py-10 max-w-4xl">
+        <div >
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">{parte.assunto}</CardTitle>
                     <CardDescription>
                         Enviada por: {parte.autor.nomeDeGuerra || parte.autor.nome} em {parte.dataEnvio ? new Date(parte.dataEnvio).toLocaleString('pt-BR') : 'N/A'}
                     </CardDescription>
+                    <div>
+                        <DownloadButton parteData={parte} />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap border p-4 rounded-md">
