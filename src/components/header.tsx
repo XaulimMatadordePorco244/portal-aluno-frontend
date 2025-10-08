@@ -60,7 +60,7 @@ export function Header({ user }: { user: User | null }) {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-xl font-bold flex items-center gap-2">
-            <Image src="/logo.png" alt="Logo da Guarda Mirim" width={40} height={40} />
+            <Image src="/img/logo.png" alt="Logo da Guarda Mirim" width={40} height={40} />
             <span>Guarda Mirim</span>
           </Link>
         </div>
@@ -79,7 +79,7 @@ export function Header({ user }: { user: User | null }) {
               <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/frequency" className="flex items-center w-full cursor-pointer"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/evaluations" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/my-reports" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/partes" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
