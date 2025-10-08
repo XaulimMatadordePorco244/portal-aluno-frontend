@@ -1,12 +1,14 @@
 "use client";
 
-import FormattedName from '@/components/FormattedName';
 import { Button } from "@/components/ui/Button"; 
 import { ArrowRight, MoreHorizontal, ExternalLink } from "lucide-react";
-import { QES, User as PrismaUser } from '@prisma/client';
+import { QES, User as PrismaUser, Cargo } from '@prisma/client';
 import Link from 'next/link';
 
-type User = Pick<PrismaUser, "nome" | "nomeDeGuerra" | "cargo" | "numero">;
+
+type UserWithCargo = PrismaUser & {
+    cargo: Cargo | null;
+};
 
 
 const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (
@@ -48,13 +50,10 @@ const RankingListItem = ({ rank, nome, numero, cargo, isCurrentUser }: { rank: n
 );
 
 const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (
-
     <div className="bg-card rounded-lg shadow-lg border flex flex-col">
-       
         <h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg">{title}</h2>
         <div className="flex-grow flex flex-col">
             <div className="flex-grow">{children}</div>
-          
             <Link href={linkHref} className="p-3 text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg">
                 {linkText} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
@@ -62,18 +61,23 @@ const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: s
     </div>
 );
 
-export default function DashboardClient({ user, qesItems }: { user: User, qesItems: QES[] }) {
+
+
+export default function DashboardClient({ user, qesItems }: { user: UserWithCargo, qesItems: QES[] }) {
+    
+    
+    const cargoAbreviacao = user.cargo?.abreviacao || '';
+
     return (
         <div className="container mx-auto py-8">
-         
             <h1 className="text-3xl font-bold text-foreground mb-6">
-                Mural do Aluno - Bem-vindo, {user.cargo} {user.nomeDeGuerra}!
+                Mural do Aluno - Bem-vindo, {cargoAbreviacao} {user.nomeDeGuerra}!
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="/classification">
-                    <RankingListItem rank={14} nome={<FormattedName fullName="Fulano de Tal" warName="Tal" />} numero="2024-010" cargo="Aluno Soldado" />
-                    <RankingListItem rank={15} nome={<FormattedName fullName={user.nome} warName={user.nomeDeGuerra} />} numero={user.numero} cargo={user.cargo} isCurrentUser={true} />
-                    <RankingListItem rank={16} nome={<FormattedName fullName="Ciclano da Silva" warName="Silva" />} numero="2024-021" cargo="Aluno Soldado" />
+                    <RankingListItem rank={14} nome="Fulano de Tal" numero="2024-010" cargo="Aluno Soldado" />
+                    <RankingListItem rank={15} nome={user.nomeDeGuerra || user.nome} numero={user.numero} cargo={user.cargo?.nome || 'N/A'} isCurrentUser={true} />
+                    <RankingListItem rank={16} nome="Ciclano da Silva" numero="2024-021" cargo="Aluno Soldado" />
                 </DashboardCard>
 
                 <DashboardCard title="QES - Quadro de Estudo Semanal" linkText="Ver todos os QES" linkHref="/qes">
@@ -93,8 +97,7 @@ export default function DashboardClient({ user, qesItems }: { user: User, qesIte
                     )}
                 </DashboardCard>
 
-             
-                <DashboardCard title="Informativos" linkText="Ver todos os informativos">
+                               <DashboardCard title="Informativos" linkText="Ver todos os informativos">
                     <UniversalListItem title="Atualização do Regulamento de Uniformes" date="Publicado em: 03/09/2025" url="#" />
                     <UniversalListItem title="Inscrições para o Desfile de 7 de Setembro" date="Publicado em: 01/09/2025" url="#" />
                 </DashboardCard>

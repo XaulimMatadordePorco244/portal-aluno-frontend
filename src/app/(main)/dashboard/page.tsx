@@ -1,10 +1,10 @@
-import { getFullCurrentUser } from '@/lib/auth';
+import { getCurrentUserWithRelations  } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import DashboardClient from './DashboardClient'; 
 import prisma from '@/lib/prisma';
 
 export default async function DashboardPage() {
-  const user = await getFullCurrentUser();
+    const user = await getCurrentUserWithRelations();
 
   if (!user) {
     redirect('/login');
@@ -18,5 +18,11 @@ export default async function DashboardPage() {
     },
   });
 
-  return <DashboardClient user={user} qesItems={qesItems} />;
+
+  const userWithCargo = {
+    ...user,
+    cargo: 'cargo' in user ? (user as any).cargo : (user.funcao && 'cargo' in user.funcao ? (user.funcao as any).cargo : ''), 
+  };
+
+  return <DashboardClient user={userWithCargo} qesItems={qesItems} />;
 }
