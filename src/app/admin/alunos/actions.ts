@@ -3,7 +3,7 @@
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getFullCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { put, del } from "@vercel/blob";
@@ -59,7 +59,7 @@ const UpdateAlunoSchema = baseAlunoSchema.safeExtend({
 
 
 export async function createAluno(prevState: AlunoState, formData: FormData) {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
@@ -87,7 +87,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
       data: {
         ...data,
         password: hashedPassword,
-        cargo: finalCargo,
+        cargo: { connect: { nome: finalCargo } },
         conceito: conceitoInicial,
         fotoUrl: uploadedFotoUrl,
         status: "ATIVO",
@@ -107,7 +107,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
 }
 
 export async function updateAluno(prevState: any, formData: FormData) {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
@@ -127,7 +127,7 @@ export async function updateAluno(prevState: any, formData: FormData) {
       return { message: "Aluno não encontrado." };
     }
     
-    if (alunoAtual.cargo !== finalCargo) {
+    if (alunoAtual.cargo!== finalCargo) {
       (dataToUpdate as any).conceito = '7.0';
       await prisma.anotacao.deleteMany({ where: { alunoId: id } });
     }
@@ -162,7 +162,7 @@ export async function updateAluno(prevState: any, formData: FormData) {
 }
 
 export async function deleteAluno(formData: FormData) {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     throw new Error("Acesso negado.");
   }
