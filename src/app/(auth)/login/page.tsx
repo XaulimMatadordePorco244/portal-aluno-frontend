@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md border">
 
         <Image
-          src="/logo.png"
+          src="/img/logo.png"
           alt="Logo da Guarda Mirim"
           width={120}
           height={120}

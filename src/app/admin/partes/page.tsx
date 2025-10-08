@@ -7,16 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Parte, StatusParte } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { PartesFilters } from "./Filters";
-import { Button } from "@/components/ui/Button";
 import { StatsCards } from "./StatsCards";
+import { Button } from "@/components/ui/Button";
 
 type SearchParams = {
     search?: string;
     status?: StatusParte;
 };
 
-async function getPartes(searchParams: SearchParams) {
-    const { search, status } = searchParams;
+
+async function getPartes({ search, status }: SearchParams) {
     const whereClause: any = {};
 
     if (status) {
@@ -33,39 +33,46 @@ async function getPartes(searchParams: SearchParams) {
     
     const partes = await prisma.parte.findMany({
         where: whereClause,
-        include: { autor: true },
+        include: { 
+            autor: {
+                include: { cargo: true }
+            } 
+        },
         orderBy: { createdAt: 'desc' }
     });
     return partes;
 }
 
-
 async function getPartesStats() {
-
     const [total, pendentes, aprovadas, negadas] = await prisma.$transaction([
         prisma.parte.count(),
         prisma.parte.count({ where: { status: 'ENVIADA' } }),
         prisma.analise.count({ where: { resultado: 'APROVADA' } }),
         prisma.analise.count({ where: { resultado: 'NEGADA' } }),
     ]);
-
-
     return { total, pendentes, aprovadas, negadas };
 }
 
-export default async function AdminPartesPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminPartesPage({
+    searchParams,
+}: {
+    searchParams: Promise<SearchParams>;
+}) {
     const user = await getCurrentUser();
     if (user?.role !== 'ADMIN') {
         redirect('/');
     }
 
+    const { search, status } = await searchParams;
+
     const [partes, stats] = await Promise.all([
-        getPartes(searchParams),
-        getPartesStats()
+        getPartes({ search, status }),
+        getPartesStats(),
     ]);
 
+
     return (
-        <div >
+        <>
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                     <FileSearch className="w-8 h-8 text-foreground" />
@@ -74,7 +81,6 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
             </div>
             
             <StatsCards stats={stats} />
-            
             <PartesFilters />
 
             <div className="border rounded-lg overflow-hidden">
@@ -87,44 +93,35 @@ export default async function AdminPartesPage({ searchParams }: { searchParams: 
                                 <TableHead className="font-semibold">Assunto</TableHead>
                                 <TableHead className="w-[150px] font-semibold">Status</TableHead>
                                 <TableHead className="w-[200px] font-semibold">Data de Criação</TableHead>
-                                <TableHead className="text-right w-[120px] font-semibold">Ações</TableHead>
+                                <TableHead className="text-right w-[150px] font-semibold">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {partes.map((parte) => (
+                            {partes.map((parte) => {
+                                const nomeFormatado = `${parte.autor.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome}`;
+                                return (
                                 <TableRow key={parte.id}>
                                     <TableCell className="font-mono">{parte.numeroDocumento || '-'}</TableCell>
-                                    <TableCell className="font-medium">
-                                        {parte.autor.nomeDeGuerra || parte.autor.nome}
-                                    </TableCell>
+                                    <TableCell className="font-medium">{nomeFormatado}</TableCell>
                                     <TableCell>{parte.assunto}</TableCell>
                                     <TableCell>
                                         <Badge variant={parte.status === 'ENVIADA' ? 'default' : parte.status === 'RASCUNHO' ? 'outline' : 'secondary'}>
                                             {parte.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
-                                        {new Date(parte.createdAt).toLocaleString('pt-BR')}
-                                    </TableCell>
+                                    <TableCell>{new Date(parte.createdAt).toLocaleString('pt-BR')}</TableCell>
                                     <TableCell className="text-right">
                                         <Link href={`/admin/partes/${parte.id}`}>
-                                            <Button variant="outline" size="sm">
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                Ver / Analisar
-                                            </Button>
+                                            <Button variant="outline" size="sm"><Eye className="mr-2 h-4 w-4" />Ver / Analisar</Button>
                                         </Link>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </div>
-                {partes.length === 0 && (
-                    <div className="text-center p-10 text-muted-foreground">
-                        Nenhuma parte encontrada com os filtros atuais.
-                    </div>
-                )}
+                {partes.length === 0 && ( <div className="text-center p-10 text-muted-foreground"> Nenhuma parte encontrada com os filtros atuais. </div> )}
             </div>
-        </div>
+        </>
     );
 }

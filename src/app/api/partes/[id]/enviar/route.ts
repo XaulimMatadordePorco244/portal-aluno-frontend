@@ -16,7 +16,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       where: { id: parteId },
     });
 
-   
     if (!parte) {
       return NextResponse.json({ error: 'Parte não encontrada.' }, { status: 404 });
     }
@@ -31,7 +30,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       where: { id: parteId },
       data: {
         status: 'ENVIADA',
-        dataEnvio: new Date(), 
+        dataEnvio: new Date(),
       },
     });
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
+
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getCurrentUser();
@@ -20,13 +21,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Este processo não pode ser iniciado ou já foi iniciado.' }, { status: 400 });
     }
 
-   
     const oficiais = await prisma.user.findMany({
       where: {
         cargo: {
           tipo: 'POSTO',
         },
-       
       },
     });
 
@@ -36,9 +35,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const oficialSorteado = oficiais[Math.floor(Math.random() * oficiais.length)];
 
- 
     await prisma.$transaction(async (tx) => {
-   
         await tx.etapaProcesso.create({
             data: {
                 processoId: parteId,
@@ -47,8 +44,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
                 responsavelId: oficialSorteado.id,
             }
         });
-
-    
         await tx.etapaProcesso.create({
             data: {
                 processoId: parteId,

@@ -26,7 +26,7 @@ export async function generatePartePDF(data: ParteData) {
     const logoGuardaMirim = await toBase64(logoUrl); 
     const brasaoMarcaDagua = await toBase64(logoUrl);
     
-    // O resto do seu código continua igual
+    
     const numero = data.numeroDocumento || 'DOC-S/N';
     const nome = data.autor.nome;
     const registro = data.autor.numero || 'N/A';
