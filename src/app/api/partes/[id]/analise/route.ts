@@ -8,6 +8,7 @@ import ParteAnaliseEmail from '@/emails/ParteAnaliseEmail';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
+  
   try {
     const user = await getCurrentUser();
     const parteId = params.id;
