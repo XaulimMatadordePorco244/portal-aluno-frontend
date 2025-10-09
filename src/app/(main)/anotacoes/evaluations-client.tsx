@@ -20,7 +20,6 @@ import { ptBR } from 'date-fns/locale';
 
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-';
 
-
 const InfoPill = ({ label, count, points }: { label: string; count: number; points: number }) => (
     <div className="text-center">
       <p className="text-sm font-semibold text-muted-foreground">{label}: {count}</p>
@@ -40,7 +39,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   const conceitoReal = (conceitoBase + somaDosPontos).toFixed(2);
 
   const filterAndCalculate = (filterType: AnnotationFilterType, source: AnotacaoComRelacoes[]) => {
-  
     const filter = filterType.toLowerCase();
     if (filter === 'todos') {
       const points = source.reduce((sum, item) => sum + Number(item.pontos), 0);
@@ -63,7 +61,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   }
 
   const filteredByDate = useMemo(() => {
-
     let items = [...anotacoes];
     if (startDate) {
       const start = startOfDay(parseISO(startDate));
@@ -84,7 +81,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   const { count: totalFONegativasCount, points: totalFONegativasPoints } = filterAndCalculate('FO-', anotacoes);
 
   const generateStatement = () => {
-
     const doc = new jsPDF();
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     doc.setFontSize(18);
@@ -110,23 +106,23 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   };
 
   return (
-    <div className="container mx-auto py-10 max-w-4xl">
-      <div className="flex justify-between items-center mb-4">
+    <div className="container mx-auto py-10 max-w-7xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <h1 className="text-3xl font-bold text-foreground">Minhas Anotações</h1>
         <Button onClick={generateStatement}>
           <FileDown className="mr-2 h-4 w-4" /> Gerar Extrato
         </Button>
       </div>
       
-          <div className="bg-card p-6 rounded-lg shadow-md border flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-            <Award size={40} className="text-yellow-500" />
+      <div className="bg-card p-6 rounded-lg shadow-md border flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+            <Award size={40} className="text-yellow-500 flex-shrink-0" />
             <div>
                 <p className="text-sm font-medium text-muted-foreground">Conceito Atual</p>
                 <p className="text-3xl font-bold text-foreground">{conceitoReal}</p>
             </div>
         </div>
-        <div className="flex gap-6 border-l pl-6">
+        <div className="w-full md:w-auto grid grid-cols-2 lg:grid-cols-4 gap-4 border-t md:border-t-0 md:border-l pt-6 md:pt-0 md:pl-6">
             <InfoPill label="Elogios" count={totalElogiosCount} points={totalElogiosPoints} />
             <InfoPill label="Punições" count={totalPunicoesCount} points={totalPunicoesPoints} />
             <InfoPill label="FO+" count={totalFOPositivasCount} points={totalFOPositivasPoints} />
@@ -139,7 +135,7 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Filter size={20} /> Histórico de Anotações
           </h2>
-                  <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4">
             <Button variant={activeFilter === 'Todos' ? 'default' : 'outline'} onClick={() => setActiveFilter('Todos')}>Todos</Button>
             <Button variant={activeFilter === 'Elogio' ? 'default' : 'outline'} className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700 dark:text-green-500 dark:border-green-500 dark:hover:bg-green-900/50 dark:hover:text-green-400" onClick={() => setActiveFilter('Elogio')}><ThumbsUp className="mr-2 h-4 w-4"/> Elogios</Button>
             <Button variant={activeFilter === 'Punição' ? 'default' : 'outline'} className="text-red-600 border-red-600 hover:bg-red-100 hover:text-red-700 dark:text-red-500 dark:border-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-400" onClick={() => setActiveFilter('Punição')}><ThumbsDown className="mr-2 h-4 w-4"/> Punições</Button>
@@ -158,32 +154,31 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
           </div>
         </div>
 
-        {/* Accordion agora usa cores do tema */}
         <Accordion type="single" collapsible className="w-full">
           {filteredAnnotations.map(anotacao => (
             <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
               <AccordionTrigger className="px-6 hover:bg-accent text-left">
-                <div className="flex justify-between items-center w-full">
-                    <div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 sm:gap-4">
+                    <div className='text-left'>
                         <span className="font-medium text-foreground">{anotacao.tipo.titulo}</span>
                         <span className={`ml-2 font-bold text-sm ${Number(anotacao.pontos) >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
                             ({Number(anotacao.pontos) > 0 ? '+' : ''}{anotacao.pontos})
                         </span>
                     </div>
-                    <span className="text-sm text-muted-foreground mr-4">
+                    <span className="text-sm text-muted-foreground text-left sm:text-right">
                       Ocorrência: {format(new Date(anotacao.data), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 bg-accent/50 border-t pt-4 space-y-2">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Detalhes da ocorrência:</p>
-                    <p className="text-foreground">{anotacao.detalhes}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Detalhes da ocorrência:</p>
+                      <p className="text-foreground">{anotacao.detalhes}</p>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    <span>Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                    <span className="mx-1">|</span>
-                    <span>Por: {anotacao.autor.nomeDeGuerra || anotacao.autor.nome}</span>
+                      <span>Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                      <span className="mx-1">|</span>
+                      <span>Por: {anotacao.autor.nomeDeGuerra || anotacao.autor.nome}</span>
                   </div>
               </AccordionContent>
             </AccordionItem>

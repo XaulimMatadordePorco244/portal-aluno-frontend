@@ -42,7 +42,7 @@ export default function DashboardClient({ user, qesItems, latestAnnotations }: {
                 </DashboardCard>
                 
      
-                <DashboardCard title="Últimas Anotações" linkText="Ver todas as anotações" linkHref="/evaluations">
+                <DashboardCard title="Últimas Anotações" linkText="Ver todas as anotações" linkHref="/anotacoes">
                     {latestAnnotations.length > 0 ? (
                         <div>
                             {latestAnnotations.map(anotacao => (
