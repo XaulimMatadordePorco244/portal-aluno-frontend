@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { Button } from "@/components/ui/Button"; 
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
@@ -34,33 +34,10 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const conceitoBase = parseFloat(user.conceito || '0');
-  const somaDosPontos = useMemo(() => anotacoes.reduce((sum, item) => sum + Number(item.pontos), 0), [anotacoes]);
-  const conceitoReal = (conceitoBase + somaDosPontos).toFixed(2);
-
-  const filterAndCalculate = (filterType: AnnotationFilterType, source: AnotacaoComRelacoes[]) => {
-    const filter = filterType.toLowerCase();
-    if (filter === 'todos') {
-      const points = source.reduce((sum, item) => sum + Number(item.pontos), 0);
-      return { items: source, count: source.length, points };
-    }
-    const filtered = source.filter(a => {
-      const titulo = a.tipo.titulo.toLowerCase();
-      const pontos = Number(a.pontos);
-      switch(filter) {
-        case 'elogio': return pontos > 0;
-        case 'punição': return pontos < 0;
-        case 'fo+': return titulo.includes('fo+');
-        case 'fo-': return titulo.includes('fo-');
-        default: return false;
-      }
-    });
-    const count = filtered.length;
-    const points = filtered.reduce((sum, item) => sum + Number(item.pontos), 0);
-    return { items: filtered, count, points };
-  }
 
   const filteredByDate = useMemo(() => {
+    if (!startDate && !endDate) return anotacoes;
+    
     let items = [...anotacoes];
     if (startDate) {
       const start = startOfDay(parseISO(startDate));
@@ -73,12 +50,53 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
     return items;
   }, [anotacoes, startDate, endDate]);
 
-  const { items: filteredAnnotations } = filterAndCalculate(activeFilter, filteredByDate);
+
+  const summaryStats = useMemo(() => {
+    const stats = {
+      elogio: { count: 0, points: 0 },
+      punicao: { count: 0, points: 0 },
+      foPositivo: { count: 0, points: 0 },
+      foNegativo: { count: 0, points: 0 },
+    };
+
+    for (const anotacao of filteredByDate) {
+      const pontos = Number(anotacao.pontos);
+      const titulo = anotacao.tipo.titulo.toLowerCase();
+
+      if (pontos > 0) {
+        stats.elogio.count++;
+        stats.elogio.points += pontos;
+      }
+      if (pontos < 0) {
+        stats.punicao.count++;
+        stats.punicao.points += pontos;
+      }
+      if (titulo.includes('fo+')) {
+        stats.foPositivo.count++;
+        stats.foPositivo.points += pontos;
+      }
+      if (titulo.includes('fo-')) {
+        stats.foNegativo.count++;
+        stats.foNegativo.points += pontos;
+      }
+    }
+    return stats;
+  }, [filteredByDate]);
   
-  const { count: totalElogiosCount, points: totalElogiosPoints } = filterAndCalculate('Elogio', anotacoes);
-  const { count: totalPunicoesCount, points: totalPunicoesPoints } = filterAndCalculate('Punição', anotacoes);
-  const { count: totalFOPositivasCount, points: totalFOPositivasPoints } = filterAndCalculate('FO+', anotacoes);
-  const { count: totalFONegativasCount, points: totalFONegativasPoints } = filterAndCalculate('FO-', anotacoes);
+
+  const filteredAnnotations = useMemo(() => {
+    switch(activeFilter) {
+      case 'Elogio': return filteredByDate.filter(a => Number(a.pontos) > 0);
+      case 'Punição': return filteredByDate.filter(a => Number(a.pontos) < 0);
+      case 'FO+': return filteredByDate.filter(a => a.tipo.titulo.toLowerCase().includes('fo+'));
+      case 'FO-': return filteredByDate.filter(a => a.tipo.titulo.toLowerCase().includes('fo-'));
+      default: return filteredByDate;
+    }
+  }, [filteredByDate, activeFilter]);
+
+  const conceitoBase = parseFloat(user.conceito || '0');
+  const somaDosPontosFiltrados = filteredByDate.reduce((sum, item) => sum + Number(item.pontos), 0);
+  const conceitoReal = (conceitoBase + somaDosPontosFiltrados).toFixed(2);
 
   const generateStatement = () => {
     const doc = new jsPDF();
@@ -89,7 +107,8 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
     doc.text(`Aluno: ${user.nome}`, 15, 30);
     doc.text(`Data de Emissão: ${dataAtual}`, 15, 36);
     doc.text(`Filtro Aplicado: ${activeFilter}`, 15, 42);
-    (doc as any).autoTable({
+    
+    autoTable(doc, {
       startY: 50,
       head: [['Ocorrência', 'Lançamento', 'Tipo', 'Pontos', 'Detalhes']],
       body: filteredAnnotations.map(a => [
@@ -102,6 +121,7 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
       theme: 'grid',
       headStyles: { fillColor: [4, 120, 87] } 
     });
+
     doc.save(`extrato_anotacoes_${user.nome.replace(/\s/g, '_')}.pdf`);
   };
 
@@ -118,15 +138,15 @@ export default function EvaluationsClient({ user, anotacoes }: { user: User, ano
         <div className="flex items-center gap-4 w-full md:w-auto">
             <Award size={40} className="text-yellow-500 flex-shrink-0" />
             <div>
-                <p className="text-sm font-medium text-muted-foreground">Conceito Atual</p>
+                <p className="text-sm font-medium text-muted-foreground">Conceito (período)</p>
                 <p className="text-3xl font-bold text-foreground">{conceitoReal}</p>
             </div>
         </div>
         <div className="w-full md:w-auto grid grid-cols-2 lg:grid-cols-4 gap-4 border-t md:border-t-0 md:border-l pt-6 md:pt-0 md:pl-6">
-            <InfoPill label="Elogios" count={totalElogiosCount} points={totalElogiosPoints} />
-            <InfoPill label="Punições" count={totalPunicoesCount} points={totalPunicoesPoints} />
-            <InfoPill label="FO+" count={totalFOPositivasCount} points={totalFOPositivasPoints} />
-            <InfoPill label="FO-" count={totalFONegativasCount} points={totalFONegativasPoints} />
+            <InfoPill label="Elogios" count={summaryStats.elogio.count} points={summaryStats.elogio.points} />
+            <InfoPill label="Punições" count={summaryStats.punicao.count} points={summaryStats.punicao.points} />
+            <InfoPill label="FO+" count={summaryStats.foPositivo.count} points={summaryStats.foPositivo.points} />
+            <InfoPill label="FO-" count={summaryStats.foNegativo.count} points={summaryStats.foNegativo.points} />
         </div>
       </div>
 
