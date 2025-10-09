@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, User, Funcao } from '@prisma/client';
+import { PrismaClient, User, Funcao, Cargo } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -35,11 +35,12 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
 }
 
 
-export type UserWithFuncao = User & {
+export type UserWithRelations = User & {
     funcao: Funcao | null;
+    cargo: Cargo | null;
 };
 
-export async function getCurrentUserWithRelations(): Promise<UserWithFuncao | null> {
+export async function getCurrentUserWithRelations(): Promise<UserWithRelations | null> {
   const sessionUser = await getCurrentUser(); 
   if (!sessionUser?.userId) {
     return null;
@@ -51,17 +52,18 @@ export async function getCurrentUserWithRelations(): Promise<UserWithFuncao | nu
         id: sessionUser.userId,
       },
       include: {
-        funcao: true, 
+        funcao: true,
+        cargo: true, 
       },
     });
-    return user as UserWithFuncao | null;
+    return user as UserWithRelations  | null;
   } catch (error) {
     console.error("Erro ao buscar dados completos do usuário:", error);
     return null;
   }
 }
 
-export function canAccessAdminArea(user: UserWithFuncao | null): boolean {
+export function canAccessAdminArea(user: UserWithRelations  | null): boolean {
     if (!user) {
         return false;
     }

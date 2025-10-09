@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TipoProcesso } from "@prisma/client";
 
-// Helper para traduzir os tipos de processo
+
 const tipoProcessoLabels: { [key in TipoProcesso]: string } = {
     GENERICO: "Parte Genérica / Outro Assunto",
     TROCA_DE_ESCALA: "Solicitação de Troca de Escala",

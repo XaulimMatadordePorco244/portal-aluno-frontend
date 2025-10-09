@@ -56,7 +56,7 @@ const menuGroups = [
 export function Header({ user }: { user: User | null }) { 
   return (
  
-    <header className="bg-slate-800 text-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md sticky top-0 z-50">
+    <header className="bg-primary text-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-xl font-bold flex items-center gap-2">

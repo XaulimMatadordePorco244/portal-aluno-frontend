@@ -3,7 +3,6 @@
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { CodigoAnotacao } from '@prisma/client';
 import { redirect } from 'next/navigation';
 
 const FormSchema = z.object({
@@ -27,47 +26,41 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
   }
 
   const { titulo, descricao, selectionType, pontos: customPontos } = validatedFields.data;
-  
+
   const data: {
     titulo: string;
     descricao: string;
-    codigo: CodigoAnotacao | null;
     pontos: number | null;
     abertoCoordenacao: boolean;
-  } = { titulo, descricao, codigo: null, pontos: null, abertoCoordenacao: false };
+  } = { titulo, descricao, pontos: null, abertoCoordenacao: false };
 
   switch (selectionType) {
     case 'FO_POSITIVO':
-      data.codigo = CodigoAnotacao.FO_POSITIVO;
       data.pontos = 0.5;
       break;
     case 'FO_NEGATIVO':
-      data.codigo = CodigoAnotacao.FO_NEGATIVO;
       data.pontos = -0.3;
       break;
     case 'ELOGIO_COORDENACAO':
       data.abertoCoordenacao = true;
       data.pontos = null;
-      data.codigo = CodigoAnotacao.FO_POSITIVO;
       break;
     case 'PUNICAO_COORDENACAO':
       data.abertoCoordenacao = true;
       data.pontos = null;
-      data.codigo = CodigoAnotacao.FO_NEGATIVO;
       break;
     case 'ELOGIO_CUSTOM':
       if (!customPontos || parseFloat(customPontos) <= 0) {
         return { message: 'Para Elogio Manual, os pontos devem ser um número positivo.', type: 'error' };
       }
       data.pontos = parseFloat(customPontos);
-      data.codigo = CodigoAnotacao.FO_POSITIVO;
       break;
     case 'PUNICAO_CUSTOM':
       if (!customPontos || parseFloat(customPontos) <= 0) {
         return { message: 'Para Punição Manual, os pontos devem ser um número positivo.', type: 'error' };
       }
       data.pontos = -parseFloat(customPontos);
-      data.codigo = CodigoAnotacao.FO_NEGATIVO;
+
       break;
   }
 
@@ -122,7 +115,7 @@ export async function deleteTipoDeAnotacao(formData: FormData) {
   const schema = z.object({
     id: z.string(),
   });
-  
+
   const validatedFields = schema.safeParse({
     id: formData.get('id'),
   });
@@ -130,7 +123,7 @@ export async function deleteTipoDeAnotacao(formData: FormData) {
   if (!validatedFields.success) {
     return;
   }
-  
+
   const { id } = validatedFields.data;
 
   try {

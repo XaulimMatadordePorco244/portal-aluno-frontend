@@ -1,10 +1,9 @@
-// src/app/(admin)/admin/anotacoes/actions.ts
 "use server";
 
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getFullCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from 'next/navigation';
 const AnotacaoSchema = z.object({
   alunoIds: z.array(z.string()).min(1, "É obrigatório selecionar pelo menos um aluno."),
@@ -16,7 +15,7 @@ const AnotacaoSchema = z.object({
 });
 
 export async function createAnotacao(prevState: any, formData: FormData) {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }

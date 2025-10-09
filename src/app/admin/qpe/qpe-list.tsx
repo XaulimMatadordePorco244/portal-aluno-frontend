@@ -31,13 +31,13 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
         case 'punicoes':
           return item.pontos !== null && item.pontos <= -1;
         case 'fo_positivo':
-          return item.codigo === 'FO_POSITIVO' && item.pontos === 0.5; 
+          return item.pontos !== null && item.pontos === 0.5;
         case 'fo_negativo':
-          return item.codigo === 'FO_NEGATIVO' && item.pontos === -0.3;
+          return item.pontos !== null && item.pontos === -0.3;
         case 'elogio_aberto':
-          return item.abertoCoordenacao && item.codigo === 'FO_POSITIVO';
+          return item.abertoCoordenacao && item.pontos === 0;
         case 'punicao_aberta':
-          return item.abertoCoordenacao && item.codigo === 'FO_NEGATIVO';
+          return item.abertoCoordenacao && item.pontos === 0;
         case 'all':
         default:
           return true;

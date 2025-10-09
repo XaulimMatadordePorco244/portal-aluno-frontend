@@ -41,6 +41,7 @@ enum ResultadoAnalise {
   ARQUIVADA
   ENCAMINHADA
 }
+
 enum TipoProcesso {
   GENERICO
   TROCA_DE_ESCALA
@@ -73,12 +74,12 @@ model User {
   partesCriadas      Parte[]
   analisesFeitas     Analise[]
   logsAtor           LogParte[]
-  anotacoesRecebidas Anotacao[] @relation("AnotacoesDoAluno")
-  anotacoesFeitas    Anotacao[] @relation("AnotacoesFeitasPeloAutor")
-  funcao             Funcao?    @relation(fields: [funcaoId], references: [id])
-  cargo              Cargo?     @relation(fields: [cargoId], references: [id])
+  anotacoesRecebidas Anotacao[]      @relation("AnotacoesDoAluno")
+  anotacoesFeitas    Anotacao[]      @relation("AnotacoesFeitasPeloAutor")
+  funcao             Funcao?         @relation(fields: [funcaoId], references: [id])
+  cargo              Cargo?          @relation(fields: [cargoId], references: [id])
   qesCriados         QES[]
-  role               Role       @default(ALUNO)
+  role               Role            @default(ALUNO)
   etapasResponsavel  EtapaProcesso[]
 }
 
@@ -124,11 +125,13 @@ model Anotacao {
 }
 
 model QES {
-  id         String @id @default(cuid())
+  id         String   @id @default(cuid())
   titulo     String
   arquivoUrl String
   autorId    String
-  autor      User   @relation(fields: [autorId], references: [id])
+  autor      User     @relation(fields: [autorId], references: [id])
+  dataInicio DateTime
+  dataFim    DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -154,13 +157,13 @@ model Funcao {
 }
 
 model Parte {
-  id       String      @id @default(cuid())
-  assunto  String
-  conteudo String      @db.Text
-  status   StatusParte @default(RASCUNHO)
-  numeroDocumento String?   @unique
-   tipo TipoProcesso @default(GENERICO)
-  etapas EtapaProcesso[]
+  id              String          @id @default(cuid())
+  assunto         String
+  conteudo        String          @db.Text
+  status          StatusParte     @default(RASCUNHO)
+  numeroDocumento String?         @unique
+  tipo            TipoProcesso    @default(GENERICO)
+  etapas          EtapaProcesso[]
 
   autorId String
   autor   User   @relation(fields: [autorId], references: [id])
@@ -172,50 +175,53 @@ model Parte {
   updatedAt DateTime  @updatedAt
   dataEnvio DateTime?
 }
+
 model Analise {
   id          String           @id @default(cuid())
   observacoes String?          @db.Text
   resultado   ResultadoAnalise
-  
-  parteId     String
-  parte       Parte            @relation(fields: [parteId], references: [id])
-  
-  analistaId  String
-  analista    User             @relation(fields: [analistaId], references: [id])
-  
-  createdAt   DateTime         @default(now())
+
+  parteId String
+  parte   Parte  @relation(fields: [parteId], references: [id])
+
+  analistaId String
+  analista   User   @relation(fields: [analistaId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model LogParte {
-  id        String   @id @default(cuid())
-  acao      String   
-  detalhes  String?  
-  
-  parteId   String
-  parte     Parte    @relation(fields: [parteId], references: [id])
-  
-  atorId    String
-  ator      User     @relation(fields: [atorId], references: [id])
-  
+  id       String  @id @default(cuid())
+  acao     String
+  detalhes String?
+
+  parteId String
+  parte   Parte  @relation(fields: [parteId], references: [id])
+
+  atorId String
+  ator   User   @relation(fields: [atorId], references: [id])
+
   createdAt DateTime @default(now())
 }
+
 model Configuracao {
-  id                String @id @default("singleton") 
+  id                String @id @default("singleton")
   ultimaParteNumero Int    @default(0)
 }
+
 model EtapaProcesso {
-  id              String   @id @default(cuid())
-  processoId      String
-  processo        Parte    @relation(fields: [processoId], references: [id])
-  
-  titulo          String   
-  status          String   
-  responsavelId   String?  
-  responsavel     User?    @relation(fields: [responsavelId], references: [id])
-  
-  conteudo        String?  @db.Text 
-  decisao         String?  
-  dataConclusao   DateTime?
-  
-  createdAt       DateTime @default(now())
+  id         String @id @default(cuid())
+  processoId String
+  processo   Parte  @relation(fields: [processoId], references: [id])
+
+  titulo        String
+  status        String
+  responsavelId String?
+  responsavel   User?   @relation(fields: [responsavelId], references: [id])
+
+  conteudo      String?   @db.Text
+  decisao       String?
+  dataConclusao DateTime?
+
+  createdAt DateTime @default(now())
 }

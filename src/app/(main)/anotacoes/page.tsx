@@ -1,14 +1,14 @@
-import { getFullCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import EvaluationsClient from "./evaluations-client"; 
-import { User } from "@prisma/client";
+
 
 
 export type AnotacaoComRelacoes = Awaited<ReturnType<typeof getAlunoData>>['anotacoes'][0];
 
 async function getAlunoData() {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user) {
     redirect('/login');
   }

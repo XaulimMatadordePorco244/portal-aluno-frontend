@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { Download, FileText } from 'lucide-react';
-import { getFullCurrentUser } from '@/lib/auth';
+import { getCurrentUserWithRelations } from '@/lib/auth';
 
 async function getQESList() {
   return await prisma.qES.findMany({
@@ -13,7 +13,7 @@ async function getQESList() {
 
 export default async function AlunoQESPage() {
   const qesList = await getQESList();
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
 
   return (
     <div className="container mx-auto py-8">

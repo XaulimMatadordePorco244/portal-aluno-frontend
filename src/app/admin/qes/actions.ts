@@ -4,7 +4,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { put, del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
-import { getFullCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { redirect } from 'next/navigation';
@@ -29,7 +29,7 @@ const CreateFormSchema = z.object({
 });
 
 export async function createQES(prevState: QESState, formData: FormData): Promise<QESState> {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
@@ -62,7 +62,7 @@ export async function createQES(prevState: QESState, formData: FormData): Promis
 }
 
 export async function deleteQES(formData: FormData) {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     throw new Error("Acesso negado.");
   }
@@ -91,7 +91,7 @@ const UpdateFormSchema = z.object({
 });
 
 export async function updateQES(prevState: QESState, formData: FormData): Promise<QESState> {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
