@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, User, Funcao } from '@prisma/client';
+import { PrismaClient, User, Funcao, Cargo } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -37,6 +37,7 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
 
 export type UserWithFuncao = User & {
     funcao: Funcao | null;
+    cargo: Cargo | null;
 };
 
 export async function getCurrentUserWithRelations(): Promise<UserWithFuncao | null> {
@@ -51,7 +52,8 @@ export async function getCurrentUserWithRelations(): Promise<UserWithFuncao | nu
         id: sessionUser.userId,
       },
       include: {
-        funcao: true, 
+        funcao: true,
+        cargo: true, 
       },
     });
     return user as UserWithFuncao | null;

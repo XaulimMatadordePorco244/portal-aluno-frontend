@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button"; 
 import { ArrowRight, MoreHorizontal, ExternalLink } from "lucide-react";
-import { QES, User as PrismaUser, Cargo } from '@prisma/client';
+import { QES, User as PrismaUser, Cargo, Anotacao, TipoDeAnotacao } from '@prisma/client'; 
 import Link from 'next/link';
 
 
@@ -10,6 +10,9 @@ type UserWithCargo = PrismaUser & {
     cargo: Cargo | null;
 };
 
+type AnotacaoWithType = Anotacao & {
+    tipo: TipoDeAnotacao;
+};
 
 const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (
     <Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-accent">
@@ -63,8 +66,7 @@ const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: s
 
 
 
-export default function DashboardClient({ user, qesItems }: { user: UserWithCargo, qesItems: QES[] }) {
-    
+export default function DashboardClient({ user, qesItems, latestAnnotations }: { user: UserWithCargo, qesItems: QES[], latestAnnotations: AnotacaoWithType[] }) {
     
     const cargoAbreviacao = user.cargo?.abreviacao || '';
 
