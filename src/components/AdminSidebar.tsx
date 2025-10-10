@@ -20,8 +20,19 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
 
+interface NavLinkProps {
+    link: {
+        href: string;
+        label: string;
+        icon: React.ElementType;
+        disabled?: boolean;
+    };
+    pathname: string;
+    isCollapsed: boolean;
+}
 
-const NavLink = ({ link, pathname, isCollapsed }: any) => (
+
+const NavLink = ({ link, pathname, isCollapsed }: NavLinkProps) => (
     <Link
         href={link.disabled ? "#" : link.href}
         className={cn(

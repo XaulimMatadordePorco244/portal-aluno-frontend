@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProcessoCompleto } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Circle, MoreHorizontal, User, Users, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, MoreHorizontal, User, Users} from "lucide-react";
 
 
 function InitialActions({ processoId }: { processoId: string }) {
@@ -23,8 +23,12 @@ function InitialActions({ processoId }: { processoId: string }) {
                 throw new Error(data.error || 'Falha ao iniciar apuração.');
             }
             router.refresh(); 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsLoading(false);
         }

@@ -71,7 +71,8 @@ export async function generatePartePDF(data: ParteData) {
         const imgX = (pageW - imgWidth) / 2;
         const imgY = (pageH - imgHeight) / 2;
         doc.saveGraphicsState();
-        doc.setGState(new (doc.GState as any)({ opacity: 0.1 }));
+        type GStateConstructor = new (options: { opacity: number }) => object;
+        doc.setGState(new (doc.GState as unknown as GStateConstructor)({ opacity: 0.1 }));
         doc.addImage(brasaoMarcaDagua, 'PNG', imgX, imgY, imgWidth, imgHeight);
         doc.restoreGraphicsState();
     };
@@ -135,7 +136,7 @@ export async function generatePartePDF(data: ParteData) {
     doc.setFontSize(9);
     doc.text('Responsável pela Parte', pageW / 2, y + 9, { align: 'center' });
     
-    const totalPages = (doc as any).internal.getNumberOfPages();
+    const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         addWatermark();

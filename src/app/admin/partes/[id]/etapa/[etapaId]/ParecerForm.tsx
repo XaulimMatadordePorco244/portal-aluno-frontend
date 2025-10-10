@@ -34,8 +34,12 @@ export function ParecerForm({ etapaId, processoId }: { etapaId: string, processo
         
             router.push(`/admin/partes/${processoId}`);
             router.refresh();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -55,7 +59,7 @@ export function ParecerForm({ etapaId, processoId }: { etapaId: string, processo
                     </div>
                      <div className="space-y-2">
                         <Label>Decisão do Parecer</Label>
-                        <Select onValueChange={(value) => setDecisao(value as any)} value={decisao} required>
+                        <Select onValueChange={(value: "DEFERIDO" | "INDEFERIDO" | "") => setDecisao(value)} value={decisao} required>
                             <SelectTrigger><SelectValue placeholder="Selecione sua decisão..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="DEFERIDO">DEFERIDO / ACEITO</SelectItem>

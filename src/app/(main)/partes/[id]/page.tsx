@@ -8,38 +8,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { SendButton } from './SendButton';
 import { DownloadButton } from './DownloadButton';
 
-// A função de busca de dados está correta e não precisa de alterações.
+
+
 async function getParteDetails(id: string) {
     const user = await getCurrentUser();
     const parte = await prisma.parte.findUnique({
         where: { id },
         include: {
-            autor: {
-                include: { cargo: true }
-            },
-        }
+            autor: { include: { cargo: true } },
+            analises: { include: { analista: true } },
+            etapas: { include: { responsavel: true } },
+        },
     });
+
     if (!parte || parte.autorId !== user?.userId) {
         return null;
     }
     return parte;
 }
 
-
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const parte = await getParteDetails(id);
+export default async function Page({ params }: { params: { id: string } }) {
+    const { id } = params;
+    const parte = await getParteDetails(id);
 
     if (!parte) {
         notFound();
     }
-    
-    const nomeFormatado = `${parte.autor.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome}`;
+
+    const nomeFormatado = `${parte.autor.cargo?.abreviacao || ''} GM ${
+        parte.autor.nomeDeGuerra || parte.autor.nome
+    }`;
 
     return (
         <div className="container mx-auto py-10 max-w-3xl">
             <div className="mb-4">
-                <Link href="/partes" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
+                <Link
+                    href="/partes"
+                    className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+                >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar para Minhas Partes
                 </Link>
@@ -56,7 +62,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                         </div>
                         <div className="flex items-center gap-2">
                             <Badge variant={parte.status === 'RASCUNHO' ? 'outline' : 'default'}>
-                                {parte.status.charAt(0).toUpperCase() + parte.status.slice(1).toLowerCase()}
+                                {parte.status.charAt(0).toUpperCase() +
+                                    parte.status.slice(1).toLowerCase()}
                             </Badge>
                             <DownloadButton parteData={parte} />
                         </div>

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, notFound } from "next/navigation";
-import { ProcessoCompleto } from "@/lib/types"; 
+import { useRouter} from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -13,8 +12,8 @@ import Link from "next/link";
 
 
 export default function ParecerPage({ params }: { params: { id: string } }) {
-    const [processo, setProcesso] = useState<ProcessoCompleto | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+
+    const [, setIsLoading] = useState(true);
     const [conteudo, setConteudo] = useState("");
     const [decisao, setDecisao] = useState<"DEFERIDO" | "INDEFERIDO" | "">("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,8 +45,12 @@ export default function ParecerPage({ params }: { params: { id: string } }) {
                 throw new Error(data.error || 'Falha ao salvar parecer.');
             }
             router.push('/minhas-tarefas');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -89,7 +92,7 @@ export default function ParecerPage({ params }: { params: { id: string } }) {
                         </div>
                          <div className="space-y-2">
                             <Label>Decisão Final do Parecer</Label>
-                            <Select onValueChange={(value) => setDecisao(value as any)} value={decisao} required>
+                            <Select onValueChange={(value: "DEFERIDO" | "INDEFERIDO") => setDecisao(value)} value={decisao} required>
                                 <SelectTrigger><SelectValue placeholder="Selecione sua decisão..." /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="DEFERIDO">DEFERIDO / ACEITO</SelectItem>
