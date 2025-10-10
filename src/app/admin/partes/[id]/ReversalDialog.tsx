@@ -41,8 +41,12 @@ export function ReversalDialog({ parteId }: { parteId: string }) {
             setOpen(false);
             router.refresh();
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsLoading(false);
         }

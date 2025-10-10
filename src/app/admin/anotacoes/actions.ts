@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from 'next/navigation';
+import { FormState } from "@/app/validar/actions";
 const AnotacaoSchema = z.object({
   alunoIds: z.array(z.string()).min(1, "É obrigatório selecionar pelo menos um aluno."),
 
@@ -14,7 +15,7 @@ const AnotacaoSchema = z.object({
   detalhes: z.string().min(1, "A descrição do ocorrido é obrigatória."),
 });
 
-export async function createAnotacao(prevState: any, formData: FormData) {
+export async function createAnotacao(prevState: FormState, formData: FormData) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };

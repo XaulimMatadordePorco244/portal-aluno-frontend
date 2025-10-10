@@ -27,7 +27,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
     
  
-    const [novaAnalise, log] = await prisma.$transaction(async (tx) => {
+    const [novaAnalise] = await prisma.$transaction(async (tx) => {
      
       const analise = await tx.analise.create({
         data: {

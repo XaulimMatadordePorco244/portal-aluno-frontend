@@ -56,7 +56,8 @@ export class PDFBuilder {
     }
 
     addFooter() {
-        const pageCount = (this.doc as any).internal.getNumberOfPages();
+        const internal = (this.doc as unknown as { internal: { getNumberOfPages: () => number } }).internal;
+        const pageCount = internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             this.doc.setPage(i);
 
@@ -80,8 +81,7 @@ export class PDFBuilder {
 
     addWatermark() {
         if (!this.watermarkBase64) throw new Error("PDFBuilder não inicializado.");
-
-        const pageCount = (this.doc as any).internal.getNumberOfPages();
+        const pageCount = (this.doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
         const imgWidth = 150;
         const imgHeight = 150;
         const imgX = (this.pageWidth - imgWidth) / 2;
@@ -90,7 +90,8 @@ export class PDFBuilder {
         for (let i = 1; i <= pageCount; i++) {
             this.doc.setPage(i);
             this.doc.saveGraphicsState();
-            this.doc.setGState(new (this.doc as any).GState({ opacity: 0.1 }));
+            const GState = (this.doc as unknown as { GState: new (options: { opacity: number }) => object }).GState;
+            this.doc.setGState(new GState({ opacity: 0.1 }));
             this.doc.addImage(this.watermarkBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
             this.doc.restoreGraphicsState();
         }
@@ -119,16 +120,16 @@ export class PDFBuilder {
 
 
     addKeyValueLine(key: string, value: string, p0?: { space?: number }) {
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(11);
-    this.doc.text(key, this.margin, this.currentY);
-    if (value) {
-        const space = p0?.space ?? 35;
-        this.doc.text(value, this.margin + space, this.currentY);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setFontSize(11);
+        this.doc.text(key, this.margin, this.currentY);
+        if (value) {
+            const space = p0?.space ?? 35;
+            this.doc.text(value, this.margin + space, this.currentY);
+        }
+        this.currentY += 7;
+        return this;
     }
-    this.currentY += 7;
-    return this;
-}
 
 
     addSignatureLine(name: string, role: string) {

@@ -4,11 +4,12 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
-import { Parte, StatusParte } from "@prisma/client";
+import { StatusParte } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { PartesFilters } from "./Filters";
 import { StatsCards } from "./StatsCards";
 import { Button } from "@/components/ui/Button";
+import { Prisma } from "@prisma/client";
 
 type SearchParams = {
     search?: string;
@@ -17,7 +18,7 @@ type SearchParams = {
 
 
 async function getPartes({ search, status }: SearchParams) {
-    const whereClause: any = {};
+    const whereClause: Prisma.ParteWhereInput = {};
 
     if (status) {
         whereClause.status = status;
@@ -25,9 +26,9 @@ async function getPartes({ search, status }: SearchParams) {
 
     if (search) {
         whereClause.OR = [
-            { assunto: { contains: search, mode: 'insensitive' } },
-            { autor: { nome: { contains: search, mode: 'insensitive' } } },
-            { autor: { nomeDeGuerra: { contains: search, mode: 'insensitive' } } },
+            { assunto: { contains: search } },
+            { autor: { nome: { contains: search } } },
+            { autor: { nomeDeGuerra: { contains: search } } },
         ];
     }
     

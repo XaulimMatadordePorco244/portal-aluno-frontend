@@ -41,8 +41,12 @@ export function AnalysisForm({ parteId }: { parteId: string }) {
             router.push('/admin/partes');
             router.refresh(); 
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsLoading(false);
         }

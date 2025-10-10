@@ -37,7 +37,7 @@ export default function ParteAnaliseEmail({
           Olá, {alunoNome}.
         </Text>
         <Text style={paragraph}>
-          A sua parte com o assunto "{parteAssunto}" foi analisada. Veja os detalhes abaixo:
+          A sua parte com o assunto &quot;{parteAssunto}&quot; foi analisada. Veja os detalhes abaixo:
         </Text>
         
         <Section style={detailsContainer}>

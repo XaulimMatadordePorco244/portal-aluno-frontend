@@ -81,11 +81,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     return NextResponse.json(novaAnalise, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao analisar parte:", error);
-   
-    if (error.message === 'Parte não encontrada.') {
+
+    if (error instanceof Error) {
+      if (error.message === 'Parte não encontrada.') {
         return NextResponse.json({ error: error.message }, { status: 404 });
+      }
     }
     return NextResponse.json({ error: 'Ocorreu um erro interno no servidor.' }, { status: 500 });
   }

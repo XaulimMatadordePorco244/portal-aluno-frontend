@@ -4,9 +4,12 @@ import { PlusCircle, FileText, Eye } from "lucide-react";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge"; 
 import { StatusParte } from "@prisma/client";
+import { VariantProps } from "class-variance-authority";
 
+
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
 async function getMinhasPartes() {
     const user = await getCurrentUser();
@@ -26,7 +29,7 @@ async function getMinhasPartes() {
 }
 
 
-const getStatusVariant = (status: StatusParte) => {
+const getStatusVariant = (status: StatusParte): { variant: BadgeVariant, text: string } => {
     switch (status) {
         case 'RASCUNHO':
             return { variant: 'outline', text: 'Rascunho' };
@@ -34,8 +37,12 @@ const getStatusVariant = (status: StatusParte) => {
             return { variant: 'default', text: 'Enviada' };
         case 'ANALISADA':
             return { variant: 'secondary', text: 'Analisada' };
+                case 'APROVADO':
+            return { variant: 'success', text: 'Aprovado' }; 
+        case 'REPROVADO':
+            return { variant: 'destructive', text: 'Reprovado' };
         default:
-            return { variant: 'destructive', text: 'Desconhecido' };
+            return { variant: 'outline', text: 'Desconhecido' };
     }
 };
 
@@ -58,7 +65,7 @@ export default async function MinhasPartesPage() {
                 </Link>
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden bg-card">
                 <div className="p-6 border-b">
                     <h2 className="text-xl font-bold text-foreground">Histórico de Partes</h2>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -86,10 +93,10 @@ export default async function MinhasPartesPage() {
                                         <TableCell className="font-medium">{parte.assunto}</TableCell>
                                         <TableCell>{new Date(parte.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                                         <TableCell>
-                                            <Badge variant={statusInfo.variant as any}>{statusInfo.text}</Badge>
+                                                                                        <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                                                                   <Link href={`/partes/${parte.id}`}>
+                                            <Link href={`/partes/${parte.id}`}>
                                                 <Button variant="outline" size="sm">
                                                     <Eye className="mr-2 h-4 w-4" />
                                                     Visualizar

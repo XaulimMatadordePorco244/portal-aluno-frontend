@@ -49,8 +49,12 @@ export default function NovaPartePage() {
 
             router.push(`/partes/${data.id}`);
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Ocorreu um erro inesperado.");
+            }
         } finally {
             setIsLoading(false);
         }

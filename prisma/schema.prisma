@@ -33,6 +33,8 @@ enum StatusParte {
   RASCUNHO
   ENVIADA
   ANALISADA
+  APROVADO  
+  REPROVADO 
 }
 
 enum ResultadoAnalise {

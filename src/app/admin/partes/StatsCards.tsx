@@ -29,7 +29,7 @@ export function StatsCards({ stats }: { stats: PartesStats }) {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.pendentes}</div>
-                    <p className="text-xs text-muted-foreground">Partes com status "Enviada"</p>
+                    <p className="text-xs text-muted-foreground">Partes com status &quot;Enviada&quot;</p>
                 </CardContent>
             </Card>
             <Card>
@@ -39,7 +39,7 @@ export function StatsCards({ stats }: { stats: PartesStats }) {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.aprovadas}</div>
-                    <p className="text-xs text-muted-foreground">Total de análises com resultado "Aprovada"</p>
+                    <p className="text-xs text-muted-foreground">Total de análises com resultado &quot;Aprovada&quot;</p>
                 </CardContent>
             </Card>
             <Card>
@@ -49,7 +49,7 @@ export function StatsCards({ stats }: { stats: PartesStats }) {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.negadas}</div>
-                     <p className="text-xs text-muted-foreground">Total de análises com resultado "Negada"</p>
+                     <p className="text-xs text-muted-foreground">Total de análises com resultado &quot;Negada&quot;</p>
                 </CardContent>
             </Card>
         </div>
