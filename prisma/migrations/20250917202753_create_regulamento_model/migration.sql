@@ -1,0 +1,13 @@
+-- CreateTable
+CREATE TABLE `Regulamento` (
+    `id` VARCHAR(191) NOT NULL,
+    `titulo` VARCHAR(191) NOT NULL,
+    `arquivoUrl` VARCHAR(191) NOT NULL,
+    `versao` VARCHAR(191) NULL,
+    `dataPublicacao` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `dataAtualização` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

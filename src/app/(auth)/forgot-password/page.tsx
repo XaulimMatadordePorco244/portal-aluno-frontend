@@ -1,44 +1,81 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/Button"; 
 import { Input } from "@/components/ui/Input";   
-import { Mail } from "lucide-react";
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
+  const [cpf, setCpf] = useState(""); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/password/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf }), 
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ocorreu um erro.');
+      }
+      setMessage(data.message); 
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Ocorreu um erro inesperado.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg">
-        
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Recuperar Senha
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Digite e-mail cadastrado para enviarmos um link de recuperação.
-          </p>
-        </div>
+     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Recuperar Senha</CardTitle>
+            <CardDescription>Digite seu CPF para enviarmos um link de recuperação para seu e-mail.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <Input
+                        id="cpf" type="text" required
+                        placeholder="Digite seu CPF"
+                        value={cpf}
+                        onChange={(e) => setCpf(e.target.value)}
+                        disabled={isLoading || !!message}
+                    />
+                </div>
+            
+                {message && <div className="p-3 text-sm text-center text-emerald-800 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-200 rounded-md">{message}</div>}
+                {error && <div className="p-3 text-sm text-center text-destructive-foreground bg-destructive rounded-md">{error}</div>}
 
-        <form className="space-y-4">
-          {}
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              id="email" type="email" required
-              placeholder="Digite seu e-mail"
-              className="pl-10" 
-            />
-          </div>
+                <Button type="submit" className="w-full" disabled={isLoading || !!message}>
+                    {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
+                </Button>
+            </form>
 
-          <Button type="submit" className="w-full !mt-6 bg-blue-600 text-white hover:bg-blue-700">
-            Enviar Link de Recuperação
-          </Button>
-        </form>
-
-        <div className="text-center">
-          <a href="/login" className="text-sm font-medium text-blue-600 hover:underline">
-            Voltar para o Login
-          </a>
-        </div>
-
-      </div>
+            <div className="text-center mt-4">
+              <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+                Voltar para o Login
+              </Link>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

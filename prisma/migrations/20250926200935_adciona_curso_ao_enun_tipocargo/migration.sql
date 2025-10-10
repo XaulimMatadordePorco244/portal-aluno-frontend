@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Cargo` MODIFY `tipo` ENUM('POSTO', 'GRADUACAO', 'CURSO') NOT NULL;
