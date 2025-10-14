@@ -5,7 +5,19 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from 'next/navigation';
-import { FormState } from "@/app/validar/actions";
+
+export interface FormState {
+  errors?: {
+    alunoIds?: string[];
+    tipoId?: string[];
+    data?: string[];
+    pontos?: string[];
+    detalhes?: string[];
+  };
+  message?: string;
+  error?: string; // Adicione esta linha
+}
+
 const AnotacaoSchema = z.object({
   alunoIds: z.array(z.string()).min(1, "É obrigatório selecionar pelo menos um aluno."),
 
