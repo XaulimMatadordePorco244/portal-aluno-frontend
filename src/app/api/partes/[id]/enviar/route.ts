@@ -1,12 +1,17 @@
+// app/api/partes/[id]/enviar/route.ts
+
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: Request, 
+  { params }: { params: Promise<{ id: string }> } // params é uma Promise
+) {
   try {
     const user = await getCurrentUser();
-    const parteId = params.id;
+    // Aguardar a Promise dos params
+    const { id: parteId } = await params;
 
     if (!user?.userId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

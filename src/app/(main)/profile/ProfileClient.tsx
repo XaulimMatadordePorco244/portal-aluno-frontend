@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from 'lucide-react';
-import { User } from '@prisma/client';
+import { User, Cargo } from '@prisma/client';
 import FormattedName from '@/components/FormattedName';
+
+
+type UserWithCargo = User & {
+  cargo?: Cargo | null;
+};
 
 const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
   <div className="border-b py-3">
@@ -15,7 +20,7 @@ const InfoField = ({ label, value }: { label: string; value: string | number | n
   </div>
 );
 
-export default function ProfileClient({ user }: { user: User }) {
+export default function ProfileClient({ user }: { user: UserWithCargo }) {
   const [email, setEmail] = useState(user.email || '');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,8 +54,8 @@ export default function ProfileClient({ user }: { user: User }) {
             
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground mb-2">Dados Institucionais</h2>
-                      <InfoField label="Companhia" value={user.companhia} />
-              <InfoField label="Graduação" value={user.cargo} />
+              <InfoField label="Companhia" value={user.companhia} />
+              <InfoField label="Graduação/Posto" value={user.cargo?.nome} />
               <InfoField label="Ano de Ingresso" value={user.anoIngresso} />
               <InfoField label="Conceito" value={user.conceito} />
             </div>
