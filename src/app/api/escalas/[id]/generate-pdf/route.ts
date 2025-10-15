@@ -3,9 +3,7 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { EscalaPDFBuilder } from '@/lib/escalaPdfGenerator';
 import { put } from '@vercel/blob';
-import path from 'path';
-import fs from 'fs/promises';
-import { format } from 'date-fns'; 
+import { format } from 'date-fns';
 
 async function getEscalaCompleta(id: string) {
   return prisma.escala.findUnique({
@@ -22,14 +20,14 @@ async function getEscalaCompleta(id: string) {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   const user = await getCurrentUser();
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params; // ✅ Aguardar params
 
   try {
     const escala = await getEscalaCompleta(id);
@@ -37,9 +35,22 @@ export async function POST(
       return NextResponse.json({ error: 'Escala não encontrada' }, { status: 404 });
     }
 
-    const imagePath = path.join(process.cwd(), 'public', 'logo-gm.png');
-    const imageBuffer = await fs.readFile(imagePath);
-    const logoBase64 = imageBuffer.toString('base64');
+
+    let logoBase64 = '';
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      const logoUrl = `${baseUrl}/img/logo.png`;
+      
+      const response = await fetch(logoUrl);
+      if (response.ok) {
+        const imageBuffer = await response.arrayBuffer();
+        logoBase64 = Buffer.from(imageBuffer).toString('base64');
+      } else {
+        console.warn('Logo não encontrada, continuando sem logo...');
+      }
+    } catch (logoError) {
+      console.warn('Erro ao carregar logo:', logoError);
+    }
     
     const pdfBuilder = new EscalaPDFBuilder(escala, logoBase64);
     const pdfBytes = await pdfBuilder.build();
@@ -49,10 +60,9 @@ export async function POST(
 
     const dataFormatada = format(new Date(escala.dataEscala), 'dd.MM.yyyy');
     const fileName = `ESCALA.${dataFormatada}-${escala.id}.pdf`;
+    const filePath = `escalas/${fileName}`;
     
-    const filePath = `escalas/${fileName}`; 
-
-    const blob = await put(filePath, pdfBuffer, { 
+    const blob = await put(filePath, pdfBuffer, {
       access: 'public',
       contentType: 'application/pdf',
     });
@@ -68,6 +78,9 @@ export async function POST(
 
   } catch (error) {
     console.error("Erro ao gerar PDF da escala:", error);
-    return NextResponse.json({ error: 'Não foi possível gerar o PDF.' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Não foi possível gerar o PDF.',
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    }, { status: 500 });
   }
 }
