@@ -5,7 +5,7 @@ import { EscalaPDFBuilder } from '@/lib/escalaPdfGenerator';
 import { put } from '@vercel/blob';
 import path from 'path';
 import fs from 'fs/promises';
-
+import { format } from 'date-fns'; 
 
 async function getEscalaCompleta(id: string) {
   return prisma.escala.findUnique({
@@ -24,7 +24,6 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-
   const user = await getCurrentUser();
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 403 });
@@ -33,7 +32,6 @@ export async function POST(
   const { id } = params;
 
   try {
-    
     const escala = await getEscalaCompleta(id);
     if (!escala) {
       return NextResponse.json({ error: 'Escala não encontrada' }, { status: 404 });
@@ -43,21 +41,22 @@ export async function POST(
     const imageBuffer = await fs.readFile(imagePath);
     const logoBase64 = imageBuffer.toString('base64');
     
-   
     const pdfBuilder = new EscalaPDFBuilder(escala, logoBase64);
     const pdfBytes = await pdfBuilder.build();
 
-   
-    const pdfBuffer = Buffer.from(pdfBytes);
-    
 
-    const fileName = `escala-${escala.id}-${Date.now()}.pdf`;
-    const blob = await put(fileName, pdfBuffer, {
+    const pdfBuffer = Buffer.from(pdfBytes);
+
+    const dataFormatada = format(new Date(escala.dataEscala), 'dd.MM.yyyy');
+    const fileName = `ESCALA.${dataFormatada}-${escala.id}.pdf`;
+    
+    const filePath = `escalas/${fileName}`; 
+
+    const blob = await put(filePath, pdfBuffer, { 
       access: 'public',
       contentType: 'application/pdf',
     });
 
- 
     const escalaAtualizada = await prisma.escala.update({
       where: { id: escala.id },
       data: {
@@ -65,7 +64,6 @@ export async function POST(
       },
     });
 
- 
     return NextResponse.json(escalaAtualizada);
 
   } catch (error) {
