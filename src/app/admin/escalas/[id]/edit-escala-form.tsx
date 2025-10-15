@@ -16,6 +16,9 @@ import { EscalaCompleta } from './page';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { StatusEscala } from '@prisma/client';
+
+
 
 function AlunoCombobox({ alunos, value, onChange }: { alunos: User[], value: string, onChange: (value: string) => void }) {
     const [open, setOpen] = useState(false);
@@ -35,12 +38,12 @@ function AlunoCombobox({ alunos, value, onChange }: { alunos: User[], value: str
                         <CommandEmpty>Nenhum aluno.</CommandEmpty>
                         <CommandGroup>
                             {alunos.map(aluno => (
-                                <CommandItem 
-                                    key={aluno.id} 
-                                    value={aluno.nomeDeGuerra || ''} 
-                                    onSelect={() => { 
-                                        onChange(aluno.id); 
-                                        setOpen(false); 
+                                <CommandItem
+                                    key={aluno.id}
+                                    value={aluno.nomeDeGuerra || ''}
+                                    onSelect={() => {
+                                        onChange(aluno.id);
+                                        setOpen(false);
                                     }}
                                 >
                                     {aluno.nomeDeGuerra}
@@ -59,6 +62,7 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
     const [escala, setEscala] = useState(escalaInicial);
 
     const hoje = new Date();
@@ -66,24 +70,24 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
     const dataDaEscala = new Date(escala.dataEscala);
     const isBloqueada = dataDaEscala < hoje;
 
-    const handleAddItem = () => setEscala(p => ({ 
-        ...p, 
-        itens: [...p.itens, { 
-            id: `temp-${Date.now()}`, 
-            secao: '', 
-            cargo: '', 
-            horarioInicio: '13:00', 
-            horarioFim: '17:45', 
-            alunoId: '', 
-            observacao: '', 
-            escalaId: p.id, 
-            aluno: {} as User 
-        }] 
+    const handleAddItem = () => setEscala(p => ({
+        ...p,
+        itens: [...p.itens, {
+            id: `temp-${Date.now()}`,
+            secao: '',
+            cargo: '',
+            horarioInicio: '13:00',
+            horarioFim: '17:45',
+            alunoId: '',
+            observacao: '',
+            escalaId: p.id,
+            aluno: {} as User
+        }]
     }));
 
-    const handleRemoveItem = (index: number) => setEscala(p => ({ 
-        ...p, 
-        itens: p.itens.filter((_, i) => i !== index) 
+    const handleRemoveItem = (index: number) => setEscala(p => ({
+        ...p,
+        itens: p.itens.filter((_, i) => i !== index)
     }));
 
     const handleItemChange = (index: number, field: string, value: string) => {
@@ -111,16 +115,16 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                 throw new Error(errorData.error || "Falha ao salvar alterações.");
             }
 
-            toast.success("Sucesso!", { 
-                description: "As alterações na escala foram salvas." 
+            toast.success("Sucesso!", {
+                description: "As alterações na escala foram salvas."
             });
             setIsEditing(false);
             router.refresh();
 
         } catch (error) {
             if (error instanceof Error) {
-                toast.error("Erro ao salvar", { 
-                    description: error.message 
+                toast.error("Erro ao salvar", {
+                    description: error.message
                 });
             }
         } finally {
@@ -130,8 +134,8 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
 
     const handleGeneratePdf = async () => {
         setIsGeneratingPdf(true);
-        const toastId = toast.loading("Gerando PDF...", { 
-            description: "Isso pode levar alguns segundos. Por favor, aguarde." 
+        const toastId = toast.loading("Gerando PDF...", {
+            description: "Isso pode levar alguns segundos. Por favor, aguarde."
         });
 
         try {
@@ -143,9 +147,9 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                 const errorData = await response.json();
                 throw new Error(errorData.error || "Falha ao gerar o PDF.");
             }
-            
+
             const updatedEscala = await response.json();
-            
+
             setEscala(prev => ({ ...prev, pdfUrl: updatedEscala.pdfUrl }));
 
             toast.success("PDF gerado e salvo com sucesso!", { id: toastId });
@@ -153,9 +157,9 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
 
         } catch (error) {
             if (error instanceof Error) {
-                toast.error("Erro ao gerar PDF", { 
-                    id: toastId, 
-                    description: error.message 
+                toast.error("Erro ao gerar PDF", {
+                    id: toastId,
+                    description: error.message
                 });
             }
         } finally {
@@ -163,8 +167,38 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
         }
     };
 
-    const handlePublish = () => {
-        toast.info("Funcionalidade de publicar em desenvolvimento.");
+    const handlePublish = async () => {
+        setIsPublishing(true);
+        const novoStatus = escala.status === 'PUBLICADA' ? StatusEscala.RASCUNHO : StatusEscala.PUBLICADA;
+        const actionText = novoStatus === 'PUBLICADA' ? 'Publicando' : 'Retornando para rascunho';
+
+        const toastId = toast.loading(`${actionText}...`);
+
+        try {
+            const response = await fetch(`/api/escalas/${escala.id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: novoStatus }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao alterar o status.');
+            }
+
+            const updatedEscala = await response.json();
+            setEscala(updatedEscala);
+
+            toast.success("Status da escala atualizado com sucesso!", { id: toastId });
+            router.refresh();
+
+        } catch (error) {
+            if (error instanceof Error) {
+                toast.error("Erro ao atualizar status", { id: toastId, description: error.message });
+            }
+        } finally {
+            setIsPublishing(false);
+        }
     };
 
     const handleDownloadPdf = () => {
@@ -179,7 +213,7 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
 
     return (
         <div className="space-y-6">
-           
+
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <Link href="/escalas">
@@ -194,11 +228,11 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                     {!isEditing ? (
                         <>
-                            <Button 
+                            <Button
                                 onClick={() => setIsEditing(true)}
                                 disabled={isBloqueada}
                             >
@@ -206,16 +240,16 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                                 Editar
                             </Button>
                             {escala.pdfUrl ? (
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={handleDownloadPdf}
                                 >
                                     <FileDown className="mr-2 h-4 w-4" />
                                     Baixar PDF
                                 </Button>
                             ) : (
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={handleGeneratePdf}
                                     disabled={isGeneratingPdf}
                                 >
@@ -223,25 +257,29 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                                     {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
                                 </Button>
                             )}
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={handlePublish}
+                                disabled={isPublishing}
                             >
                                 <Globe className="mr-2 h-4 w-4" />
-                                Publicar
+                                {isPublishing
+                                    ? (escala.status === 'PUBLICADA' ? 'Retornando...' : 'Publicando...')
+                                    : (escala.status === 'PUBLICADA' ? 'Retornar para Rascunho' : 'Publicar')
+                                }
                             </Button>
                         </>
                     ) : (
                         <>
-                            <Button 
+                            <Button
                                 onClick={handleSaveChanges}
                                 disabled={isSubmitting}
                             >
                                 <Save className="mr-2 h-4 w-4" />
                                 {isSubmitting ? 'Salvando...' : 'Salvar'}
                             </Button>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => {
                                     setIsEditing(false);
                                     setEscala(escalaInicial);
@@ -263,12 +301,12 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                 </div>
             )}
 
-         
+
             <Card>
                 <CardHeader>
                     <CardTitle>Informações Gerais</CardTitle>
                     <CardDescription>
-                        Dados básicos da escala
+                        Data: {format(new Date(escala.dataEscala), "dd/MM/yyyy")} | Tipo: {escala.tipo} | Status: {escala.status}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -276,18 +314,18 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <Label htmlFor="dataEscala">Data da Escala</Label>
-                                <Input 
-                                    id="dataEscala" 
-                                    type="date" 
-                                    value={format(new Date(escala.dataEscala), 'yyyy-MM-dd')} 
-                                    onChange={e => setEscala(p => ({...p, dataEscala: new Date(e.target.value)}))} 
+                                <Input
+                                    id="dataEscala"
+                                    type="date"
+                                    value={format(new Date(escala.dataEscala), 'yyyy-MM-dd')}
+                                    onChange={e => setEscala(p => ({ ...p, dataEscala: new Date(e.target.value) }))}
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tipo">Tipo</Label>
-                                <Select 
-                                    value={escala.tipo} 
-                                    onValueChange={(v: TipoEscala) => setEscala(p => ({...p, tipo: v}))}
+                                <Select
+                                    value={escala.tipo}
+                                    onValueChange={(v: TipoEscala) => setEscala(p => ({ ...p, tipo: v }))}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -302,10 +340,10 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="elaboradoPor">Elaborado Por</Label>
-                                <Input 
-                                    id="elaboradoPor" 
-                                    value={escala.elaboradoPor} 
-                                    onChange={e => setEscala(p => ({...p, elaboradoPor: e.target.value}))} 
+                                <Input
+                                    id="elaboradoPor"
+                                    value={escala.elaboradoPor}
+                                    onChange={e => setEscala(p => ({ ...p, elaboradoPor: e.target.value }))}
                                 />
                             </div>
                         </div>
@@ -330,7 +368,7 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                 </CardContent>
             </Card>
 
- 
+
             <Card>
                 <CardHeader>
                     <CardTitle>Itens da Escala</CardTitle>
@@ -345,47 +383,47 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                                 <>
                                     <div className="col-span-12 md:col-span-2 space-y-2">
                                         <Label>Seção</Label>
-                                        <Input 
-                                            value={item.secao} 
-                                            onChange={e => handleItemChange(index, 'secao', e.target.value)} 
+                                        <Input
+                                            value={item.secao}
+                                            onChange={e => handleItemChange(index, 'secao', e.target.value)}
                                         />
                                     </div>
                                     <div className="col-span-12 md:col-span-3 space-y-2">
                                         <Label>Cargo/Função</Label>
-                                        <Input 
-                                            value={item.cargo} 
-                                            onChange={e => handleItemChange(index, 'cargo', e.target.value)} 
+                                        <Input
+                                            value={item.cargo}
+                                            onChange={e => handleItemChange(index, 'cargo', e.target.value)}
                                         />
                                     </div>
                                     <div className="col-span-6 md:col-span-2 space-y-2">
                                         <Label>Início</Label>
-                                        <Input 
-                                            type="time" 
-                                            value={item.horarioInicio} 
-                                            onChange={e => handleItemChange(index, 'horarioInicio', e.target.value)} 
+                                        <Input
+                                            type="time"
+                                            value={item.horarioInicio}
+                                            onChange={e => handleItemChange(index, 'horarioInicio', e.target.value)}
                                         />
                                     </div>
                                     <div className="col-span-6 md:col-span-2 space-y-2">
                                         <Label>Fim</Label>
-                                        <Input 
-                                            type="time" 
-                                            value={item.horarioFim} 
-                                            onChange={e => handleItemChange(index, 'horarioFim', e.target.value)} 
+                                        <Input
+                                            type="time"
+                                            value={item.horarioFim}
+                                            onChange={e => handleItemChange(index, 'horarioFim', e.target.value)}
                                         />
                                     </div>
                                     <div className="col-span-12 md:col-span-3 space-y-2">
                                         <Label>Aluno</Label>
-                                        <AlunoCombobox 
-                                            alunos={alunos} 
-                                            value={item.alunoId} 
-                                            onChange={alunoId => handleItemChange(index, 'alunoId', alunoId)} 
+                                        <AlunoCombobox
+                                            alunos={alunos}
+                                            value={item.alunoId}
+                                            onChange={alunoId => handleItemChange(index, 'alunoId', alunoId)}
                                         />
                                     </div>
-                                    <Button 
-                                        type="button" 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="absolute top-1 right-1" 
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-1 right-1"
                                         onClick={() => handleRemoveItem(index)}
                                     >
                                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -419,12 +457,12 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                             )}
                         </div>
                     ))}
-                    
+
                     {isEditing && (
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={handleAddItem} 
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAddItem}
                             className="w-full"
                         >
                             <PlusCircle className="mr-2 h-4 w-4" />
