@@ -63,6 +63,7 @@ enum TipoEscala {
   COLABORACAO
   ESPECIAL
   EVENTO
+  PERSONALIZADO
   OUTRO
 }
 
