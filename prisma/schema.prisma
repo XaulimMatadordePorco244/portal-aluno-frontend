@@ -66,6 +66,11 @@ enum TipoEscala {
   PERSONALIZADO
   OUTRO
 }
+enum BandeiraTipo {
+  BR
+  MS
+  NV
+}
 
 model User {
   id                   String    @id @default(cuid())
@@ -172,6 +177,7 @@ model Cargo {
 model Funcao {
   id       String @id @default(cuid())
   nome     String @unique
+  categoria String?
   usuarios User[]
 }
 
@@ -252,6 +258,8 @@ model Escala {
   status       StatusEscala @default(RASCUNHO)
   pdfUrl       String?
   elaboradoPor String
+  fardamento    String? @db.Text
+  observacoes   String? @db.Text
 
   criadoEm     DateTime  @default(now())
   atualizadoEm DateTime  @updatedAt
@@ -271,6 +279,7 @@ model EscalaItem {
   horarioInicio String
   horarioFim    String
   observacao    String?
+  bandeira      BandeiraTipo?
 
   escalaId String
   escala   Escala @relation(fields: [escalaId], references: [id], onDelete: Cascade)

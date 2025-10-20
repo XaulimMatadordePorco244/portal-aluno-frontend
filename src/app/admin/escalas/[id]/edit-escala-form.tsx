@@ -81,7 +81,8 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
             alunoId: '',
             observacao: '',
             escalaId: p.id,
-            aluno: {} as User
+            aluno: {} as User,
+            bandeira: null,
         }]
     }));
 
@@ -396,7 +397,7 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                                         />
                                     </div>
                                     <div className="col-span-6 md:col-span-2 space-y-2">
-                                        <Label>Início</Label>
+                                        <Label>Entrada</Label>
                                         <Input
                                             type="time"
                                             value={item.horarioInicio}
@@ -404,7 +405,7 @@ export function EditEscalaForm({ escalaInicial, alunos }: { escalaInicial: Escal
                                         />
                                     </div>
                                     <div className="col-span-6 md:col-span-2 space-y-2">
-                                        <Label>Fim</Label>
+                                        <Label>Saída</Label>
                                         <Input
                                             type="time"
                                             value={item.horarioFim}

@@ -4,33 +4,46 @@ import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
 
 
-
 async function getFormData() {
-
-  const [alunos, admins] = await Promise.all([
+  
+  const [alunos, admins, funcoes] = await Promise.all([
+   
     prisma.user.findMany({
       where: {
         role: 'ALUNO',
         status: 'ATIVO',
       },
+      include: {
+        funcao: true,
+      },
       orderBy: {
         nomeDeGuerra: 'asc'
       }
     }),
+  
     prisma.user.findMany({
         where: {
             role: 'ADMIN',
         },
+        include: {
+            funcao: true, 
+        },
+        orderBy: {
+            nome: 'asc'
+        }
+    }),
+
+    prisma.funcao.findMany({
         orderBy: {
             nome: 'asc'
         }
     })
   ]);
-  return { alunos, admins };
+  return { alunos, admins, funcoes };
 }
 
 export default async function NovaEscalaPage() {
-  const { alunos, admins } = await getFormData();
+  const { alunos, admins, funcoes } = await getFormData();
   const currentUser = await getCurrentUser();
 
   return (
@@ -42,10 +55,11 @@ export default async function NovaEscalaPage() {
         </div>
       </div>
       
-  
+    
       <EscalaForm 
         alunos={alunos} 
         admins={admins}
+        funcoes={funcoes}
         elaboradorPadrao={currentUser?.nome ?? ''} 
       />
     </>
