@@ -7,12 +7,12 @@ import { StatusEscala, TipoEscala } from '@prisma/client';
 
 const escalaItemSchema = z.object({
   secao: z.string().min(1, "A seção é obrigatória."),
-  cargo: z.string().min(1, "O cargo/função é obrigatório."),
-  horarioInicio: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido."),
-  horarioFim: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido."),
-  alunoId: z.string().cuid("ID de aluno inválido."),
-  observacao: z.string().optional(),
-  bandeira: z.string().optional().nullable(),
+  cargo: z.string().min(1, "O cargo/função/tema é obrigatório."), 
+  horarioInicio: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)."),
+  horarioFim: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)."),
+  alunoId: z.string().cuid("ID de usuário inválido."),
+  observacao: z.string().nullable().optional(), 
+
 });
 
 
@@ -21,8 +21,8 @@ const createEscalaSchema = z.object({
   tipo: z.nativeEnum(TipoEscala),
   elaboradoPor: z.string().min(3, "O nome do elaborador é obrigatório."),
   itens: z.array(escalaItemSchema).min(1, "A escala deve ter pelo menos um item."),
-  fardamento: z.string().optional(),   
-  observacoes: z.string().optional(),  
+  fardamento: z.string().optional(),
+  observacoes: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -31,10 +31,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 403 });
   }
 
-  const body = await request.json();
+  let body;
+  try {
+      body = await request.json();
+  } catch (error) {
+      return NextResponse.json({ error: 'JSON inválido no corpo da requisição.' }, { status: 400 });
+  }
+
 
   const validation = createEscalaSchema.safeParse(body);
   if (!validation.success) {
+    
+    console.error("Erro de validação Zod:", JSON.stringify(validation.error.format(), null, 2));
     return NextResponse.json({ error: 'Dados inválidos', details: validation.error.format() }, { status: 400 });
   }
 
@@ -54,15 +62,15 @@ export async function POST(request: Request) {
         },
       });
 
+     
       const itensParaCriar = itens.map(item => ({
         secao: item.secao,
         cargo: item.cargo,
         horarioInicio: item.horarioInicio,
         horarioFim: item.horarioFim,
         alunoId: item.alunoId,
-        observacao: item.observacao,
-        bandeira: item.bandeira as any, 
-        escalaId: escala.id,
+        observacao: item.observacao, 
+          escalaId: escala.id,
       }));
 
       await tx.escalaItem.createMany({
@@ -75,7 +83,10 @@ export async function POST(request: Request) {
     return NextResponse.json(novaEscala, { status: 201 });
 
   } catch (error) {
-    console.error("Erro ao criar escala:", error);
+    console.error("Erro ao criar escala no DB:", error); 
+      if (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('P')) {
+       return NextResponse.json({ error: `Erro no banco de dados: ${error.message}` }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }
 }
