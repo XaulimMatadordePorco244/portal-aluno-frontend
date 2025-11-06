@@ -39,7 +39,7 @@ type SecaoState = {
 
 type UserComFuncao = User & { funcao: Funcao | null };
 
-const GABARITO_COLABORACAO = {
+export const GABARITO_COLABORACAO = {
   fardamento: "- OS COMANDOS: COMPARECER FARDADOS.\n- OS ESCALADOS PARA LIMPEZA: COMPARECER DE TFM.\n- OS DEMAIS ALUNOS SE APRESETAR DE UNIFORME 1.",
   observacoes: "- O HASTEAMENTO DO PAVILHÃO NACIONAL: 13:25H.\n- SUSPENSÃO (-4 PONTOS): ...\n- A PALESTRA DEVERÁ TER O TEMPO DE 3MIN À 5MIN.",
   secoes: [

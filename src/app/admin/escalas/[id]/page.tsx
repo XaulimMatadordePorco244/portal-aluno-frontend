@@ -3,47 +3,144 @@ import { notFound } from "next/navigation";
 import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
+import { Cargo, Funcao, User, Escala, EscalaItem } from "@prisma/client";
+
+export type UserComCargoEFuncao = User & {
+  funcao: Funcao | null;
+  cargo: Cargo | null;
+};
 
 
-export type EscalaCompleta = NonNullable<Awaited<ReturnType<typeof getEscalaDetails>>>;
+export type EscalaItemCompleto = EscalaItem & {
+  aluno: User;
+  funcaoId: string | null; 
+};
 
+export type EscalaCompleta = Escala & {
+  itens: EscalaItemCompleto[]; 
+  criadoPor: User;
+};
 
-async function getEscalaDetails(id: string) {
+async function getEscalaDetails(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
     where: { id },
     include: {
       itens: {
         include: {
-          aluno: true, 
+          aluno: true,
         },
         orderBy: {
-          secao: 'asc', 
+          secao: 'asc',
         },
       },
       criadoPor: true,
     },
   });
-  return escala;
+
+
+  if (!escala) return null;
+
+
+  const itensComFuncao = await Promise.all(
+    escala.itens.map(async (item) => {
+
+      const alunoComFuncao = await prisma.user.findUnique({
+        where: { id: item.alunoId },
+        include: { funcao: true }
+      });
+
+      return {
+        ...item,
+        funcaoId: alunoComFuncao?.funcao?.id || null
+      };
+    })
+  );
+
+  return {
+    ...escala,
+    itens: itensComFuncao
+  };
 }
 
 
-async function getAlunos() {
-    return prisma.user.findMany({
-        where: { role: 'ALUNO', status: 'ATIVO' },
-        orderBy: { nomeDeGuerra: 'asc' }
-    });
+async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
+  const escala = await prisma.escala.findUnique({
+    where: { id },
+    include: {
+      itens: {
+        include: {
+          aluno: {
+            include: {
+              funcao: true
+            }
+          },
+        },
+        orderBy: {
+          secao: 'asc',
+        },
+      },
+      criadoPor: true,
+    },
+  });
+
+  if (!escala) return null;
+
+ 
+  return {
+    ...escala,
+    itens: escala.itens.map(item => ({
+      ...item,
+      funcaoId: item.aluno.funcao?.id || null
+    }))
+  };
+}
+
+async function getFormData() {
+  const [alunos, admins, funcoes] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: 'ALUNO', status: 'ATIVO' },
+      include: {
+        funcao: true,
+        cargo: true
+      },
+      orderBy: {
+        cargo: { precedencia: 'asc' }
+      }
+    }),
+    prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      include: {
+        funcao: true,
+        cargo: true
+      },
+      orderBy: {
+        cargo: { precedencia: 'asc' }
+      }
+    }),
+    prisma.funcao.findMany({
+      orderBy: {
+        nome: 'asc'
+      }
+    })
+  ]);
+
+  return {
+    alunos: alunos as UserComCargoEFuncao[],
+    admins: admins as UserComCargoEFuncao[],
+    funcoes
+  };
 }
 
 type PageProps = {
-    params: { id: string };
+  params: { id: string };
 };
 
 export default async function DetalheEscalaPage({ params }: PageProps) {
   const { id } = params;
 
-  const [escala, alunos, currentUser] = await Promise.all([
-    getEscalaDetails(id),
-    getAlunos(),
+  const [escala, formData, currentUser] = await Promise.all([
+    getEscalaDetailsSimple(id), 
+    getFormData(),
     getCurrentUser()
   ]);
 
@@ -59,9 +156,13 @@ export default async function DetalheEscalaPage({ params }: PageProps) {
           <h1 className="text-3xl font-bold text-foreground">Detalhes da Escala</h1>
         </div>
       </div>
-      
- 
-      <EditEscalaForm escalaInicial={escala} alunos={alunos} />
+
+      <EditEscalaForm
+        escalaInicial={escala}
+        alunos={formData.alunos}
+        admins={formData.admins}
+        funcoes={formData.funcoes}
+      />
     </>
   );
 }
