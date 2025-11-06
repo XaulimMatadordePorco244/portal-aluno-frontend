@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ParecerForm } from "./ParecerForm";
 
+
 async function getEtapaDetails(processoId: string, etapaId: string) {
     const etapa = await prisma.etapaProcesso.findUnique({
         where: { id: etapaId, processoId: processoId },
@@ -13,20 +14,16 @@ async function getEtapaDetails(processoId: string, etapaId: string) {
     return etapa;
 }
 
-export default async function EtapaParecerPage({ 
-    params 
-}: { 
-    params: Promise<{ id: string, etapaId: string }> 
-}) {
-  
-    const { id, etapaId } = await params;
 
-    const etapa = await getEtapaDetails(id, etapaId);
+export default async function EtapaParecerPage({ params }: { params: { id: string, etapaId: string } }) {
+
+    const etapa = await getEtapaDetails(params.id, params.etapaId);
     if (!etapa) notFound();
 
     return (
         <div className="max-w-4xl mx-auto">
             <div className="mb-4">
+          
                 <Link href={`/admin/partes/${etapa.processoId}`} className="flex items-center text-sm text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar para a Linha do Tempo do Processo

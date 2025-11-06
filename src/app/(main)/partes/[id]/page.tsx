@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { SendButton } from './SendButton';
 import { DownloadButton } from './DownloadButton';
 
+
+
 async function getParteDetails(id: string) {
     const user = await getCurrentUser();
     const parte = await prisma.parte.findUnique({
@@ -25,14 +27,8 @@ async function getParteDetails(id: string) {
     return parte;
 }
 
-
-export default async function Page({ 
-    params 
-}: { 
-    params: Promise<{ id: string }> 
-}) {
-     const { id } = await params;
-    
+export default async function Page({ params }: { params: { id: string } }) {
+    const { id } = params;
     const parte = await getParteDetails(id);
 
     if (!parte) {

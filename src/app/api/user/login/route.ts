@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-
 const prisma = new PrismaClient();
 
 
@@ -17,11 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { cpf },
-      include: { cargo: true }
-    });
-
+    const user = await prisma.user.findUnique({ where: { cpf } });
     if (!user) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
     }
@@ -40,7 +35,6 @@ export async function POST(request: Request) {
         userId: user.id,
         nome: user.nome,
         nomeDeGuerra: user.nomeDeGuerra,
-        cargoId: user.cargoId,
         cargo: user.cargo,
         role: user.role
       },

@@ -6,6 +6,7 @@ import FormattedName from '@/components/FormattedName';
 
 const prisma = new PrismaClient();
 
+
 async function getAlunoPorId(validationId: string) {
   const aluno = await prisma.user.findUnique({
     where: { validationId: validationId },
@@ -21,12 +22,7 @@ async function getAlunoPorId(validationId: string) {
   return aluno;
 }
 
-export default async function PaginaValidacao({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
-}) {
-   const { id } = await params;
+export default async function PaginaValidacao({ params: { id } }: { params: { id: string } }) {
   
   const aluno = await getAlunoPorId(id);
 
@@ -47,7 +43,7 @@ export default async function PaginaValidacao({
   const initials = aluno.nome.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div className="flex items-center justify-center  min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
         
         <div className="flex items-center justify-center mb-4">
@@ -63,12 +59,11 @@ export default async function PaginaValidacao({
         </div>
         
         <div className="text-center">
+          {}
           <h2 className="text-2xl font-semibold text-gray-900">
             <FormattedName fullName={aluno.nome} warName={aluno.nomeDeGuerra} />
           </h2>
-          <p className="text-md text-gray-600">{aluno.cargo?.nome ?? 'Não informado'}</p>
-
-          <p><strong>Cargo:</strong> </p>
+          <p className="text-md text-gray-600">{aluno.cargo}</p>
           <p className="text-sm text-gray-500 mt-1">Nº: {aluno.numero || 'N/A'}</p>
         </div>
 

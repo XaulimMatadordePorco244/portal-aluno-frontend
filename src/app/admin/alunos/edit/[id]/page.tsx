@@ -3,15 +3,9 @@ import { notFound } from "next/navigation";
 import EditAlunoForm from "./edit-aluno-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function EditAlunoPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
-}) {
-  const { id } = await params;
-  
+export default async function EditAlunoPage({ params }: { params: { id: string } }) {
   const aluno = await prisma.user.findUnique({
-    where: { id },
+    where: { id: params.id },
   });
 
   if (!aluno) {
