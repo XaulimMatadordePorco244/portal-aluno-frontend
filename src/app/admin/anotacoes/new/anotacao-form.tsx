@@ -1,8 +1,8 @@
 "use client";
 
-
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useState, useEffect, useMemo, useActionState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,6 @@ import Link from 'next/link';
 import { User, TipoDeAnotacao } from '@prisma/client';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FormState } from '../actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,14 +27,8 @@ function SubmitButton() {
   );
 }
 
-
-
-
-const initialState: FormState = {};
-
 export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User[], tiposDeAnotacao: TipoDeAnotacao[] }) {
-
-  const [state, formAction] = useActionState<FormState, FormData>(createAnotacao, initialState);
+  const [state, formAction] = useActionState(createAnotacao, undefined);
 
   const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
   const [selectedAlunos, setSelectedAlunos] = useState<User[]>([]);
@@ -237,7 +230,6 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
       </div>
 
       {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-      {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
 
       <div className="flex gap-2 pt-4">
         <SubmitButton />

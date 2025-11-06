@@ -78,7 +78,7 @@ export function Header({ user }: { user: User | null }) {
             <DropdownMenuContent>
               <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/frequency" className="flex items-center w-full cursor-pointer"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/anotacoes" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/evaluations" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/partes" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

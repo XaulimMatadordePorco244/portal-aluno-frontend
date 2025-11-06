@@ -2,13 +2,11 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getCurrentUser();
-    const { id: parteId } = await params;
+    const parteId = params.id;
 
     if (user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -38,21 +36,21 @@ export async function POST(
     const oficialSorteado = oficiais[Math.floor(Math.random() * oficiais.length)];
 
     await prisma.$transaction(async (tx) => {
-      await tx.etapaProcesso.create({
-        data: {
-          processoId: parteId,
-          titulo: "Parecer do Oficial Investigador",
-          status: "Pendente",
-          responsavelId: oficialSorteado.id,
-        }
-      });
-      await tx.etapaProcesso.create({
-        data: {
-          processoId: parteId,
-          titulo: "Parecer da Coordenação",
-          status: "Aguardando Etapa Anterior",
-        }
-      });
+        await tx.etapaProcesso.create({
+            data: {
+                processoId: parteId,
+                titulo: "Parecer do Oficial Investigador",
+                status: "Pendente",
+                responsavelId: oficialSorteado.id,
+            }
+        });
+        await tx.etapaProcesso.create({
+            data: {
+                processoId: parteId,
+                titulo: "Parecer da Coordenação",
+                status: "Aguardando Etapa Anterior",
+            }
+        });
     });
 
     return NextResponse.json({ message: `Processo iniciado. Oficial ${oficialSorteado.nomeDeGuerra} foi designado.` });

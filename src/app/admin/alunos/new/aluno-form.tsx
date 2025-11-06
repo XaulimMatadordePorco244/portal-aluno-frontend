@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox"; // Adicionado
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -103,7 +103,7 @@ export default function AlunoForm() {
             <SelectItem value="OUTRO">OUTRO</SelectItem>
           </SelectContent>
         </Select>
-        {state?.errors?.cargoNome && <p className="text-sm text-red-500 mt-1">{state.errors.cargoNome[0]}</p>}
+        {state?.errors?.cargo && <p className="text-sm text-red-500 mt-1">{state.errors.cargo[0]}</p>}
       </div>
 
       {selectedCargo === 'OUTRO' && (
