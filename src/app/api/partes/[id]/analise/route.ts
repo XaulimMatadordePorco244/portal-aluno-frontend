@@ -7,11 +7,13 @@ import ParteAnaliseEmail from '@/emails/ParteAnaliseEmail';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  
+export async function POST(
+  req: Request, 
+  { params }: { params: Promise<{ id: string }> } 
+) {
   try {
     const user = await getCurrentUser();
-    const parteId = params.id;
+      const { id: parteId } = await params;
 
     if (user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -22,7 +24,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Resultado da análise é inválido.' }, { status: 400 });
     }
 
-   
     const { novaAnalise, parteAtualizada } = await prisma.$transaction(async (tx) => {
       const parte = await tx.parte.findUnique({
         where: { id: parteId },
@@ -60,7 +61,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return { novaAnalise, parteAtualizada };
     });
 
-    
     const autor = parteAtualizada.autor;
     if (autor && autor.email) {
       const parteLink = `${process.env.NEXT_PUBLIC_APP_URL}/partes/${parteId}`;

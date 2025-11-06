@@ -31,16 +31,28 @@ const cargosPadrao = [
   "CAPITÃO", "MAJOR", "TENENTE CORONEL", "CORONEL"
 ];
 
-export default function EditAlunoForm({ aluno }: { aluno: User }) {
+
+type UserWithCargoString = User & {
+  cargo?: string | null;
+};
+
+export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString }) {
   const [state, formAction] = useActionState(updateAluno, undefined);
-  
+
+ 
   const isCargoPadrao = cargosPadrao.includes(aluno.cargo || "");
-  const [selectedCargo, setSelectedCargo] = useState(isCargoPadrao ? aluno.cargo : "OUTRO");
-  const [outroCargo, setOutroCargo] = useState(isCargoPadrao ? "" : aluno.cargo || "");
+  const [selectedCargo, setSelectedCargo] = useState(isCargoPadrao ? (aluno.cargo || "") : "OUTRO");
+  const [outroCargo, setOutroCargo] = useState(isCargoPadrao ? "" : (aluno.cargo || ""));
+
+ 
+  const getFinalCargoValue = () => {
+    return selectedCargo === 'OUTRO' ? outroCargo : selectedCargo;
+  };
 
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="id" value={aluno.id} />
+          <input type="hidden" name="cargo" value={getFinalCargoValue() || ""} />
       
       <div className="space-y-2">
         <Label htmlFor="nome">Nome Completo</Label>
@@ -84,8 +96,8 @@ export default function EditAlunoForm({ aluno }: { aluno: User }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="cargo">Cargo</Label>
-        <Select name="cargo" required onValueChange={setSelectedCargo} defaultValue={selectedCargo || ''}>
+        <Label htmlFor="cargoSelect">Cargo</Label>
+        <Select name="cargoSelect" required onValueChange={setSelectedCargo} defaultValue={selectedCargo}>
           <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -111,7 +123,7 @@ export default function EditAlunoForm({ aluno }: { aluno: User }) {
             <SelectItem value="OUTRO">OUTRO</SelectItem>
           </SelectContent>
         </Select>
-        {state?.errors?.cargo && <p className="text-sm text-red-500 mt-1">{state.errors.cargo[0]}</p>}
+        {state?.errors?.cargoNome && <p className="text-sm text-red-500 mt-1">{state.errors.cargoNome[0]}</p>}
       </div>
 
       {selectedCargo === 'OUTRO' && (

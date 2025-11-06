@@ -58,6 +58,59 @@ const UpdateAlunoSchema = baseAlunoSchema.extend({
 
 
 
+const CreateAlunoSchema = baseAlunoSchema.extend({
+  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
+});
+
+export async function createAluno(prevState: AlunoState, formData: FormData) {
+  const user = await getCurrentUserWithRelations();
+  if (!user || user.role !== 'ADMIN') {
+    return { message: "Acesso negado." };
+  }
+
+  const validatedFields = CreateAlunoSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors };
+  }
+  
+  const { cargoNome, cargoOutro, fotoUrl, password, ingressoForaDeData, ...data } = validatedFields.data;
+  const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
+  const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let uploadedFotoUrl: string | null = null;
+
+    if (fotoUrl && fotoUrl.size > 0) {
+      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
+      uploadedFotoUrl = blob.url;
+    }
+
+    await prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+        cargo: { connect: { nome: finalCargoNome } },
+        conceito: conceitoInicial,
+        fotoUrl: uploadedFotoUrl,
+        status: "ATIVO", 
+        role: "ALUNO",     
+      },
+    });
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
+      return { message: 'Já existe um usuário com este CPF ou Número.' };
+    }
+    console.error("Erro ao criar aluno:", error);
+    return { message: "Ocorreu um erro ao criar o aluno." };
+  }
+
+  revalidatePath("/admin/alunos");
+  redirect("/admin/alunos");
+}
+
+
 export async function updateAluno(prevState: AlunoState, formData: FormData) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {

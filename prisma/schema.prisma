@@ -33,8 +33,8 @@ enum StatusParte {
   RASCUNHO
   ENVIADA
   ANALISADA
-  APROVADO  
-  REPROVADO 
+  APROVADO
+  REPROVADO
 }
 
 enum ResultadoAnalise {
@@ -50,6 +50,26 @@ enum TipoProcesso {
   RECLAMACAO
   ATO_DE_BRAVURA
   RECONSIDERACAO_ATO_DE_BRAVURA
+}
+
+enum StatusEscala {
+  RASCUNHO
+  PUBLICADA
+  FECHADA
+  ARQUIVADA
+}
+
+enum TipoEscala {
+  COLABORACAO
+  ESPECIAL
+  EVENTO
+  PERSONALIZADO
+  OUTRO
+}
+enum BandeiraTipo {
+  BR
+  MS
+  NV
 }
 
 model User {
@@ -80,6 +100,8 @@ model User {
   anotacoesFeitas    Anotacao[]      @relation("AnotacoesFeitasPeloAutor")
   funcao             Funcao?         @relation(fields: [funcaoId], references: [id])
   cargo              Cargo?          @relation(fields: [cargoId], references: [id])
+  escalasCriadas     Escala[]        @relation("EscalasCriadas")
+  escalasAtribuidas  EscalaItem[]    @relation("EscalasAtribuidas")
   qesCriados         QES[]
   role               Role            @default(ALUNO)
   etapasResponsavel  EtapaProcesso[]
@@ -155,6 +177,7 @@ model Cargo {
 model Funcao {
   id       String @id @default(cuid())
   nome     String @unique
+  categoria String?
   usuarios User[]
 }
 
@@ -226,4 +249,43 @@ model EtapaProcesso {
   dataConclusao DateTime?
 
   createdAt DateTime @default(now())
+}
+
+model Escala {
+  id           String       @id @default(cuid())
+  dataEscala   DateTime     @db.Date
+  tipo         TipoEscala
+  status       StatusEscala @default(RASCUNHO)
+  pdfUrl       String?
+  elaboradoPor String
+  fardamento    String? @db.Text
+  observacoes   String? @db.Text
+
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  publicadoEm  DateTime?
+
+  itens       EscalaItem[]
+  criadoPorId String
+  criadoPor   User         @relation("EscalasCriadas", fields: [criadoPorId], references: [id])
+
+  @@map("escalas")
+}
+
+model EscalaItem {
+  id            String  @id @default(cuid())
+  secao         String
+  cargo         String
+  horarioInicio String
+  horarioFim    String
+  observacao    String?
+  bandeira      BandeiraTipo?
+
+  escalaId String
+  escala   Escala @relation(fields: [escalaId], references: [id], onDelete: Cascade)
+
+  alunoId String
+  aluno   User   @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
+
+  @@map("escala_itens")
 }

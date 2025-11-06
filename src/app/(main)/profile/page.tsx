@@ -1,9 +1,9 @@
-import { getFullCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient"; 
 
 export default async function ProfilePage() {
-  const user = await getFullCurrentUser();
+  const user = await getCurrentUserWithRelations();
 
   if (!user) {
     redirect('/login');

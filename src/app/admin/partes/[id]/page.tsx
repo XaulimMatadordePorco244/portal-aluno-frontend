@@ -27,7 +27,7 @@ async function getProcessoDetails(id: string): Promise<ProcessoCompleto | null> 
             },
         },
     });
-    return processo;
+    return processo as ProcessoCompleto | null;
 }
 
 function ProcessView({ processo }: { processo: ProcessoCompleto }) {
@@ -41,12 +41,12 @@ function ProcessView({ processo }: { processo: ProcessoCompleto }) {
     }
 }
 
-
-export default async function AdminProcessoDetailsPage({
-    params,
-}: {
-    params: Promise<{ id: string }>;
+export default async function AdminProcessoDetailsPage({ 
+    params 
+}: { 
+    params: Promise<{ id: string }> 
 }) {
+
     const { id } = await params;
 
     const processo = await getProcessoDetails(id);

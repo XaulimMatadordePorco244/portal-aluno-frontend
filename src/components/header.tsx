@@ -78,8 +78,9 @@ export function Header({ user }: { user: User | null }) {
             <DropdownMenuContent>
               <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/frequency" className="flex items-center w-full cursor-pointer"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/evaluations" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/anotacoes" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/partes" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/minhas-tarefas" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Tarefas</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -87,9 +88,11 @@ export function Header({ user }: { user: User | null }) {
               Institucional <ChevronDown className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamento</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="#" className="flex items-center w-full cursor-pointer"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Eventos</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/qes" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Quadro de Estudo Semanal</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/classification" className="flex items-center w-full cursor-pointer"><Calendar className="mr-2 h-4 w-4" /><span>Classificação Geral</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamentos</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
+               <DropdownMenuItem asChild><Link href="/escalas" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Escalas</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>

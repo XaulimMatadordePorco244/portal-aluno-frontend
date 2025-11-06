@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/Button"; 
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from 'lucide-react';
-import { User } from '@prisma/client';
-import FormattedName from '@/components/FormattedName';
+import { User, Cargo } from '@prisma/client';
+
+type UserWithCargo = User & {
+  cargo?: Cargo | null;
+};
 
 const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
   <div className="border-b py-3">
@@ -15,9 +18,33 @@ const InfoField = ({ label, value }: { label: string; value: string | number | n
   </div>
 );
 
-export default function ProfileClient({ user }: { user: User }) {
+export default function ProfileClient({ user }: { user: UserWithCargo }) {
   const [email, setEmail] = useState(user.email || '');
   const [isLoading, setIsLoading] = useState(false);
+
+  const nameParts = useMemo(() => {
+    const fullName = user.nome;
+    const warName = user.nomeDeGuerra;
+
+    if (!fullName) {
+      return { before: '', match: warName || 'Perfil', after: '' };
+    }
+    if (!warName) {
+      return { before: fullName, match: '', after: '' };
+    }
+
+    const index = fullName.indexOf(warName);
+
+    if (index === -1) {
+      return { before: fullName, match: '', after: '' };
+    }
+
+    return {
+      before: fullName.substring(0, index),
+      match: warName,
+      after: fullName.substring(index + warName.length),
+    };
+  }, [user.nome, user.nomeDeGuerra]);
 
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
@@ -37,8 +64,10 @@ export default function ProfileClient({ user }: { user: User }) {
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b">
           <UserCircle className="w-24 h-24 text-muted-foreground" />
           <div>
-              <h1 className="text-3xl text-foreground">
-              <FormattedName fullName={user.nome} warName={user.nomeDeGuerra} />
+            <h1 className="text-3xl text-foreground font-light uppercase">
+              {nameParts.before}
+              <strong className="font-bold">{nameParts.match.toUpperCase()}</strong>
+              {nameParts.after}
             </h1>
             <p className="text-md text-muted-foreground">Nº: {user.numero || 'N/A'}</p>
           </div>
@@ -49,15 +78,15 @@ export default function ProfileClient({ user }: { user: User }) {
             
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground mb-2">Dados Institucionais</h2>
-                      <InfoField label="Companhia" value={user.companhia} />
-              <InfoField label="Graduação" value={user.cargo} />
+              <InfoField label="Companhia" value={user.companhia} />
+              <InfoField label="Graduação/Posto" value={user.cargo?.nome} />
               <InfoField label="Ano de Ingresso" value={user.anoIngresso} />
               <InfoField label="Conceito" value={user.conceito} />
             </div>
 
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground mb-2">Informações de Acesso</h2>
-                    <div className="p-3 bg-accent border rounded-md">
+              <div className="p-3 bg-accent border rounded-md">
                 <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
                   E-mail de Recuperação
                 </Label>

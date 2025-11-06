@@ -3,10 +3,14 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { ResultadoAnalise } from '@prisma/client';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const user = await getCurrentUser();
-    const parteId = params.id;
+
+    const { id: parteId } = await params;
 
     if (user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -18,17 +22,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Novo resultado é inválido.' }, { status: 400 });
     }
     if (!justificativa) {
-        return NextResponse.json({ error: 'A justificativa é obrigatória para reverter uma decisão.' }, { status: 400 });
+      return NextResponse.json({ error: 'A justificativa é obrigatória para reverter uma decisão.' }, { status: 400 });
     }
 
     const parte = await prisma.parte.findUnique({ where: { id: parteId } });
     if (!parte || parte.status !== 'ANALISADA') {
       return NextResponse.json({ error: 'Apenas partes já analisadas podem ter a decisão revertida.' }, { status: 400 });
     }
-    
- 
+
     const [novaAnalise] = await prisma.$transaction(async (tx) => {
-     
       const analise = await tx.analise.create({
         data: {
           resultado: novoResultado,
@@ -38,20 +40,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         },
       });
 
-   
       const logReversao = await tx.logParte.create({
         data: {
-            acao: `REVERSAO: ${novoResultado}`,
-            detalhes: justificativa,
-            parteId,
-            atorId: user.userId,
+          acao: `REVERSAO: ${novoResultado}`,
+          detalhes: justificativa,
+          parteId,
+          atorId: user.userId,
         }
       });
-      
+
       return [analise, logReversao];
     });
-
-
 
     return NextResponse.json(novaAnalise, { status: 201 });
 
