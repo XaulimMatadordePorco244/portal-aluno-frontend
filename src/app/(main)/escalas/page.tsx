@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import {
   Card,
@@ -19,9 +20,8 @@ type PageProps = {
     filtro?: 'minhas' | 'todas';
   };
 };
-
 async function getEscalasAluno(userId: string, filtro: 'minhas' | 'todas' = 'todas') {
-  const whereClause: any = {
+  const whereClause: Prisma.EscalaWhereInput = {
     status: 'PUBLICADA',
   };
 
@@ -47,6 +47,7 @@ async function getEscalasAluno(userId: string, filtro: 'minhas' | 'todas' = 'tod
 
   return escalas;
 }
+
 
 export default async function AlunoEscalasPage({ searchParams }: PageProps) {
   const user = await getCurrentUser();

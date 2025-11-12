@@ -119,7 +119,7 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
 
   const handleItemChange = (secaoIndex: number, itemIndex: number, field: keyof ItemState, value: string) => {
     const novasSecoes = [...secoes];
-    (novasSecoes[secaoIndex].itens[itemIndex] as any)[field] = value;
+    novasSecoes[secaoIndex].itens[itemIndex] = { ...novasSecoes[secaoIndex].itens[itemIndex], [field]: value };
     setSecoes(novasSecoes);
   };
 

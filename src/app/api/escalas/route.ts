@@ -7,11 +7,11 @@ import { StatusEscala, TipoEscala } from '@prisma/client';
 
 const escalaItemSchema = z.object({
   secao: z.string().min(1, "A seção é obrigatória."),
-  cargo: z.string().min(1, "O cargo/função/tema é obrigatório."), 
+  cargo: z.string().min(1, "O cargo/função/tema é obrigatório."),
   horarioInicio: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)."),
   horarioFim: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)."),
   alunoId: z.string().cuid("ID de usuário inválido."),
-  observacao: z.string().nullable().optional(), 
+  observacao: z.string().nullable().optional(),
 
 });
 
@@ -33,15 +33,19 @@ export async function POST(request: Request) {
 
   let body;
   try {
-      body = await request.json();
+    body = await request.json();
   } catch (error) {
-      return NextResponse.json({ error: 'JSON inválido no corpo da requisição.' }, { status: 400 });
+    console.error('Erro na rota /api/escalas:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 
 
   const validation = createEscalaSchema.safeParse(body);
   if (!validation.success) {
-    
+
     console.error("Erro de validação Zod:", JSON.stringify(validation.error.format(), null, 2));
     return NextResponse.json({ error: 'Dados inválidos', details: validation.error.format() }, { status: 400 });
   }
@@ -62,15 +66,15 @@ export async function POST(request: Request) {
         },
       });
 
-     
+
       const itensParaCriar = itens.map(item => ({
         secao: item.secao,
         cargo: item.cargo,
         horarioInicio: item.horarioInicio,
         horarioFim: item.horarioFim,
         alunoId: item.alunoId,
-        observacao: item.observacao, 
-          escalaId: escala.id,
+        observacao: item.observacao,
+        escalaId: escala.id,
       }));
 
       await tx.escalaItem.createMany({
@@ -83,9 +87,9 @@ export async function POST(request: Request) {
     return NextResponse.json(novaEscala, { status: 201 });
 
   } catch (error) {
-    console.error("Erro ao criar escala no DB:", error); 
-      if (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('P')) {
-       return NextResponse.json({ error: `Erro no banco de dados: ${error.message}` }, { status: 500 });
+    console.error("Erro ao criar escala no DB:", error);
+    if (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('P')) {
+      return NextResponse.json({ error: `Erro no banco de dados: ${error.message}` }, { status: 500 });
     }
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }

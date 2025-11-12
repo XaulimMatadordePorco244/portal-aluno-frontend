@@ -21,48 +21,6 @@ export type EscalaCompleta = Escala & {
   criadoPor: User;
 };
 
-async function getEscalaDetails(id: string): Promise<EscalaCompleta | null> {
-  const escala = await prisma.escala.findUnique({
-    where: { id },
-    include: {
-      itens: {
-        include: {
-          aluno: true,
-        },
-        orderBy: {
-          secao: 'asc',
-        },
-      },
-      criadoPor: true,
-    },
-  });
-
-
-  if (!escala) return null;
-
-
-  const itensComFuncao = await Promise.all(
-    escala.itens.map(async (item) => {
-
-      const alunoComFuncao = await prisma.user.findUnique({
-        where: { id: item.alunoId },
-        include: { funcao: true }
-      });
-
-      return {
-        ...item,
-        funcaoId: alunoComFuncao?.funcao?.id || null
-      };
-    })
-  );
-
-  return {
-    ...escala,
-    itens: itensComFuncao
-  };
-}
-
-
 async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
     where: { id },
@@ -138,7 +96,7 @@ type PageProps = {
 export default async function DetalheEscalaPage({ params }: PageProps) {
   const { id } = params;
 
-  const [escala, formData, currentUser] = await Promise.all([
+  const [escala, formData] = await Promise.all([
     getEscalaDetailsSimple(id), 
     getFormData(),
     getCurrentUser()
