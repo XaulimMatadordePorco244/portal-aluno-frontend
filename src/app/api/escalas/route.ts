@@ -90,3 +90,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }
 }
+//gdgdgd
