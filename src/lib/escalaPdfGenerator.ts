@@ -7,7 +7,7 @@ import { PDFBuilder } from '@/lib/pdfUtils'
 import fs from 'fs'
 import path from 'path'
 
-// Interfaces para tipagem
+
 interface jsPDFWithAutoTable extends jsPDF {
   lastAutoTable?: {
     finalY: number;

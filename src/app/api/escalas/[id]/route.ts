@@ -1,5 +1,3 @@
-// Em: src/app/api/escalas/[id]/route.ts
-
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
@@ -25,14 +23,14 @@ const updateEscalaSchema = z.object({
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json();
 
   const validation = updateEscalaSchema.safeParse(body);
@@ -46,7 +44,7 @@ export async function PUT(
 
     const escalaAntiga = await prisma.escala.findUnique({
       where: { id },
-      select: { pdfUrl: true }, 
+      select: { pdfUrl: true },
     });
 
     if (!escalaAntiga) {
@@ -63,7 +61,7 @@ export async function PUT(
           dataEscala: new Date(dataEscala),
           tipo,
           elaboradoPor,
-          pdfUrl: null, 
+          pdfUrl: null,
         },
       });
 
@@ -80,7 +78,7 @@ export async function PUT(
 
       return escala;
     });
-    
+
 
     if (urlPdfAntigo) {
       await del(urlPdfAntigo);

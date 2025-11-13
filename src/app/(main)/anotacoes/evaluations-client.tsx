@@ -109,9 +109,9 @@ const generateStatement = async () => {
     const nomeFormatado = `${user.cargo?.abreviacao || ''} GM ${user.nomeDeGuerra || user.nome}`;
  
     pdfBuilder
-        .addKeyValueLine('Aluno:', nomeFormatado, { space: 12 })
-        .addKeyValueLine('Data de Emissão:', new Date().toLocaleDateString('pt-BR'), { space: 32 })
-        .addKeyValueLine('Filtro Aplicado:', activeFilter, { space: 27 })
+        .addKeyValueLine('Aluno:', nomeFormatado, { keySpace: 12 })
+        .addKeyValueLine('Data de Emissão:', new Date().toLocaleDateString('pt-BR'), { keySpace: 32 })
+        .addKeyValueLine('Filtro Aplicado:', activeFilter, { keySpace: 27 })
         .addSpacing(5);
 
     autoTable(doc, {

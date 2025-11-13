@@ -90,11 +90,11 @@ async function getFormData() {
 }
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function DetalheEscalaPage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   const [escala, formData] = await Promise.all([
     getEscalaDetailsSimple(id), 
