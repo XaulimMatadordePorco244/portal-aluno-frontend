@@ -10,7 +10,7 @@ const updateStatusSchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
  
   const user = await getCurrentUser();
@@ -18,7 +18,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json();
 
   const validation = updateStatusSchema.safeParse(body);

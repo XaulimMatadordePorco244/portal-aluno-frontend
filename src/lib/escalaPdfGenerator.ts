@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import autoTable, { UserOptions } from 'jspdf-autotable'
+import autoTable, { UserOptions, CellHookData, RowInput } from 'jspdf-autotable'
 import { EscalaCompleta } from '@/app/admin/escalas/[id]/page'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -7,11 +7,68 @@ import { PDFBuilder } from '@/lib/pdfUtils'
 import fs from 'fs'
 import path from 'path'
 
+
 interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: UserOptions) => jsPDF
+  lastAutoTable?: {
+    finalY: number;
+  };
+  autoTable: (options: UserOptions) => jsPDF;
 }
 
-const GABARITO_COLABORACAO = {
+interface SecaoGabarito {
+  nome: string;
+  total: number;
+  categoriaEsperada: string;
+  permiteMultiplosItens: boolean;
+  isSecaoAdmin: boolean;
+  isSecaoPalestrante: boolean;
+  itemFuncoes: string[];
+}
+
+interface GabaritoColaboracao {
+  fardamento: string;
+  observacoes: string;
+  secoes: SecaoGabarito[];
+}
+
+interface TableStyles {
+  fontSize: number;
+  font: string;
+  cellPadding: number | { top: number; right: number; bottom: number; left: number };
+  lineColor: [number, number, number];
+  lineWidth: number;
+  valign: 'middle' | 'top' | 'bottom';
+  minCellHeight: number;
+  halign: 'left' | 'center' | 'right';
+}
+
+interface HeadStyle {
+  fontStyle: 'bold' | 'normal' | 'italic';
+  fillColor: [number, number, number];
+  textColor: number;
+  halign: 'left' | 'center' | 'right';
+  cellPadding: number | { top: number; right: number; bottom: number; left: number };
+  fontSize: number;
+  font: string;
+  lineWidth: number;
+}
+
+interface CellContent {
+  content: string;
+  styles: Partial<HeadStyle> & { 
+    halign?: 'left' | 'center' | 'right';
+    fontStyle?: 'bold' | 'normal' | 'italic';
+  };
+  colSpan?: number;
+}
+
+interface ColumnStyle {
+  cellWidth: number | 'auto';
+  halign: 'left' | 'center' | 'right';
+  fontStyle?: 'bold' | 'normal' | 'italic';
+}
+
+const GABARITO_COLABORACAO: GabaritoColaboracao = {
   fardamento: "- OS COMANDOS: COMPARECER FARDADOS.\n- OS ESCALADOS PARA LIMPEZA: COMPARECER DE TFM.\n- OS DEMAIS ALUNOS SE APRESETAR DE UNIFORME 1.",
   observacoes: "- O HASTEAMENTO DO PAVILHÃO NACIONAL: 13:25H.\n- SUSPENSÃO (-4 PONTOS): SERÁ APLICADA AO ALUNO QUE NÃO FIZER A PALESTRA, FALTAR OU CHEGAR À ESCALA APÓS ÀS 13:26H ( SALVO OS CASOS DEVIDAMENTE JUSTIFICADOS ).\n- A PALESTRA DEVERÁ TER O TEMPO DE 3MIN À 5MIN.\n- O COMANDANTE DO DIA É O RESPONSÁVEL POR FISCALIZAR O ANDAMENTO DAS ATIVIDADES REALIZADAS PELOS OS ALUNOS DA ESCALA EXTRA.",
   secoes: [
@@ -48,7 +105,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
     return typeof Buffer !== 'undefined' ? Buffer.from(bytes).toString('base64') : '';
   }
 
-  private async loadFonts() {
+  private async loadFonts(): Promise<void> {
     try {
       let arialBase64: string;
       let arialBoldBase64: string;
@@ -93,7 +150,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
     }
   }
 
-  addHeader() {
+  addHeader(): this {
     super.addHeader()
     const data = new Date(this.escala.dataEscala)
     const dataCorrigida = new Date(data.valueOf() + data.getTimezoneOffset() * 60 * 1000)
@@ -113,21 +170,23 @@ export class EscalaPDFBuilder extends PDFBuilder {
     this.doc.line(startX, lineY, startX + textWidth, lineY)
     this.currentY = subtitleY + 4
     this.doc.setFont('Arial', 'normal')
+    return this
   }
 
-  addFooter() {
+  addFooter(): this {
     super.addFooter()
+    return this
   }
 
-  private addScaleContent() {
+  private addScaleContent(): void {
     const secoes = this.escala.itens.reduce((acc, item) => {
       const secaoKey = item.secao.toUpperCase()
       acc[secaoKey] = acc[secaoKey] || []
       acc[secaoKey].push(item)
       return acc
-    }, {} as Record<string, EscalaCompleta['itens']>)
+    }, {} as Record<string, typeof this.escala.itens>)
 
-    const checkPageBreak = (neededHeight: number = 10) => {
+    const checkPageBreak = (neededHeight: number = 10): void => {
       if (this.currentY + neededHeight > this.pageHeight - this.margin - 10) {
         this.doc.addPage()
         this.currentY = this.margin + 10
@@ -140,22 +199,22 @@ export class EscalaPDFBuilder extends PDFBuilder {
       return (orderA === -1 ? 99 : orderA) - (orderB === -1 ? 99 : orderB)
     })
 
-    const commonTableStyles = {
+    const commonTableStyles: TableStyles = {
       fontSize: 8.5,
       font: 'Arial',
       cellPadding: 0.2,
-      lineColor: [0, 0, 0] as [number, number, number],
+      lineColor: [0, 0, 0],
       lineWidth: 0.3,
-      valign: 'middle' as any,
+      valign: 'middle',
       minCellHeight: 4,
-      halign: 'center' as any
+      halign: 'center'
     }
 
-    const headStyleDefault = {
+    const headStyleDefault: HeadStyle = {
       fontStyle: 'bold',
       fillColor: [220, 220, 220],
       textColor: 0,
-      halign: 'center' as any,
+      halign: 'center',
       cellPadding: { top: 0.2, right: 0.2, bottom: 0.2, left: -9 },
       fontSize: 8.5,
       font: 'Arial',
@@ -167,9 +226,9 @@ export class EscalaPDFBuilder extends PDFBuilder {
       if (!itensSecao || itensSecao.length === 0) continue
       checkPageBreak(8)
 
-      let body: (string | { content: string; styles: any })[][] = []
-      let columnStyles: { [key: number]: any } = {}
-      let head: (string | { content: string; styles: any, colSpan?: number })[][] = []
+      let body: CellContent[][] = []
+      let columnStyles: { [key: number]: ColumnStyle } = {}
+      let head: CellContent[][] = []
 
       if (nomeSecao === 'PALESTRANTE') {
         head = [[
@@ -181,15 +240,24 @@ export class EscalaPDFBuilder extends PDFBuilder {
         ]]
 
         body = itensSecao.map(item => [
-          { content: item.cargo.toUpperCase(), styles: { fontStyle: 'bold', halign: 'center' as any } },
-          { content: item.aluno?.nomeDeGuerra?.toUpperCase() || 'N/A', styles: { halign: 'center' as any } },
-          { content: item.observacao?.toUpperCase() || '', styles: { halign: 'center' as any, fontStyle: 'normal' } }
+          { 
+            content: item.cargo.toUpperCase(), 
+            styles: { fontStyle: 'bold', halign: 'center' } 
+          },
+          { 
+            content: item.aluno?.nomeDeGuerra?.toUpperCase() || 'N/A', 
+            styles: { halign: 'center' } 
+          },
+          { 
+            content: item.observacao?.toUpperCase() || '', 
+            styles: { halign: 'center', fontStyle: 'normal' } 
+          }
         ])
 
         columnStyles = {
-          0: { cellWidth: 65, halign: 'center' as any },
-          1: { cellWidth: 40, halign: 'center' as any },
-          2: { cellWidth: 'auto', halign: 'center' as any }
+          0: { cellWidth: 65, halign: 'center' },
+          1: { cellWidth: 40, halign: 'center' },
+          2: { cellWidth: 'auto', halign: 'center' }
         }
 
       } else {
@@ -202,22 +270,31 @@ export class EscalaPDFBuilder extends PDFBuilder {
         ]]
 
         body = itensSecao.map(item => [
-          { content: item.cargo.toUpperCase(), styles: { fontStyle: 'bold', halign: 'center' as any } },
-          { content: `${item.horarioInicio} – ${item.horarioFim}`, styles: { fontStyle: 'bold', halign: 'center' as any } },
-          { content: item.aluno?.nomeDeGuerra?.toUpperCase() || 'N/A', styles: { halign: 'center' as any } }
+          { 
+            content: item.cargo.toUpperCase(), 
+            styles: { fontStyle: 'bold', halign: 'center' } 
+          },
+          { 
+            content: `${item.horarioInicio} – ${item.horarioFim}`, 
+            styles: { fontStyle: 'bold', halign: 'center' } 
+          },
+          { 
+            content: item.aluno?.nomeDeGuerra?.toUpperCase() || 'N/A', 
+            styles: { halign: 'center' } 
+          }
         ])
 
         columnStyles = {
-          0: { cellWidth: 65, halign: 'center' as any },
-          1: { cellWidth: 40, halign: 'center' as any },
-          2: { cellWidth: 'auto', halign: 'center' as any }
+          0: { cellWidth: 65, halign: 'center' },
+          1: { cellWidth: 40, halign: 'center' },
+          2: { cellWidth: 'auto', halign: 'center' }
         }
       }
 
       autoTable(this.doc as jsPDFWithAutoTable, {
         startY: this.currentY,
-        head: head,
-        body: body,
+        head: head as RowInput[],
+        body: body as RowInput[],
         theme: 'grid',
         styles: commonTableStyles,
         headStyles: {
@@ -225,7 +302,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
           textColor: 0,
           lineWidth: 0.3,
           fontStyle: 'bold',
-          halign: 'center' as any,
+          halign: 'center',
           cellPadding: 0.2,
           font: 'Arial'
         },
@@ -233,15 +310,15 @@ export class EscalaPDFBuilder extends PDFBuilder {
           fillColor: [255, 255, 255],
           textColor: 0,
           lineWidth: 0.3,
-          halign: 'center' as any,
+          halign: 'center',
           cellPadding: 0.2,
           font: 'Arial'
         },
-        columnStyles: columnStyles,
+        columnStyles: columnStyles as unknown as { [key: string]: Partial<TableStyles> },
         margin: { left: this.margin, right: this.margin },
         tableWidth: 'auto',
 
-        didDrawCell: (data) => {
+        didDrawCell: (data: CellHookData) => {
           if (data.section === 'body') {
             const titleCell = data.table.head[0].cells[0];
 
@@ -265,7 +342,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
                 this.doc.rect(cell.x, cell.y, cell.width, cell.height, 'F');
                 this.doc.restoreGraphicsState();
 
-                const textX = cell.x + (cell.padding('left') || commonTableStyles.cellPadding || 0.2);
+                const textX = cell.x + (cell.padding('left') || 0.2);
                 const textY = cell.y + cell.height / 2;
 
                 this.doc.setFont('Arial', 'bold');
@@ -289,10 +366,10 @@ export class EscalaPDFBuilder extends PDFBuilder {
         }
       })
 
-      this.currentY = (this.doc as any).lastAutoTable.finalY + 2
+      this.currentY = (this.doc as jsPDFWithAutoTable).lastAutoTable?.finalY ?? this.currentY + 2
     }
 
-    const addSingleColumnSection = (title: string, text: string | null | undefined) => {
+    const addSingleColumnSection = (title: string, text: string | null | undefined): void => {
       if (!text || text.trim() === '') return
       checkPageBreak(15)
 
@@ -305,43 +382,35 @@ export class EscalaPDFBuilder extends PDFBuilder {
               fontStyle: 'bold',
               fillColor: [220, 220, 220],
               textColor: 0,
-              halign: 'center' as any,
+              halign: 'center',
               cellPadding: { top: 0.2, right: 0.2, bottom: 0.2, left: 0.2 },
               fontSize: 8.5,
               font: 'Arial',
               lineWidth: 0.3
             }
           }
-        ]],
+        ]] as RowInput[],
         body: [[
           {
             content: text.toUpperCase(),
             styles: {
               fontStyle: 'normal',
-              halign: 'left' as any,
+              halign: 'left',
               cellPadding: { top: 2.2, right: 2.2, bottom: 2.2, left: 2.2 },
               fontSize: 8.5,
               minCellHeight: 8,
               font: 'Arial'
             }
           }
-        ]],
+        ]] as RowInput[],
         theme: 'grid',
-        styles: {
-          fontSize: 8.5,
-          font: 'Arial',
-          cellPadding: 0.2,
-          lineColor: [0, 0, 0] as [number, number, number],
-          lineWidth: 0.3,
-          valign: 'middle' as any,
-          halign: 'center' as any
-        },
+        styles: commonTableStyles,
         headStyles: {
           fillColor: [220, 220, 220],
           textColor: 0,
           lineWidth: 0.3,
           fontStyle: 'bold',
-          halign: 'center' as any,
+          halign: 'center',
           cellPadding: 0.2,
           font: 'Arial'
         },
@@ -349,16 +418,16 @@ export class EscalaPDFBuilder extends PDFBuilder {
           fillColor: [255, 255, 255],
           textColor: 0,
           lineWidth: 0.3,
-          halign: 'left' as any,
+          halign: 'left',
           cellPadding: 1.2,
           font: 'Arial'
         },
         columnStyles: {
           0: {
             cellWidth: this.pageWidth - this.margin * 2,
-            halign: 'left' as any
+            halign: 'left'
           }
-        },
+        } as unknown as { [key: string]: Partial<TableStyles> },
         margin: { left: this.margin, right: this.margin },
         tableWidth: 'auto',
         didDrawPage: data => {
@@ -370,7 +439,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
         }
       })
 
-      this.currentY = (this.doc as any).lastAutoTable.finalY + 2
+      this.currentY = (this.doc as jsPDFWithAutoTable).lastAutoTable?.finalY ?? this.currentY + 2
     }
 
     addSingleColumnSection('FARDAMENTO', this.escala.fardamento)
@@ -378,24 +447,24 @@ export class EscalaPDFBuilder extends PDFBuilder {
 
     checkPageBreak(15)
 
-    const signatureTableStyles = {
+    const signatureTableStyles: TableStyles = {
       fontSize: 8.5,
       font: 'Arial',
       cellPadding: { top: 1.2, right: 1.2, bottom: 1.2, left: 1.2 },
-      lineColor: [0, 0, 0] as [number, number, number],
+      lineColor: [0, 0, 0],
       lineWidth: 0.3,
-      valign: 'middle' as any,
+      valign: 'middle',
       minCellHeight: 8,
-      halign: 'center' as any
+      halign: 'center'
     }
 
     autoTable(this.doc as jsPDFWithAutoTable, {
       startY: this.currentY,
       body: [[
-        { content: 'ELABORADO', styles: { fontStyle: 'bold', halign: 'center' as any } },
-        { content: 'Revisado: 29/09/25\nAUX. ADM. ISABELY', styles: { halign: 'center' as any } },
-        { content: 'CONFERIDO', styles: { fontStyle: 'bold', halign: 'center' as any } }
-      ]],
+        { content: 'ELABORADO', styles: { fontStyle: 'bold', halign: 'center' } },
+        { content: 'Revisado: 29/09/25\nAUX. ADM. ISABELY', styles: { halign: 'center' } },
+        { content: 'CONFERIDO', styles: { fontStyle: 'bold', halign: 'center' } }
+      ]] as RowInput[],
       theme: 'grid',
       styles: signatureTableStyles,
       bodyStyles: {
@@ -407,15 +476,15 @@ export class EscalaPDFBuilder extends PDFBuilder {
         font: 'Arial'
       },
       columnStyles: {
-        0: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' as any },
-        1: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' as any },
-        2: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' as any }
-      },
+        0: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' },
+        1: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' },
+        2: { cellWidth: (this.pageWidth - this.margin * 2) / 3, halign: 'center' }
+      } as unknown as { [key: string]: Partial<TableStyles> },
       margin: { left: this.margin, right: this.margin },
       tableWidth: 'auto'
     })
 
-    this.currentY = (this.doc as any).lastAutoTable.finalY + 10
+    this.currentY = (this.doc as jsPDFWithAutoTable).lastAutoTable?.finalY ?? this.currentY + 10
 
     this.doc.setFontSize(9)
     this.doc.setFont('Arial', 'bold')

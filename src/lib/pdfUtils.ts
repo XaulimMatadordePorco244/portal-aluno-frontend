@@ -1,5 +1,100 @@
 import jsPDF from 'jspdf';
 
+// Interface para estender o jsPDF com métodos que precisamos
+interface jsPDFExtended extends jsPDF {
+  getLineHeightFactor: () => number;
+  splitTextToSize: (text: string, maxWidth: number) => string[];
+  // Para compatibilidade com autoTable
+  autoTable?: (options: UserOptions) => jsPDF;
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
+
+// Interface para as opções do autoTable (simplificada)
+interface UserOptions {
+  startY?: number;
+  head?: RowInput[];
+  body?: RowInput[];
+  theme?: string;
+  styles?: TableStyles;
+  headStyles?: HeadStyles;
+  bodyStyles?: BodyStyles;
+  columnStyles?: { [key: string]: Partial<TableStyles> };
+  margin?: { left: number; right: number };
+  tableWidth?: 'auto' | number;
+  didDrawCell?: (data: CellHookData) => void;
+  didDrawPage?: (data: unknown) => void;
+}
+
+interface TableStyles {
+  fontSize: number;
+  font: string;
+  cellPadding: number | { top: number; right: number; bottom: number; left: number };
+  lineColor: [number, number, number];
+  lineWidth: number;
+  valign: 'middle' | 'top' | 'bottom';
+  minCellHeight: number;
+  halign: 'left' | 'center' | 'right';
+}
+
+interface HeadStyles {
+  fillColor: [number, number, number];
+  textColor: number;
+  lineWidth: number;
+  fontStyle: 'bold' | 'normal' | 'italic';
+  halign: 'left' | 'center' | 'right';
+  cellPadding: number;
+  font: string;
+}
+
+interface BodyStyles {
+  fillColor: [number, number, number];
+  textColor: number;
+  lineWidth: number;
+  halign: 'left' | 'center' | 'right';
+  cellPadding: number;
+  font: string;
+}
+
+type RowInput = string[] | { content: string; styles?: Record<string, unknown>; colSpan?: number }[][];
+
+interface CellHookData {
+  section: 'head' | 'body' | 'foot';
+  column: {
+    index: number;
+  };
+  cell: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text?: string[];
+    padding: (side: string) => number;
+  };
+  table: {
+    head: {
+      cells: {
+        raw: unknown;
+      }[][];
+    };
+  };
+}
+
+// Interface para o objeto interno do jsPDF
+interface jsPDFInternal {
+  getNumberOfPages: () => number;
+  pageSize: {
+    getWidth: () => number;
+    getHeight: () => number;
+  };
+}
+
+// Interface para o GState do jsPDF
+interface GState {
+  opacity: number;
+}
+
 async function toBase64(url: string): Promise<string> {
   let absoluteUrl = url;
   if (!url.startsWith('http')) {
@@ -31,7 +126,7 @@ async function toBase64(url: string): Promise<string> {
 }
 
 export class PDFBuilder {
-  doc: jsPDF;
+  doc: jsPDFExtended;
   pageWidth: number;
   pageHeight: number;
   margin: number;
@@ -40,14 +135,15 @@ export class PDFBuilder {
   currentY: number;
 
   constructor(margin = 25) {
-    this.doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    // Conversão segura para o tipo estendido
+    this.doc = new jsPDF({ unit: 'mm', format: 'a4' }) as unknown as jsPDFExtended;
     this.pageWidth = this.doc.internal.pageSize.getWidth();
     this.pageHeight = this.doc.internal.pageSize.getHeight();
     this.margin = margin;
     this.currentY = this.margin;
   }
 
-  async init() {
+  async init(): Promise<void> {
     try {
       const logoPath = '/img/logo.png';
       const watermarkPath = '/img/logo.png';
@@ -61,7 +157,7 @@ export class PDFBuilder {
     }
   }
 
-  addHeader() {
+  addHeader(): this {
     if (this.logoBase64) {
       const logoY = this.margin - 10;
       const logoSize = 27;
@@ -85,10 +181,13 @@ export class PDFBuilder {
 
     this.currentY = lineY + 10;
     this.doc.setFont('helvetica', 'normal');
-      }
+    return this;
+  }
 
-  addFooter() {
-    const pageCount = (this.doc as any).internal.getNumberOfPages();
+  addFooter(): this {
+    // Usando uma abordagem mais segura para obter o número de páginas
+    const internal = this.doc.internal as unknown as jsPDFInternal;
+    const pageCount = internal.getNumberOfPages?.() || 1;
     const footerStartY = this.pageHeight - this.margin;
 
     for (let i = 1; i <= pageCount; i++) {
@@ -108,17 +207,19 @@ export class PDFBuilder {
       this.doc.text('Contato: (67) 99999-4341 / e-mail: gmnaviraims@gmail.com', this.pageWidth / 2, textY2, {
         align: 'center',
       });
-
-   
     }
 
     this.doc.setTextColor(0);
     this.doc.setFont('helvetica', 'normal');
+    return this;
   }
 
-  addWatermark() {
-    if (!this.watermarkBase64) return;
-    const pageCount = (this.doc as any).internal.getNumberOfPages();
+  addWatermark(): this {
+    if (!this.watermarkBase64) return this;
+    
+    // Abordagem segura para obter número de páginas
+    const internal = this.doc.internal as unknown as jsPDFInternal;
+    const pageCount = internal.getNumberOfPages?.() || 1;
     const imgWidth = 150;
     const imgHeight = 150;
     const imgX = (this.pageWidth - imgWidth) / 2;
@@ -128,12 +229,22 @@ export class PDFBuilder {
       this.doc.setPage(i);
       this.doc.saveGraphicsState();
       try {
-        const GState = (this.doc as any).GState;
-        if (GState) this.doc.setGState(new GState({ opacity: 0.1 }));
-      } catch {}
+        // Abordagem mais segura para verificar e usar GState
+        // Primeiro tentamos acessar via propriedade do documento
+        const docAny = this.doc as unknown as Record<string, unknown>;
+        const GStateConstructor = docAny.GState as unknown as (new (options: { opacity: number }) => GState) | undefined;
+        
+        if (GStateConstructor && typeof GStateConstructor === 'function') {
+          const gstateInstance = new GStateConstructor({ opacity: 0.1 });
+          this.doc.setGState(gstateInstance);
+        }
+      } catch (error: unknown) {
+        console.warn('GState não disponível para opacidade:', error);
+      }
       this.doc.addImage(this.watermarkBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
       this.doc.restoreGraphicsState();
     }
+    return this;
   }
 
   getTextHeight(text: string | string[], fontSize: number, maxWidth: number): number {
@@ -143,7 +254,7 @@ export class PDFBuilder {
     return lines.length * fontHeightInPoints * pointsToMm;
   }
 
-  addTitle(text: string, fontSize = 14, spacingAfter = 5) {
+  addTitle(text: string, fontSize = 14, spacingAfter = 5): this {
     if (this.currentY < this.margin) this.currentY = this.margin;
     const textHeight = this.getTextHeight(text, fontSize, this.pageWidth - this.margin * 2);
     if (this.currentY + textHeight > this.pageHeight - this.margin) {
@@ -159,7 +270,7 @@ export class PDFBuilder {
     return this;
   }
 
-  addParagraph(text: string | string[], align: 'left' | 'center' | 'right' | 'justify' = 'justify', fontSize = 11, spacingAfter = 3) {
+  addParagraph(text: string | string[], align: 'left' | 'center' | 'right' | 'justify' = 'justify', fontSize = 11, spacingAfter = 3): this {
     if (!text) return this;
     if (this.currentY < this.margin) this.currentY = this.margin;
     const maxWidth = this.pageWidth - this.margin * 2;
@@ -178,7 +289,7 @@ export class PDFBuilder {
     return this;
   }
 
-  addKeyValueLine(key: string, value: string, options?: { keySpace?: number; valueAlign?: 'left' | 'right' | 'center'; fontSize?: number; spacingAfter?: number }) {
+  addKeyValueLine(key: string, value: string, options?: { keySpace?: number; valueAlign?: 'left' | 'right' | 'center'; fontSize?: number; spacingAfter?: number }): this {
     if (this.currentY < this.margin) this.currentY = this.margin;
     const keySpace = options?.keySpace ?? 35;
     const valueAlign = options?.valueAlign ?? 'left';
@@ -208,7 +319,7 @@ export class PDFBuilder {
     return this;
   }
 
-  addSignatureLine(name: string, role: string) {
+  addSignatureLine(name: string, role: string): this {
     const signatureBlockHeight = 20;
     const signatureY = this.pageHeight - this.margin - signatureBlockHeight;
 
@@ -233,7 +344,7 @@ export class PDFBuilder {
     return this;
   }
 
-  addSpacing(spaceInMm = 5) {
+  addSpacing(spaceInMm = 5): this {
     if (this.currentY < this.margin) this.currentY = this.margin;
     const nextY = this.currentY + spaceInMm;
     if (nextY > this.pageHeight - this.margin) {
