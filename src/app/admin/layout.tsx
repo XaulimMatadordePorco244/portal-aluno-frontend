@@ -2,6 +2,15 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { getCurrentUserWithRelations, canAccessAdminArea } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Portal do Admin - Guarda Mirim",
+  description: "Portal do Admin Guarda Mirim de Naviraí-MS",
+  icons: {
+    icon: "/img/logo.png",
+  },
+};
 
 export default async function AdminLayout({
     children,

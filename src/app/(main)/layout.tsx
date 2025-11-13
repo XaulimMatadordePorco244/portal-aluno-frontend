@@ -1,5 +1,14 @@
 import { Header } from "@/components/header";
 import { getCurrentUser } from "@/lib/auth";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Portal do Aluno - Guarda Mirim",
+  description: "Portal do aluno Guarda Mirim de Naviraí-MS",
+  icons: {
+    icon: "/img/logo.png",
+  },
+};
 
 export default async function MainLayout({
   children,
