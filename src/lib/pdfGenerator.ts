@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
-import { Parte, User, Cargo } from '@prisma/client';
+import { Parte, Usuario, Cargo } from '@prisma/client';
 
 type ParteData = Parte & {
-    autor: User & { cargo: Cargo | null }
+    autor: Usuario & { cargo: Cargo | null }
 };
 
 const toBase64 = async (url: string) => {

@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from 'lucide-react';
-import { User, Cargo } from '@prisma/client';
+import { Usuario, Cargo } from '@prisma/client';
 
-type UserWithCargo = User & {
+type UserWithCargo = Usuario & {
   cargo?: Cargo | null;
+  companhia?: { nome: string } | null;
 };
 
 const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
@@ -78,7 +79,7 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
             
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground mb-2">Dados Institucionais</h2>
-              <InfoField label="Companhia" value={user.companhia} />
+              <InfoField label="Companhia" value={user.companhia?.nome} />
               <InfoField label="Graduação/Posto" value={user.cargo?.nome} />
               <InfoField label="Ano de Ingresso" value={user.anoIngresso} />
               <InfoField label="Conceito" value={user.conceito} />

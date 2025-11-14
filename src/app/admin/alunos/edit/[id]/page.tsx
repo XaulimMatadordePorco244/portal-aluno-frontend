@@ -10,8 +10,9 @@ export default async function EditAlunoPage({
 }) {
   const { id } = await params;
   
-  const aluno = await prisma.user.findUnique({
+  const aluno = await prisma.usuario.findUnique({
     where: { id },
+    include: { companhia: true },
   });
 
   if (!aluno) {

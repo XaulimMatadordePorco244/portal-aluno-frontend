@@ -40,7 +40,7 @@ export default async function AlunoQESPage() {
                   <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow flex items-end">
+              <CardContent className="grow flex items-end">
                 <Button asChild className="w-full">
                   <Link href={qes.arquivoUrl} target="_blank" rel="noopener noreferrer">
                     <Download className="mr-2 h-4 w-4" />

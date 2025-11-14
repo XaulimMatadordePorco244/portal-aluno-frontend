@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User } from '@prisma/client';
+import { Usuario } from '@prisma/client';
 import Image from 'next/image';
 
 function SubmitButton() {
@@ -32,11 +32,12 @@ const cargosPadrao = [
 ];
 
 
-type UserWithCargoString = User & {
+type UsuarioWithCargoString = Usuario & {
   cargo?: string | null;
+  companhia?: { nome: string } | null;
 };
 
-export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString }) {
+export default function EditAlunoForm({ aluno }: { aluno: UsuarioWithCargoString }) {
   const [state, formAction] = useActionState(updateAluno, undefined);
 
  
@@ -81,7 +82,7 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
         </div>
         <div className="space-y-2">
           <Label htmlFor="companhia">Companhia</Label>
-          <Select name="companhia" required defaultValue={aluno.companhia || ''}>
+          <Select name="companhia" required defaultValue={aluno.companhia?.nome || ''}>
             <SelectTrigger><SelectValue placeholder="Selecione a companhia" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="1ª Companhia">1ª Companhia</SelectItem>
@@ -91,7 +92,7 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
               <SelectItem value="5ª Companhia">5ª Companhia</SelectItem>
             </SelectContent>
           </Select>
-          {state?.errors?.companhia && <p className="text-sm text-red-500 mt-1">{state.errors.companhia[0]}</p>}
+          {state?.errors?.companhiaId && <p className="text-sm text-red-500 mt-1">{state.errors.companhiaId[0]}</p>}
         </div>
       </div>
 

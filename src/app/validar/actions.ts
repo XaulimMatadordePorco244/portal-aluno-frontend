@@ -21,7 +21,7 @@ export async function validateUserByNumber(
   let user;
   try {
   
-    user = await prisma.user.findUnique({
+    user = await prisma.usuario.findUnique({
       where: { numero: numero.trim() },
     });
 

@@ -15,7 +15,7 @@ export default async function ResetPasswordPage({
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.usuario.findFirst({
         where: {
             passwordResetToken: hashedToken,
             passwordResetExpires: {

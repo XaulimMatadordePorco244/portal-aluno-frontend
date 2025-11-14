@@ -3,9 +3,12 @@ import AnotacaoForm from "./anotacao-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 async function getData() {
-  const alunos = await prisma.user.findMany({
+  const alunos = await prisma.usuario.findMany({
     where: { role: 'ALUNO', status: 'ATIVO' },
     orderBy: { nome: 'asc' },
+    include: { 
+      companhia: true 
+    },
   });
 
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({

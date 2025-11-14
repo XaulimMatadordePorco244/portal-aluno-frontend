@@ -3,22 +3,22 @@ import { notFound } from "next/navigation";
 import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
-import { Cargo, Funcao, User, Escala, EscalaItem } from "@prisma/client";
+import { Cargo, Funcao, Usuario, Escala, EscalaItem } from "@prisma/client";
 
-export type UserComCargoEFuncao = User & {
+export type UserComCargoEFuncao = Usuario & {
   funcao: Funcao | null;
   cargo: Cargo | null;
 };
 
 
 export type EscalaItemCompleto = EscalaItem & {
-  aluno: User;
+  aluno: Usuario;
   funcaoId: string | null; 
 };
 
 export type EscalaCompleta = Escala & {
   itens: EscalaItemCompleto[]; 
-  criadoPor: User;
+  criadoPor: Usuario;
 };
 
 async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
@@ -55,7 +55,7 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
 
 async function getFormData() {
   const [alunos, admins, funcoes] = await Promise.all([
-    prisma.user.findMany({
+    prisma.usuario.findMany({
       where: { role: 'ALUNO', status: 'ATIVO' },
       include: {
         funcao: true,
@@ -65,7 +65,7 @@ async function getFormData() {
         cargo: { precedencia: 'asc' }
       }
     }),
-    prisma.user.findMany({
+    prisma.usuario.findMany({
       where: { role: 'ADMIN' },
       include: {
         funcao: true,

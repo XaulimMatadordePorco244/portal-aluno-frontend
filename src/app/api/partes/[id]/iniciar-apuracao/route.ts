@@ -23,7 +23,7 @@ export async function POST(
       return NextResponse.json({ error: 'Este processo não pode ser iniciado ou já foi iniciado.' }, { status: 400 });
     }
 
-    const oficiais = await prisma.user.findMany({
+    const oficiais = await prisma.usuario.findMany({
       where: {
         cargo: {
           tipo: 'POSTO',
@@ -42,7 +42,7 @@ export async function POST(
         data: {
           processoId: parteId,
           titulo: "Parecer do Oficial Investigador",
-          status: "Pendente",
+          status: "PENDENTE",
           responsavelId: oficialSorteado.id,
         }
       });
@@ -50,7 +50,7 @@ export async function POST(
         data: {
           processoId: parteId,
           titulo: "Parecer da Coordenação",
-          status: "Aguardando Etapa Anterior",
+          status: "EM_ANALISE",
         }
       });
     });

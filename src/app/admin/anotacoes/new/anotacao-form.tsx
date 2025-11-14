@@ -14,10 +14,14 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnotacao } from '../actions';
 import Link from 'next/link';
-import { User, TipoDeAnotacao } from '@prisma/client';
+import { Usuario, TipoDeAnotacao, Companhia} from '@prisma/client';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FormState } from '../actions';
+
+type AlunoComCompanhia = Usuario & {
+  companhia: Companhia | null;
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -33,12 +37,12 @@ function SubmitButton() {
 
 const initialState: FormState = {};
 
-export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User[], tiposDeAnotacao: TipoDeAnotacao[] }) {
+export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: AlunoComCompanhia[], tiposDeAnotacao: TipoDeAnotacao[] }) {
 
   const [state, formAction] = useActionState<FormState, FormData>(createAnotacao, initialState);
 
   const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
-  const [selectedAlunos, setSelectedAlunos] = useState<User[]>([]);
+  const [selectedAlunos, setSelectedAlunos] = useState<Usuario[]>([]);
 
   const [selectedTipo, setSelectedTipo] = useState<TipoDeAnotacao | null>(null);
   const [pontos, setPontos] = useState<number | string>('');
@@ -49,7 +53,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
     else setPontos('');
   }, [selectedTipo]);
 
-  const companhias = useMemo(() => [...new Set(alunos.map(a => a.companhia).filter(Boolean))], [alunos]) as string[];
+  const companhias = useMemo(() => [...new Set(alunos.map(a => a.companhia?.nome).filter(Boolean))], [alunos]) as string[];
 
   const { positivas, negativas } = useMemo(() => {
     const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0);
@@ -58,11 +62,11 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
   }, [tiposDeAnotacao]);
 
   const handleCompanhiaChange = (companhia: string) => {
-    const alunosDaCompanhia = alunos.filter(a => a.companhia === companhia);
+    const alunosDaCompanhia = alunos.filter(a => a.companhia?.nome === companhia);
     setSelectedAlunos(alunosDaCompanhia);
   };
 
-  const handleAlunoSelect = (aluno: User) => {
+  const handleAlunoSelect = (aluno: Usuario) => {
     setSelectedAlunos(prev => prev.find(a => a.id === aluno.id) ? prev : [...prev, aluno]);
   };
 

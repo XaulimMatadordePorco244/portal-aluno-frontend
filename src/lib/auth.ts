@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, User, Funcao, Cargo } from '@prisma/client';
+import { PrismaClient, Usuario, Funcao, Cargo } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -35,7 +35,7 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
 }
 
 
-export type UserWithRelations = User & {
+export type UserWithRelations = Usuario & {
     funcao: Funcao | null;
     cargo: Cargo | null;
 };
@@ -47,13 +47,14 @@ export async function getCurrentUserWithRelations(): Promise<UserWithRelations |
   }
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: {
         id: sessionUser.userId,
       },
       include: {
         funcao: true,
         cargo: true, 
+        companhia: true,
       },
     });
     return user as UserWithRelations  | null;

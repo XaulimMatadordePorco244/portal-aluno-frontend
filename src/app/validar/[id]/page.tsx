@@ -7,7 +7,7 @@ import FormattedName from '@/components/FormattedName';
 const prisma = new PrismaClient();
 
 async function getAlunoPorId(validationId: string) {
-  const aluno = await prisma.user.findUnique({
+  const aluno = await prisma.usuario.findUnique({
     where: { validationId: validationId },
     select: { 
       nome: true, 
@@ -42,7 +42,7 @@ export default async function PaginaValidacao({
     );
   }
 
-  const isAtivo = aluno.status === 'Ativo';
+  const isAtivo = aluno.status === 'ATIVO';
 
   const initials = aluno.nome.split(' ').map(n => n[0]).join('').toUpperCase();
 

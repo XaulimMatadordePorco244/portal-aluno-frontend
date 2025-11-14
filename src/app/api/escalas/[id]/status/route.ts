@@ -45,7 +45,7 @@ export async function PATCH(
       where: { id },
       data: {
         status: novoStatus,
-              publicadoEm: novoStatus === 'PUBLICADA' ? new Date() : escalaAtual.publicadoEm,
+              publishedAt: novoStatus === 'PUBLICADA' ? new Date() : escalaAtual.publishedAt,
       },
     });
 

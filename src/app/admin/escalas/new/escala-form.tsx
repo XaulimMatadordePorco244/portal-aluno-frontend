@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Funcao, TipoEscala, User } from '@prisma/client';
+import { Funcao, TipoEscala, Usuario } from '@prisma/client';
 import { toast } from 'sonner';
 import { PlusCircle, Save, Trash2, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,7 +37,7 @@ type SecaoState = {
   itens: ItemState[];
 };
 
-type UserComFuncao = User & { funcao: Funcao | null };
+type UserComFuncao = Usuario & { funcao: Funcao | null };
 
 export const GABARITO_COLABORACAO = {
   fardamento: "- OS COMANDOS: COMPARECER FARDADOS.\n- OS ESCALADOS PARA LIMPEZA: COMPARECER DE TFM.\n- OS DEMAIS ALUNOS SE APRESETAR DE UNIFORME 1.",

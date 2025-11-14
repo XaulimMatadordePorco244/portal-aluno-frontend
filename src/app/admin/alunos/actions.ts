@@ -31,7 +31,7 @@ const baseAlunoSchema = z.object({
   email: z.string().email("Formato de e-mail inválido.").optional().or(z.literal('')),
   numero: z.string().min(1, "O número do aluno é obrigatório."),
   nomeDeGuerra: z.string().min(1, "O nome de guerra é obrigatório."),
-  companhia: z.string().min(1, "A companhia é obrigatória."),
+  companhiaId: z.string().min(1, "A companhia é obrigatória."),
   cargoNome: z.string().min(1, "O cargo é obrigatório."), 
   cargoOutro: z.string().optional(),
   ingressoForaDeData: z.string().optional(),
@@ -74,7 +74,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  const { cargoNome, cargoOutro, fotoUrl, password, ingressoForaDeData, ...data } = validatedFields.data;
+  const { cargoNome, cargoOutro, fotoUrl, password, ingressoForaDeData, companhiaId, ...data } = validatedFields.data;
   const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
   const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
 
@@ -87,7 +87,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
       uploadedFotoUrl = blob.url;
     }
 
-    await prisma.user.create({
+    await prisma.usuario.create({
       data: {
         ...data,
         password: hashedPassword,
@@ -130,13 +130,13 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
   const { id, password, fotoUrl, cargoNome, cargoOutro, ...dataToUpdateRaw } = validatedFields.data;
   
   try {
-    const alunoAtual = await prisma.user.findUnique({ where: { id }, include: { cargo: true } });
+    const alunoAtual = await prisma.usuario.findUnique({ where: { id }, include: { cargo: true } });
     if (!alunoAtual) {
       return { message: "Aluno não encontrado." };
     }
     
 
-    const dataForPrisma: Prisma.UserUpdateInput = {
+    const dataForPrisma: Prisma.UsuarioUpdateInput = {
       ...dataToUpdateRaw, 
     };
 
@@ -168,7 +168,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
     }
 
   
-    await prisma.user.update({
+    await prisma.usuario.update({
       where: { id },
       data: dataForPrisma,
     });
@@ -205,7 +205,7 @@ export async function deleteAluno(formData: FormData) {
     }
     
     await prisma.anotacao.deleteMany({ where: { alunoId: id } });
-    await prisma.user.delete({ where: { id } });
+    await prisma.usuario.delete({ where: { id } });
 
     revalidatePath("/admin/alunos");
     return { success: true };

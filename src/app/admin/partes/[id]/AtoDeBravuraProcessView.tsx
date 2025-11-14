@@ -81,10 +81,10 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
                                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                                     {etapa.responsavel ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
                                     <span>
-                                        Responsável: {etapa.responsavel?.nomeDeGuerra || etapa.status === "Aguardando Etapa Anterior" ? "Aguardando" : "Coordenação"}
+                                        Responsável: {etapa.responsavel?.nomeDeGuerra || etapa.status === "EM_ANALISE" ? "Aguardando" : "Coordenação"}
                                     </span>
                                 </div>
-                                {etapa.status === 'Concluído' && (
+                                {etapa.status === 'CONCLUIDA' && (
                                      <p className="text-xs text-muted-foreground mt-1">
                                         Concluído em: {new Date(etapa.dataConclusao!).toLocaleDateString('pt-BR')}
                                     </p>
