@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: { cpf },
       include: { cargo: true }
     });

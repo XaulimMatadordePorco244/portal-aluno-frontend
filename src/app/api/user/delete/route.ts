@@ -9,7 +9,7 @@ export async function handleDeleteUser(userId: string) {
   }
 
   try {
-    const usuarioInativado = await prisma.user.update({
+    const usuarioInativado = await prisma.usuario.update({
       where: {
         id: userId,
       },
