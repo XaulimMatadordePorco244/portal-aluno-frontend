@@ -1,34 +1,31 @@
-import { PrismaClient, Prisma } from '@prisma/client';
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from 'next/server';
+import { handleDeleteUser } from '@/lib/user-actions';
 
-
-export async function handleDeleteUser(userId: string) {
-  
-  if (!userId) {
-    throw new Error("ID do usuário é obrigatório");
-  }
-
+export async function DELETE(request: NextRequest) {
   try {
-    const usuarioInativado = await prisma.usuario.update({
-      where: {
-        id: userId,
-      },
-      data: {
-              status: 'INATIVO', 
-            passwordResetToken: null,
-        passwordResetExpires: null,
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
 
-    console.log("Usuário inativado com sucesso:", usuarioInativado.id);
-    return usuarioInativado;
-
-  } catch (error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.error("Usuário não encontrado para inativar.");
-    } else {
-      console.error("Erro ao inativar usuário:", error);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'ID do usuário é obrigatório' },
+        { status: 400 }
+      );
     }
-    throw error;
+
+    const result = await handleDeleteUser(userId);
+    
+    return NextResponse.json(
+      { message: 'Usuário inativado com sucesso', user: result },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Erro ao inativar usuário:', error);
+    
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 }
