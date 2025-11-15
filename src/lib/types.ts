@@ -1,14 +1,14 @@
-import { Parte, User, Cargo, Analise, EtapaProcesso } from '@prisma/client';
+import { Parte, Usuario, Cargo, Analise, EtapaProcesso } from '@prisma/client';
 
 
 export type ProcessoCompleto = Parte & {
-    autor: User & {
+    autor: Usuario & {
         cargo: Cargo | null;
     };
     analises: (Analise & {
-        analista: User;
+        analista: Usuario;
     })[];
     etapas: (EtapaProcesso & {
-        responsavel: User | null;
+        responsavel: Usuario | null;
     })[];
 };

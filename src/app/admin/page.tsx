@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 async function getDashboardStats() {
     const [partesPendentes, totalAlunos] = await prisma.$transaction([
         prisma.parte.count({ where: { status: 'ENVIADA' } }),
-        prisma.user.count({ where: { role: 'ALUNO' } }),
+        prisma.usuario.count({ where: { role: 'ALUNO' } }),
     ]);
     return { partesPendentes, totalAlunos };
 }

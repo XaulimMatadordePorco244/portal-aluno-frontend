@@ -7,7 +7,7 @@ import Link from "next/link";
 import { AlunoActions } from "./aluno-actions";
 
 async function getAlunos() {
-    return await prisma.user.findMany({
+    return await prisma.usuario.findMany({
         orderBy: { nome: 'asc' }
     });
 }

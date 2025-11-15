@@ -8,10 +8,10 @@ async function getRankingSnippet(user: UserWithRelations) {
         return { rankingData: [], currentUserRank: null };
     }
 
-    const peers = await prisma.user.findMany({
+    const peers = await prisma.usuario.findMany({
         where: {
             cargoId: user.cargoId,
-            status: 'Ativo',
+            status: 'ATIVO',
         },
         orderBy: {
             conceito: 'desc',

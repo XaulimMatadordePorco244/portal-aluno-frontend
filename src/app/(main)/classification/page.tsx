@@ -62,7 +62,7 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
 
 
 async function getAlunos() {
-    return await prisma.user.findMany({
+    return await prisma.usuario.findMany({
         where: {
             status: 'ATIVO',
             role: 'ALUNO',

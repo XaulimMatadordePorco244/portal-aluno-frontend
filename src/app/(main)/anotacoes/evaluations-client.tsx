@@ -152,7 +152,7 @@ const generateStatement = async () => {
 
       <div className="bg-card p-6 rounded-lg shadow-md border flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <Award size={40} className="text-yellow-500 flex-shrink-0" />
+          <Award size={40} className="text-yellow-500 flex shrink-0" />
           <div>
             <p className="text-sm font-medium text-muted-foreground">Conceito (período)</p>
             <p className="text-3xl font-bold text-foreground">{conceitoReal}</p>

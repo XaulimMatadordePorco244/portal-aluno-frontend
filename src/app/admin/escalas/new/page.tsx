@@ -8,7 +8,7 @@ async function getFormData() {
   
   const [alunos, admins, funcoes] = await Promise.all([
    
-    prisma.user.findMany({
+    prisma.usuario.findMany({
       where: {
         role: 'ALUNO',
         status: 'ATIVO',
@@ -20,8 +20,8 @@ async function getFormData() {
         nomeDeGuerra: 'asc'
       }
     }),
-  
-    prisma.user.findMany({
+
+    prisma.usuario.findMany({
         where: {
             role: 'ADMIN',
         },
