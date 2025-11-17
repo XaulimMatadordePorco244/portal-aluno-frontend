@@ -35,9 +35,9 @@ const baseAlunoSchema = z.object({
   cargoNome: z.string().min(1, "O cargo é obrigatório."), 
   cargoOutro: z.string().optional(),
   ingressoForaDeData: z.string().optional(),
-  fotoUrl: z
-    .instanceof(File)
-    .refine((file) => !file || file.size === 0 || file.type.startsWith("image/"), "O arquivo precisa ser uma imagem.")
+  fotoUrl: z.any() 
+    .refine((file) => !file || file.size === 0 || (file instanceof File && file.type.startsWith("image/")), 
+      "O arquivo precisa ser uma imagem.")
     .optional(),
 }).refine(data => {
   if (data.cargoNome === 'OUTRO') {
@@ -49,14 +49,10 @@ const baseAlunoSchema = z.object({
   path: ["cargoOutro"],
 });
 
-
-
 const UpdateAlunoSchema = baseAlunoSchema.extend({
   id: z.string(),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres.").optional().or(z.literal('')),
 });
-
-
 
 const CreateAlunoSchema = baseAlunoSchema.extend({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
@@ -68,7 +64,20 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     return { message: "Acesso negado." };
   }
 
-  const validatedFields = CreateAlunoSchema.safeParse(Object.fromEntries(formData.entries()));
+  
+  const validatedFields = CreateAlunoSchema.safeParse({
+    nome: formData.get('nome'),
+    cpf: formData.get('cpf'),
+    email: formData.get('email'),
+    numero: formData.get('numero'),
+    nomeDeGuerra: formData.get('nomeDeGuerra'),
+    companhiaId: formData.get('companhiaId'),
+    cargoNome: formData.get('cargoNome'),
+    cargoOutro: formData.get('cargoOutro'),
+    ingressoForaDeData: formData.get('ingressoForaDeData'),
+    fotoUrl: formData.get('fotoUrl'),
+    password: formData.get('password'),
+  });
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
@@ -82,7 +91,8 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     const hashedPassword = await bcrypt.hash(password, 10);
     let uploadedFotoUrl: string | null = null;
 
-    if (fotoUrl && fotoUrl.size > 0) {
+
+    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
       const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       uploadedFotoUrl = blob.url;
     }
@@ -110,18 +120,27 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
   redirect("/admin/alunos");
 }
 
-
 export async function updateAluno(prevState: AlunoState, formData: FormData) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
 
-  const formObject = Object.fromEntries(formData.entries());
 
-  if (!formObject.id) formObject.id = formData.get('id') as string;
-
-  const validatedFields = UpdateAlunoSchema.safeParse(formObject);
+  const validatedFields = UpdateAlunoSchema.safeParse({
+    id: formData.get('id'),
+    nome: formData.get('nome'),
+    cpf: formData.get('cpf'),
+    email: formData.get('email'),
+    numero: formData.get('numero'),
+    nomeDeGuerra: formData.get('nomeDeGuerra'),
+    companhiaId: formData.get('companhiaId'),
+    cargoNome: formData.get('cargoNome'),
+    cargoOutro: formData.get('cargoOutro'),
+    ingressoForaDeData: formData.get('ingressoForaDeData'),
+    fotoUrl: formData.get('fotoUrl'),
+    password: formData.get('password'),
+  });
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
@@ -134,19 +153,16 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
     if (!alunoAtual) {
       return { message: "Aluno não encontrado." };
     }
-    
 
     const dataForPrisma: Prisma.UsuarioUpdateInput = {
       ...dataToUpdateRaw, 
     };
 
-
     if (password) {
       dataForPrisma.password = await bcrypt.hash(password, 10);
     }
 
-
-    if (fotoUrl && fotoUrl.size > 0) {
+    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
       if (alunoAtual.fotoUrl) {
         await del(alunoAtual.fotoUrl);
       }
@@ -154,9 +170,8 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
       dataForPrisma.fotoUrl = blob.url;
     }
 
-
     const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
-       if (alunoAtual.cargo?.nome !== finalCargoNome) {
+    if (alunoAtual.cargo?.nome !== finalCargoNome) {
       dataForPrisma.cargo = {
         connect: {
           nome: finalCargoNome, 
@@ -167,7 +182,6 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
       await prisma.anotacao.deleteMany({ where: { alunoId: id } });
     }
 
-  
     await prisma.usuario.update({
       where: { id },
       data: dataForPrisma,
@@ -175,8 +189,8 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
 
   } catch (error: unknown) {
     console.error("Erro ao atualizar o aluno:", error);
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-        return { message: 'Já existe um usuário com este CPF ou Número.' };
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
+      return { message: 'Já existe um usuário com este CPF ou Número.' };
     }
     return { message: "Ocorreu um erro ao atualizar o aluno." };
   }
@@ -184,7 +198,6 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
-
 
 export async function deleteAluno(formData: FormData) {
   const user = await getCurrentUserWithRelations();
