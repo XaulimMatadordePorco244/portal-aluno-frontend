@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 
+const cleanCpf = (value: string) => value.replace(/\D/g, '');
+
 export default function LoginPage() {
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +25,7 @@ export default function LoginPage() {
       const response = await fetch('/api/user/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf, password }),
+        body: JSON.stringify({ cpf: cleanCpf(cpf), password }),
       });
 
       const data = await response.json();
@@ -35,20 +37,27 @@ export default function LoginPage() {
       router.push('/dashboard');
 
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Ocorreu um erro desconhecido.');
-      }
+      setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const cleaned = cleanCpf(rawValue);
+    if (cleaned.length <= 11) {
+      let formatted = cleaned;
+      if (cleaned.length > 3) formatted = `${cleaned.slice(0, 3)}.${cleaned.slice(3)}`;
+      if (cleaned.length > 6) formatted = `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6)}`;
+      if (cleaned.length > 9) formatted = `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-${cleaned.slice(9, 11)}`;
+      setCpf(formatted);
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md border">
-
         <Image
           src="/img/logo.png"
           alt="Logo da Guarda Mirim"
@@ -72,8 +81,9 @@ export default function LoginPage() {
               placeholder="Digite seu CPF"
               required
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
+              onChange={handleCpfChange}
               disabled={isLoading}
+              maxLength={14}
             />
           </div>
 
@@ -100,6 +110,7 @@ export default function LoginPage() {
             {isLoading ? "Carregando..." : "Entrar"}
           </Button>
         </form>
+
         <div className="text-center">
           <a href="/forgot-password" className="text-sm text-primary hover:underline">
             Esqueceu a Senha?

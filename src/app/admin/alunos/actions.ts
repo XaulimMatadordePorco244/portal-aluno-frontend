@@ -49,12 +49,12 @@ const baseAlunoSchema = z.object({
   path: ["cargoOutro"],
 });
 
-const UpdateAlunoSchema = baseAlunoSchema.extend({
+const UpdateAlunoSchema = baseAlunoSchema.safeExtend({
   id: z.string(),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres.").optional().or(z.literal('')),
 });
 
-const CreateAlunoSchema = baseAlunoSchema.extend({
+const CreateAlunoSchema = baseAlunoSchema.safeExtend({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
 });
 
