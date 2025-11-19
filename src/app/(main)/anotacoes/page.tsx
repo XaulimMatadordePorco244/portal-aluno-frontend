@@ -3,8 +3,6 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import EvaluationsClient from "./evaluations-client"; 
 
-
-
 export type AnotacaoComRelacoes = Awaited<ReturnType<typeof getAlunoData>>['anotacoes'][0];
 
 async function getAlunoData() {
@@ -13,11 +11,25 @@ async function getAlunoData() {
     redirect('/login');
   }
 
+  const perfilId = user.perfilAluno?.id;
+
+  if (!perfilId) {
+    return { user, anotacoes: [] };
+  }
+
   const anotacoes = await prisma.anotacao.findMany({
-    where: { alunoId: user.id },
+    where: { alunoId: perfilId },
     include: {
       tipo: true,
-      autor: true,
+      autor: {
+        include: {
+          perfilAluno: {
+            include: {
+              cargo: true
+            }
+          }
+        }
+      },
     },
     orderBy: {
       data: 'desc',

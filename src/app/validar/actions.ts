@@ -31,7 +31,7 @@ export async function validateUserByNumber(
       }
     });
 
-  } catch (error) {
+  } catch {
     return { error: "Ocorreu um erro ao consultar o banco de dados. Tente novamente." };
   }
 

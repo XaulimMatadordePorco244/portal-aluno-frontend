@@ -163,7 +163,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
 
   const { 
     id, password, fotoUrl, 
-    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId, ingressoForaDeData,
+    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId,
     ...userData 
   } = validatedFields.data;
 

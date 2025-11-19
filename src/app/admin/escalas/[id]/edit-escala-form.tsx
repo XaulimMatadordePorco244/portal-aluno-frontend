@@ -205,9 +205,8 @@ export function EditEscalaForm({
 
     const handleRemoveItem = (secaoIndex: number, itemIndex: number) => {
         const novasSecoes = [...secoes];
-        const novasSecoesCopy = [...secoes];
-        novasSecoesCopy[secaoIndex].itens.splice(itemIndex, 1);
-        setSecoes(novasSecoesCopy);
+        novasSecoes[secaoIndex].itens.splice(itemIndex, 1);
+        setSecoes(novasSecoes);
     };
 
     const handleSaveChanges = async () => {
