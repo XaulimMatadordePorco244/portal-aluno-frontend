@@ -17,7 +17,7 @@ function InitialActions({ processoId }: { processoId: string }) {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/partes/${processoId}/iniciar-apuracao`, { method: 'POST' });
+            const response = await fetch(`/api/partes/${processoId}/start`, { method: 'POST' });
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Falha ao iniciar apuração.');
@@ -57,8 +57,8 @@ function InitialActions({ processoId }: { processoId: string }) {
 
 function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
     const getStatusIcon = (status: string) => {
-        if (status === 'Concluído') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-        if (status === 'Pendente') return <MoreHorizontal className="h-5 w-5 text-yellow-500" />;
+        if (status === 'CONCLUIDA') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        if (status === 'EM_ANALISE' || status === 'PENDENTE') return <MoreHorizontal className="h-5 w-5 text-yellow-500" />;
         return <Circle className="h-5 w-5 text-muted-foreground" />;
     };
 
@@ -70,7 +70,10 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {processo.etapas.map((etapa) => (
+                    {processo.etapas.map((etapa) => {
+                        const responsavelNome = etapa.responsavel?.perfilAluno?.nomeDeGuerra || etapa.responsavel?.nome || (etapa.status === "EM_ANALISE" ? "Aguardando" : "Coordenação");
+                        
+                        return (
                         <div key={etapa.id} className="flex items-start gap-4">
                             <div className="flex flex-col items-center">
                                 {getStatusIcon(etapa.status)}
@@ -81,24 +84,22 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
                                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                                     {etapa.responsavel ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
                                     <span>
-                                        Responsável: {etapa.responsavel?.nomeDeGuerra || etapa.status === "Aguardando Etapa Anterior" ? "Aguardando" : "Coordenação"}
+                                        Responsável: {responsavelNome}
                                     </span>
                                 </div>
-                                {etapa.status === 'Concluído' && (
+                                {etapa.status === 'CONCLUIDA' && (
                                      <p className="text-xs text-muted-foreground mt-1">
-                                        Concluído em: {new Date(etapa.dataConclusao!).toLocaleDateString('pt-BR')}
-                                    </p>
+                                        Concluído em: {etapa.dataConclusao ? new Date(etapa.dataConclusao).toLocaleDateString('pt-BR') : 'N/A'}
+                                     </p>
                                 )}
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
             </CardContent>
         </Card>
     );
 }
-
-
 
 export function AtoDeBravuraProcessView({ processo }: { processo: ProcessoCompleto }) {
 
@@ -106,12 +107,10 @@ export function AtoDeBravuraProcessView({ processo }: { processo: ProcessoComple
         return <InitialActions processoId={processo.id} />;
     }
 
-    
     if (processo.etapas.length > 0) {
         return <ProcessTimeline processo={processo} />;
     }
     
-  
     return (
         <div className="text-center text-muted-foreground p-4 border rounded-md">
             O processo ainda não foi enviado para análise.

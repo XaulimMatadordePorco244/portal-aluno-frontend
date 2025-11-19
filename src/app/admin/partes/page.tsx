@@ -16,7 +16,6 @@ type SearchParams = {
     status?: StatusParte;
 };
 
-
 async function getPartes({ search, status }: SearchParams) {
     const whereClause: Prisma.ParteWhereInput = {};
 
@@ -28,16 +27,28 @@ async function getPartes({ search, status }: SearchParams) {
         whereClause.OR = [
             { assunto: { contains: search } },
             { autor: { nome: { contains: search } } },
-            { autor: { nomeDeGuerra: { contains: search } } },
+            {
+                autor: {
+                    perfilAluno: {
+                        nomeDeGuerra: { contains: search }
+                    }
+                }
+            },
         ];
     }
-    
+
     const partes = await prisma.parte.findMany({
         where: whereClause,
-        include: { 
+        include: {
             autor: {
-                include: { cargo: true }
-            } 
+                include: {
+                    perfilAluno: {
+                        include: {
+                            cargo: true
+                        }
+                    }
+                }
+            }
         },
         orderBy: { createdAt: 'desc' }
     });
@@ -80,7 +91,7 @@ export default async function AdminPartesPage({
                     <h1 className="text-3xl font-bold text-foreground">Gerenciamento de Partes</h1>
                 </div>
             </div>
-            
+
             <StatsCards stats={stats} />
             <PartesFilters />
 
@@ -99,29 +110,32 @@ export default async function AdminPartesPage({
                         </TableHeader>
                         <TableBody>
                             {partes.map((parte) => {
-                                const nomeFormatado = `${parte.autor.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome}`;
+                                const perfil = parte.autor.perfilAluno;
+                                const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || parte.autor.nome}`;
+
                                 return (
-                                <TableRow key={parte.id}>
-                                    <TableCell className="font-mono">{parte.numeroDocumento || '-'}</TableCell>
-                                    <TableCell className="font-medium">{nomeFormatado}</TableCell>
-                                    <TableCell>{parte.assunto}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={parte.status === 'ENVIADA' ? 'default' : parte.status === 'RASCUNHO' ? 'outline' : 'secondary'}>
-                                            {parte.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{new Date(parte.createdAt).toLocaleString('pt-BR')}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Link href={`/admin/partes/${parte.id}`}>
-                                            <Button variant="outline" size="sm"><Eye className="mr-2 h-4 w-4" />Ver / Analisar</Button>
-                                        </Link>
-                                    </TableCell>
-                                </TableRow>
-                            )})}
+                                    <TableRow key={parte.id}>
+                                        <TableCell className="font-mono">{parte.numeroDocumento || '-'}</TableCell>
+                                        <TableCell className="font-medium">{nomeFormatado}</TableCell>
+                                        <TableCell>{parte.assunto}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={parte.status === 'ENVIADA' ? 'default' : parte.status === 'RASCUNHO' ? 'outline' : 'secondary'}>
+                                                {parte.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{new Date(parte.createdAt).toLocaleString('pt-BR')}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Link href={`/admin/partes/${parte.id}`}>
+                                                <Button variant="outline" size="sm"><Eye className="mr-2 h-4 w-4" />Ver / Analisar</Button>
+                                            </Link>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
                         </TableBody>
                     </Table>
                 </div>
-                {partes.length === 0 && ( <div className="text-center p-10 text-muted-foreground"> Nenhuma parte encontrada com os filtros atuais. </div> )}
+                {partes.length === 0 && (<div className="text-center p-10 text-muted-foreground"> Nenhuma parte encontrada com os filtros atuais. </div>)}
             </div>
         </>
     );

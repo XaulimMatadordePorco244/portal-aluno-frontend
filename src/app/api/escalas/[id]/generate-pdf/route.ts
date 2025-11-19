@@ -14,7 +14,9 @@ async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
         include: {
           aluno: {
             include: {
-              funcao: true 
+              usuario: true,
+              funcao: true,
+              cargo: true
             }
           },
         },
@@ -26,11 +28,11 @@ async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
 
   if (!escala) return null;
 
-  
   return {
     ...escala,
     itens: escala.itens.map(item => ({
       ...item,
+      alunoId: item.aluno.usuarioId,
       funcaoId: item.aluno.funcao?.id || null 
     }))
   };

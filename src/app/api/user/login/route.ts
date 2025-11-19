@@ -1,69 +1,84 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
-
-const prisma = new PrismaClient();
-
-
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { cpf, password } = body;
+    const body = await req.json();
 
-    if (!cpf || !password) {
-      return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
+    if (Array.isArray(body)) {
+      for (const user of body) {
+        if (!user.nome || !user.cpf || !user.password) {
+          return NextResponse.json(
+            { error: `Um dos usuários na lista está incompleto. Faltando nome, CPF ou senha.` },
+            { status: 400 }
+          );
+        }
+      }
+
+
+      const results = [];
+      
+      for (const user of body) {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+
+        const { perfilAluno, ...userData } = user;
+        
+        const result = await prisma.usuario.create({
+          data: {
+            ...userData,
+            password: hashedPassword,
+            perfilAluno: perfilAluno ? {
+              create: perfilAluno
+            } : undefined
+          },
+          include: {
+            perfilAluno: true
+          }
+        });
+        
+        results.push(result);
+      }
+
+      return NextResponse.json({
+        message: `${results.length} usuários criados com sucesso.`,
+        results
+      });
+    } else {
+      const { nome, cpf, password, perfilAluno, ...rest } = body;
+
+      if (!nome || !cpf || !password) {
+        return NextResponse.json(
+          { error: "CPF, senha e nome são obrigatórios" },
+          { status: 400 }
+        );
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const result = await prisma.usuario.create({
+        data: {
+          nome,
+          cpf,
+          password: hashedPassword,
+          ...rest,
+          perfilAluno: perfilAluno ? {
+            create: perfilAluno
+          } : undefined
+        },
+        include: {
+          perfilAluno: true
+        }
+      });
+
+      return NextResponse.json(result);
     }
-
-    const user = await prisma.user.findUnique({
-      where: { cpf },
-      include: { cargo: true }
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error("A variável de ambiente JWT_SECRET não está definida.");
-    }
-
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        nome: user.nome,
-        nomeDeGuerra: user.nomeDeGuerra,
-        cargoId: user.cargoId,
-        cargo: user.cargo,
-        role: user.role
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-
-    const response = NextResponse.json({ message: 'Login bem-sucedido!' });
-
-
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      maxAge: 60 * 60 * 24,
-      path: '/',
-    });
-
-
-    return response;
-
   } catch (error) {
-    console.error("Erro no login:", error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    console.error("Erro na criação de usuário(s):", error);
+    
+    return NextResponse.json(
+      { error: 'Ocorreu um erro interno no servidor ao processar a requisição.' },
+      { status: 500 }
+    );
   }
 }

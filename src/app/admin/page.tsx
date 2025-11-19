@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 async function getDashboardStats() {
     const [partesPendentes, totalAlunos] = await prisma.$transaction([
         prisma.parte.count({ where: { status: 'ENVIADA' } }),
-        prisma.user.count({ where: { role: 'ALUNO' } }),
+        prisma.usuario.count({ where: { role: 'ALUNO' } }),
     ]);
     return { partesPendentes, totalAlunos };
 }
@@ -23,16 +23,15 @@ export default async function AdminDashboardPage() {
 
     const stats = await getDashboardStats();
 
-    
     const displayName = user
-        ? (user.role === 'ADMIN' ? user.nome : (user.nomeDeGuerra || user.nome))
+        ? (user.role === 'ADMIN' ? user.nome : (user.perfilAluno?.nomeDeGuerra || user.nome))
         : '';
 
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2">Dashboard Administrativo</h1>
             <p className="text-muted-foreground mb-8">
-                   Bem-vindo(a), {displayName}. Aqui está um resumo do sistema.
+                    Bem-vindo(a), {displayName}. Aqui está um resumo do sistema.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

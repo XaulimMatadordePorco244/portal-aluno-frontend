@@ -13,14 +13,13 @@ import FormattedName from "@/components/FormattedName";
 
 
 type AlunoComRank = Awaited<ReturnType<typeof getAlunos>>[0] & {
-    rank: number;
+  rank: number;
 };
 
-
 const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: string, students: AlunoComRank[], loggedInUserId?: string }) => {
- 
+
   if (students.length === 0) {
-    return null; 
+    return null;
   }
 
   return (
@@ -39,17 +38,22 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
           <TableBody>
             {students.map((aluno) => {
               const isCurrentUser = aluno.id === loggedInUserId;
+
+
+              const perfil = aluno.perfilAluno;
+
               return (
-                <TableRow 
-                  key={aluno.id} 
+                <TableRow
+                  key={aluno.id}
                   className={isCurrentUser ? "bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30" : ""}
                 >
                   <TableCell className="font-bold text-lg text-center border-r">{aluno.rank}º</TableCell>
                   <TableCell className="font-medium border-r">
-                    <FormattedName fullName={aluno.nome} warName={aluno.nomeDeGuerra} />
+
+                    <FormattedName fullName={aluno.nome} warName={perfil?.nomeDeGuerra} />
                   </TableCell>
-                  <TableCell className="font-mono border-r">{aluno.numero || 'N/A'}</TableCell>
-                  <TableCell>{isCurrentUser ? aluno.conceito : '—'}</TableCell>
+                  <TableCell className="font-mono border-r">{perfil?.numero || 'N/A'}</TableCell>
+                  <TableCell>{isCurrentUser ? (perfil?.conceito || '—') : '—'}</TableCell>
                 </TableRow>
               );
             })}
@@ -60,18 +64,24 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
   );
 };
 
-
 async function getAlunos() {
-    return await prisma.user.findMany({
-        where: {
-            status: 'ATIVO',
-            role: 'ALUNO',
-            cargoId: { not: null } 
-        },
+  return await prisma.usuario.findMany({
+    where: {
+      status: 'ATIVO',
+      role: 'ALUNO',
+      perfilAluno: {
+        cargoId: { not: null }
+      }
+    },
+    include: {
+
+      perfilAluno: {
         include: {
-            cargo: true, 
-        },
-    });
+          cargo: true,
+        }
+      }
+    },
+  });
 }
 
 export default async function ClassificationPage() {
@@ -79,10 +89,10 @@ export default async function ClassificationPage() {
     getCurrentUser(),
     getAlunos()
   ]);
-  
- 
+
+
   const groupedByCargo = allAlunos.reduce((acc, aluno) => {
-    const cargoNome = aluno.cargo?.nome || 'Sem Cargo';
+    const cargoNome = aluno.perfilAluno?.cargo?.nome || 'Sem Cargo';
     if (!acc[cargoNome]) {
       acc[cargoNome] = [];
     }
@@ -90,55 +100,60 @@ export default async function ClassificationPage() {
     return acc;
   }, {} as Record<string, typeof allAlunos>);
 
- 
+
   const rankedCourses = Object.entries(groupedByCargo)
     .sort(([, alunosA], [, alunosB]) => {
-      const precedenciaA = alunosA[0].cargo?.precedencia || 999;
-      const precedenciaB = alunosB[0].cargo?.precedencia || 999;
-      return precedenciaA - precedenciaB; 
+
+      const precedenciaA = alunosA[0].perfilAluno?.cargo?.precedencia || 999;
+      const precedenciaB = alunosB[0].perfilAluno?.cargo?.precedencia || 999;
+      return precedenciaA - precedenciaB;
     })
     .map(([cargo, alunos]) => {
-      
+
       const rankedAlunos = alunos
-        .sort((a, b) => parseFloat(b.conceito || '0') - parseFloat(a.conceito || '0'))
+        .sort((a, b) => {
+          const conceitoA = parseFloat(a.perfilAluno?.conceito || '0');
+          const conceitoB = parseFloat(b.perfilAluno?.conceito || '0');
+          return conceitoB - conceitoA;
+        })
         .map((aluno, index) => ({
           ...aluno,
           rank: index + 1,
         }));
-      
+
       return { name: cargo, data: rankedAlunos };
     });
 
   const dataAtualizacao = new Date().toLocaleDateString('pt-BR');
-  const loggedInUserId = currentUser?.userId; 
+  const loggedInUserId = currentUser?.userId;
 
   return (
-      <div className="container mx-auto py-10 max-w-5xl">
-          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
-              <div className="flex items-center gap-3">
-                  <BarChart3 className="w-8 h-8 text-foreground" />
-                  <h1 className="text-3xl font-bold text-foreground">Classificação Geral</h1>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>Última atualização: {dataAtualizacao}</span>
-              </div>
-          </div>
-          
-          {rankedCourses.map(course => (
-              <CourseRanking 
-                key={course.name} 
-                courseName={course.name} 
-                students={course.data}
-                loggedInUserId={loggedInUserId}
-              />
-          ))}
-
-          {rankedCourses.length === 0 && (
-            <div className="bg-card rounded-xl shadow-lg border p-10 text-center text-muted-foreground">
-              <p>Nenhum aluno ativo encontrado para exibir a classificação.</p>
-            </div>
-          )}
+    <div className="container mx-auto py-10 max-w-5xl">
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="w-8 h-8 text-foreground" />
+          <h1 className="text-3xl font-bold text-foreground">Classificação Geral</h1>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
+          <CalendarDays className="h-4 w-4" />
+          <span>Última atualização: {dataAtualizacao}</span>
+        </div>
       </div>
+
+      {rankedCourses.map(course => (
+        <CourseRanking
+          key={course.name}
+          courseName={course.name}
+          students={course.data}
+          loggedInUserId={loggedInUserId}
+        />
+      ))}
+
+      {rankedCourses.length === 0 && (
+        <div className="bg-card rounded-xl shadow-lg border p-10 text-center text-muted-foreground">
+          <p>Nenhum aluno ativo encontrado para exibir a classificação.</p>
+        </div>
+      )}
+    </div>
   );
 }

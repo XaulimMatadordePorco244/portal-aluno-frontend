@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'CPF é obrigatório.' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { cpf } });
+    const user = await prisma.usuario.findUnique({ where: { cpf } });
 
 
     if (!user || !user.email) {
@@ -26,8 +26,7 @@ export async function POST(req: Request) {
     const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     const passwordResetExpires = new Date(Date.now() + 3600 * 1000); 
 
-   
-    await prisma.user.update({
+    await prisma.usuario.update({
       where: { id: user.id },
       data: {
         passwordResetToken,

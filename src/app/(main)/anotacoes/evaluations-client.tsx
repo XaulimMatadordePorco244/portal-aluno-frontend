@@ -12,12 +12,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown } from 'lucide-react';
-import { AnotacaoComRelacoes } from './page';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PDFBuilder } from '@/lib/pdfUtils';
 import { UserWithRelations } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 
+type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
+  include: {
+    tipo: true;
+    autor: {
+      include: {
+        perfilAluno: true
+      }
+    }
+  }
+}>;
 
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-';
 
@@ -92,11 +102,12 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
     }
   }, [filteredByDate, activeFilter]);
 
-  const conceitoBase = parseFloat(user.conceito || '0');
+  const perfil = user.perfilAluno;
+  const conceitoBase = parseFloat(perfil?.conceito || '0');
   const somaDosPontosFiltrados = filteredByDate.reduce((sum, item) => sum + Number(item.pontos), 0);
   const conceitoReal = (conceitoBase + somaDosPontosFiltrados).toFixed(2);
 
-const generateStatement = async () => { 
+  const generateStatement = async () => { 
     const pdfBuilder = new PDFBuilder();
     await pdfBuilder.init(); 
     
@@ -105,9 +116,9 @@ const generateStatement = async () => {
     pdfBuilder.addHeader();
     pdfBuilder.addTitle("Extrato de Anotações");
     pdfBuilder.addSpacing(5);
-    
-    const nomeFormatado = `${user.cargo?.abreviacao || ''} GM ${user.nomeDeGuerra || user.nome}`;
- 
+
+    const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || user.nome}`;
+  
     pdfBuilder
         .addKeyValueLine('Aluno:', nomeFormatado, { keySpace: 12 })
         .addKeyValueLine('Data de Emissão:', new Date().toLocaleDateString('pt-BR'), { keySpace: 32 })
@@ -123,7 +134,6 @@ const generateStatement = async () => {
         (Number(a.pontos) > 0 ? '+' : '') + a.pontos,
         a.detalhes || ''
       ]),
-
       
       columnStyles: {
         0: { cellWidth: 25 },    
@@ -139,8 +149,9 @@ const generateStatement = async () => {
     pdfBuilder.addWatermark();
     pdfBuilder.addFooter();
 
-    doc.save(`extrato_${user.nomeDeGuerra?.toLowerCase() || 'aluno'}.pdf`);
+    doc.save(`extrato_${perfil?.nomeDeGuerra?.toLowerCase() || 'aluno'}.pdf`);
   };
+
   return (
     <div className="container mx-auto py-10 max-w-7xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -152,7 +163,7 @@ const generateStatement = async () => {
 
       <div className="bg-card p-6 rounded-lg shadow-md border flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <Award size={40} className="text-yellow-500 flex-shrink-0" />
+          <Award size={40} className="text-yellow-500 flex shrink-0" />
           <div>
             <p className="text-sm font-medium text-muted-foreground">Conceito (período)</p>
             <p className="text-3xl font-bold text-foreground">{conceitoReal}</p>
@@ -191,34 +202,39 @@ const generateStatement = async () => {
         </div>
 
         <Accordion type="single" collapsible className="w-full">
-          {filteredAnnotations.map(anotacao => (
-            <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
-              <AccordionTrigger className="px-6 hover:bg-accent text-left">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 sm:gap-4">
-                  <div className='text-left'>
-                    <span className="font-medium text-foreground">{anotacao.tipo.titulo}</span>
-                    <span className={`ml-2 font-bold text-sm ${Number(anotacao.pontos) >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
-                      ({Number(anotacao.pontos) > 0 ? '+' : ''}{anotacao.pontos})
+          {filteredAnnotations.map(anotacao => {
+            const autorPerfil = anotacao.autor.perfilAluno;
+            const autorNome = autorPerfil?.nomeDeGuerra || anotacao.autor.nome;
+            
+            return (
+              <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
+                <AccordionTrigger className="px-6 hover:bg-accent text-left">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 sm:gap-4">
+                    <div className='text-left'>
+                      <span className="font-medium text-foreground">{anotacao.tipo.titulo}</span>
+                      <span className={`ml-2 font-bold text-sm ${Number(anotacao.pontos) >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+                        ({Number(anotacao.pontos) > 0 ? '+' : ''}{anotacao.pontos})
+                      </span>
+                    </div>
+                    <span className="text-sm text-muted-foreground text-left sm:text-right">
+                      Ocorrência: {format(new Date(anotacao.data), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground text-left sm:text-right">
-                    Ocorrência: {format(new Date(anotacao.data), "dd/MM/yyyy", { locale: ptBR })}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 bg-accent/50 border-t pt-4 space-y-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Detalhes da ocorrência:</p>
-                  <p className="text-foreground">{anotacao.detalhes}</p>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  <span>Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                  <span className="mx-1">|</span>
-                  <span>Por: {anotacao.autor.nomeDeGuerra || anotacao.autor.nome}</span>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 bg-accent/50 border-t pt-4 space-y-2">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Detalhes da ocorrência:</p>
+                    <p className="text-foreground">{anotacao.detalhes}</p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <span>Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                    <span className="mx-1">|</span>
+                    <span>Por: {autorNome}</span>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
         </Accordion>
 
         {filteredAnnotations.length === 0 && (

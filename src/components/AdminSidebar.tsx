@@ -46,7 +46,7 @@ const NavLink = ({ link, pathname, isCollapsed }: NavLinkProps) => (
         )}
         title={link.label} 
     >
-        <link.icon className="h-5 w-5 flex-shrink-0" />
+        <link.icon className="h-5 w-5 flex shrink-0" />
         <span className={cn("whitespace-nowrap", isCollapsed && "hidden")}>{link.label}</span>
     </Link>
 );
@@ -85,11 +85,11 @@ export function AdminSidebar() {
     return (
         <aside 
             className={cn(
-                "relative flex-shrink-0 border-r bg-background p-2 hidden md:flex flex-col transition-all duration-300",
+                "relative shrink-0 border-r bg-background p-2 hidden md:flex flex-col transition-all duration-300",
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
-            <div className="flex-grow">
+            <div className="flex grow">
                
                 <div className={cn(
                     "flex items-center gap-2 p-2 mb-4",

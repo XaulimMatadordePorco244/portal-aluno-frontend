@@ -17,10 +17,16 @@ export default async function MainLayout({
 }) {
   const user = await getCurrentUser();
 
+  const userForHeader = user ? {
+    ...user,
+    nomeDeGuerra: user.nomeDeGuerra ?? null,
+    cargo: user.cargo ?? null
+  } : null;
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header user={user} />
-      <main className="flex-grow bg-background p-6">
+      <Header user={userForHeader} />
+      <main className="flex grow bg-background p-6">
         {children}
       </main>
     </div>

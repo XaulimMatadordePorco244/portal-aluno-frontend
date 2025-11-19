@@ -71,7 +71,7 @@ export default function AlunoForm() {
               <SelectItem value="5ª Companhia">5ª Companhia</SelectItem>
             </SelectContent>
           </Select>
-          {state?.errors?.companhia && <p className="text-sm text-red-500 mt-1">{state.errors.companhia[0]}</p>}
+          {state?.errors?.companhiaId && <p className="text-sm text-red-500 mt-1">{state.errors.companhiaId[0]}</p>}
         </div>
       </div>
 

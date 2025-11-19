@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       );
 
 
-      const result = await prisma.user.createMany({
+      const result = await prisma.usuario.createMany({
         data: usersData,
         skipDuplicates: true, 
       });
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
       const hashedPassword = await bcrypt.hash(password, 10);
       
-      const result = await prisma.user.create({
+      const result = await prisma.usuario.create({
         data: {
           nome,
           cpf,

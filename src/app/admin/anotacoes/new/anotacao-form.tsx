@@ -14,10 +14,16 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnotacao } from '../actions';
 import Link from 'next/link';
-import { User, TipoDeAnotacao } from '@prisma/client';
+import { Usuario, TipoDeAnotacao, Companhia, PerfilAluno } from '@prisma/client';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FormState } from '../actions';
+
+type AlunoComCompanhia = Usuario & {
+  perfilAluno: (PerfilAluno & {
+    companhia: Companhia | null;
+  }) | null;
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,17 +34,14 @@ function SubmitButton() {
   );
 }
 
-
-
-
 const initialState: FormState = {};
 
-export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User[], tiposDeAnotacao: TipoDeAnotacao[] }) {
+export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: AlunoComCompanhia[], tiposDeAnotacao: TipoDeAnotacao[] }) {
 
   const [state, formAction] = useActionState<FormState, FormData>(createAnotacao, initialState);
 
   const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
-  const [selectedAlunos, setSelectedAlunos] = useState<User[]>([]);
+  const [selectedAlunos, setSelectedAlunos] = useState<AlunoComCompanhia[]>([]);
 
   const [selectedTipo, setSelectedTipo] = useState<TipoDeAnotacao | null>(null);
   const [pontos, setPontos] = useState<number | string>('');
@@ -49,7 +52,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
     else setPontos('');
   }, [selectedTipo]);
 
-  const companhias = useMemo(() => [...new Set(alunos.map(a => a.companhia).filter(Boolean))], [alunos]) as string[];
+  const companhias = useMemo(() => [...new Set(alunos.map(a => a.perfilAluno?.companhia?.nome).filter(Boolean))], [alunos]) as string[];
 
   const { positivas, negativas } = useMemo(() => {
     const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0);
@@ -58,11 +61,11 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
   }, [tiposDeAnotacao]);
 
   const handleCompanhiaChange = (companhia: string) => {
-    const alunosDaCompanhia = alunos.filter(a => a.companhia === companhia);
+    const alunosDaCompanhia = alunos.filter(a => a.perfilAluno?.companhia?.nome === companhia);
     setSelectedAlunos(alunosDaCompanhia);
   };
 
-  const handleAlunoSelect = (aluno: User) => {
+  const handleAlunoSelect = (aluno: AlunoComCompanhia) => {
     setSelectedAlunos(prev => prev.find(a => a.id === aluno.id) ? prev : [...prev, aluno]);
   };
 
@@ -110,11 +113,14 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
                   <CommandList>
                     <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {alunos.map(aluno => (
-                        <CommandItem key={aluno.id} value={`${aluno.nomeDeGuerra} ${aluno.nome}`} onSelect={() => handleAlunoSelect(aluno)}>
-                          {aluno.nomeDeGuerra}
-                        </CommandItem>
-                      ))}
+                      {alunos.map(aluno => {
+                        const nomeGuerra = aluno.perfilAluno?.nomeDeGuerra || aluno.nome;
+                        return (
+                          <CommandItem key={aluno.id} value={`${nomeGuerra} ${aluno.nome}`} onSelect={() => handleAlunoSelect(aluno)}>
+                            {nomeGuerra}
+                          </CommandItem>
+                        )
+                      })}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -129,7 +135,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
             <div className="flex flex-wrap gap-1 pt-1">
               {selectedAlunos.map(aluno => (
                 <Badge key={aluno.id} variant="secondary">
-                  {aluno.nomeDeGuerra}
+                  {aluno.perfilAluno?.nomeDeGuerra || aluno.nome}
                   <button type="button" onClick={() => handleAlunoRemove(aluno.id)} className="ml-1.5 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                   </button>
@@ -138,7 +144,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao }: { alunos: User
             </div>
           </div>
         )}
-        {selectedAlunos.map(aluno => <input key={aluno.id} type="hidden" name="alunoIds" value={aluno.id} />)}
+        {selectedAlunos.map(aluno => <input key={aluno.id} type="hidden" name="alunoIds" value={aluno.perfilAluno?.id} />)}
         {state?.errors?.alunoIds && <p className="text-sm text-red-500 mt-1">{state.errors.alunoIds[0]}</p>}
       </div>
 
