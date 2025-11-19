@@ -9,12 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Funcao, TipoEscala, Usuario } from '@prisma/client';
+import { Funcao, TipoEscala, Usuario, PerfilAluno, Cargo } from '@prisma/client';
 import { toast } from 'sonner';
 import { PlusCircle, Save, Trash2, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-
-
 
 type ItemState = {
   id: string;
@@ -37,7 +35,13 @@ type SecaoState = {
   itens: ItemState[];
 };
 
-type UserComFuncao = Usuario & { funcao: Funcao | null };
+
+type UserComDados = Usuario & {
+  perfilAluno: (PerfilAluno & {
+    funcao: Funcao | null;
+    cargo: Cargo | null;
+  }) | null;
+};
 
 export const GABARITO_COLABORACAO = {
   fardamento: "- OS COMANDOS: COMPARECER FARDADOS.\n- OS ESCALADOS PARA LIMPEZA: COMPARECER DE TFM.\n- OS DEMAIS ALUNOS SE APRESETAR DE UNIFORME 1.",
@@ -53,7 +57,7 @@ export const GABARITO_COLABORACAO = {
   ]
 };
 
-export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alunos: UserComFuncao[], admins: UserComFuncao[], funcoes: (Funcao & { categoria: string | null })[], elaboradorPadrao: string }) {
+export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alunos: UserComDados[], admins: UserComDados[], funcoes: (Funcao & { categoria: string | null })[], elaboradorPadrao: string }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tipoEscala, setTipoEscala] = useState<TipoEscala | ''>('');
@@ -73,11 +77,15 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
         const itens = Array.from({ length: secaoTemplate.total }, (v, i): ItemState => {
           const funcaoNome = secaoTemplate.itemFuncoes[i]?.toUpperCase() || '';
           const funcaoPredefinida = funcoes.find(f => f.nome.toUpperCase() === funcaoNome);
+
           let userIdPreenchido = '';
+
+
           if (secaoTemplate.isSecaoAdmin && funcaoPredefinida) {
-            const adminComFuncao = admins.find(a => a.funcaoId === funcaoPredefinida.id);
+            const adminComFuncao = admins.find(a => a.perfilAluno?.funcaoId === funcaoPredefinida.id);
             if (adminComFuncao) userIdPreenchido = adminComFuncao.id;
           }
+
           return {
             id: `item-${Math.random()}`,
             funcaoId: funcaoPredefinida?.id || '',
@@ -137,7 +145,8 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
           cargoFinal = item.tema || 'PALESTRA';
           const auxiliar = alunos.find(a => a.id === item.auxiliarUserId);
           if (auxiliar) {
-            observacaoFinal = `AUXILIAR - ${auxiliar.nomeDeGuerra || auxiliar.nome}`;
+            const nomeAuxiliar = auxiliar.perfilAluno?.nomeDeGuerra || auxiliar.nome;
+            observacaoFinal = `AUXILIAR - ${nomeAuxiliar}`;
           }
         } else if (funcao?.id === funcaoOutroId) {
           cargoFinal = item.cargoPersonalizado;
@@ -250,18 +259,47 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
       <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}><Save className="mr-2 h-4 w-4" />{isSubmitting ? "Salvando..." : "Salvar Rascunho"}</Button></div>
     </form>
   );
-
 }
 
-function UserCombobox({ users, value, onChange }: { users: UserComFuncao[], value: string, onChange: (value: string) => void }) {
+function UserCombobox({ users, value, onChange }: { users: UserComDados[], value: string, onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false);
   const selectedUser = users.find(u => u.id === value);
+
+  const formatUserDisplay = (user: UserComDados) => {
+    const perfil = user.perfilAluno;
+    if (perfil) {
+      return `${perfil.cargo?.abreviacao || ''} ${perfil.nomeDeGuerra || user.nome}`.trim();
+    }
+    return user.nome;
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild><Button variant="outline" role="combobox" className="w-full justify-between font-normal">{selectedUser ? (selectedUser.nomeDeGuerra || selectedUser.nome) : "Selecione..."}<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" /></Button></PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Buscar..." /><CommandList><CommandEmpty>Nenhum usuário.</CommandEmpty><CommandGroup>
-        {users.map(user => (<CommandItem key={user.id} value={user.nomeDeGuerra || user.nome} onSelect={() => { onChange(user.id); setOpen(false); }}>{user.nomeDeGuerra || user.nome}</CommandItem>))}
-      </CommandGroup></CommandList></Command></PopoverContent>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+          {selectedUser ? formatUserDisplay(selectedUser) : "Selecione..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder="Buscar..." />
+          <CommandList>
+            <CommandEmpty>Nenhum usuário.</CommandEmpty>
+            <CommandGroup>
+              {users.map(user => (
+                <CommandItem
+                  key={user.id}
+                  value={formatUserDisplay(user)}
+                  onSelect={() => { onChange(user.id); setOpen(false); }}
+                >
+                  {formatUserDisplay(user)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
     </Popover>
   );
 }

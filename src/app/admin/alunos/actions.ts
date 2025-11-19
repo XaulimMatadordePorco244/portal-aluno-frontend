@@ -7,7 +7,7 @@ import { getCurrentUserWithRelations } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { put, del } from "@vercel/blob";
-import { Prisma } from "@prisma/client"; 
+import { Prisma } from "@prisma/client";
 
 export type AlunoState = {
   errors?: {
@@ -17,7 +17,7 @@ export type AlunoState = {
     password?: string[];
     numero?: string[];
     nomeDeGuerra?: string[];
-    companhia?: string[];
+    companhiaId?: string[];
     cargoNome?: string[];
     cargoOutro?: string[];
     fotoUrl?: string[];
@@ -32,11 +32,11 @@ const baseAlunoSchema = z.object({
   numero: z.string().min(1, "O número do aluno é obrigatório."),
   nomeDeGuerra: z.string().min(1, "O nome de guerra é obrigatório."),
   companhiaId: z.string().min(1, "A companhia é obrigatória."),
-  cargoNome: z.string().min(1, "O cargo é obrigatório."), 
+  cargoNome: z.string().min(1, "O cargo é obrigatório."),
   cargoOutro: z.string().optional(),
   ingressoForaDeData: z.string().optional(),
-  fotoUrl: z.any() 
-    .refine((file) => !file || file.size === 0 || (file instanceof File && file.type.startsWith("image/")), 
+  fotoUrl: z.any()
+    .refine((file) => !file || file.size === 0 || (file instanceof File && file.type.startsWith("image/")),
       "O arquivo precisa ser uma imagem.")
     .optional(),
 }).refine(data => {
@@ -64,7 +64,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     return { message: "Acesso negado." };
   }
 
-  
   const validatedFields = CreateAlunoSchema.safeParse({
     nome: formData.get('nome'),
     cpf: formData.get('cpf'),
@@ -82,15 +81,18 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
-  
-  const { cargoNome, cargoOutro, fotoUrl, password, ingressoForaDeData, companhiaId, ...data } = validatedFields.data;
+
+  const { 
+    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId, ingressoForaDeData,
+    fotoUrl, password, nome, cpf, email
+  } = validatedFields.data;
+
   const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
   const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     let uploadedFotoUrl: string | null = null;
-
 
     if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
       const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
@@ -99,15 +101,29 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
 
     await prisma.usuario.create({
       data: {
-        ...data,
+        nome,
+        cpf,
+        email,
         password: hashedPassword,
-        cargo: { connect: { nome: finalCargoNome } },
-        conceito: conceitoInicial,
         fotoUrl: uploadedFotoUrl,
-        status: "ATIVO", 
-        role: "ALUNO",     
+        status: "ATIVO",
+        role: "ALUNO",
+        perfilAluno: {
+          create: {
+            numero,
+            nomeDeGuerra,
+            conceito: conceitoInicial,
+            companhia: {
+                connect: { id: companhiaId }
+            },
+            cargo: {
+               connect: { nome: finalCargoNome }
+            }
+          }
+        }
       },
     });
+
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
       return { message: 'Já existe um usuário com este CPF ou Número.' };
@@ -125,7 +141,6 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
   if (!user || user.role !== 'ADMIN') {
     return { message: "Acesso negado." };
   }
-
 
   const validatedFields = UpdateAlunoSchema.safeParse({
     id: formData.get('id'),
@@ -145,21 +160,33 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
-  
-  const { id, password, fotoUrl, cargoNome, cargoOutro, ...dataToUpdateRaw } = validatedFields.data;
-  
+
+  const { 
+    id, password, fotoUrl, 
+    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId, ingressoForaDeData,
+    ...userData 
+  } = validatedFields.data;
+
   try {
-    const alunoAtual = await prisma.usuario.findUnique({ where: { id }, include: { cargo: true } });
-    if (!alunoAtual) {
-      return { message: "Aluno não encontrado." };
+    const alunoAtual = await prisma.usuario.findUnique({ 
+      where: { id }, 
+      include: { 
+        perfilAluno: {
+          include: { cargo: true }
+        } 
+      } 
+    });
+
+    if (!alunoAtual || !alunoAtual.perfilAluno) {
+      return { message: "Aluno ou perfil não encontrado." };
     }
 
-    const dataForPrisma: Prisma.UsuarioUpdateInput = {
-      ...dataToUpdateRaw, 
+    const dataUsuarioUpdate: Prisma.UsuarioUpdateInput = {
+      ...userData,
     };
 
     if (password) {
-      dataForPrisma.password = await bcrypt.hash(password, 10);
+      dataUsuarioUpdate.password = await bcrypt.hash(password, 10);
     }
 
     if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
@@ -167,24 +194,34 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
         await del(alunoAtual.fotoUrl);
       }
       const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
-      dataForPrisma.fotoUrl = blob.url;
+      dataUsuarioUpdate.fotoUrl = blob.url;
     }
 
     const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
-    if (alunoAtual.cargo?.nome !== finalCargoNome) {
-      dataForPrisma.cargo = {
-        connect: {
-          nome: finalCargoNome, 
-        },
+    
+    const dataPerfilUpdate: Prisma.PerfilAlunoUpdateInput = {
+       numero,
+       nomeDeGuerra,
+       companhia: { connect: { id: companhiaId } } 
+    };
+    
+    if (alunoAtual.perfilAluno.cargo?.nome !== finalCargoNome) {
+      dataPerfilUpdate.cargo = {
+        connect: { nome: finalCargoNome },
       };
+      dataPerfilUpdate.conceito = '7.0';
 
-      dataForPrisma.conceito = '7.0';
-      await prisma.anotacao.deleteMany({ where: { alunoId: id } });
+      await prisma.anotacao.deleteMany({ where: { alunoId: alunoAtual.perfilAluno.id } });
     }
 
     await prisma.usuario.update({
       where: { id },
-      data: dataForPrisma,
+      data: {
+        ...dataUsuarioUpdate,
+        perfilAluno: {
+          update: dataPerfilUpdate
+        }
+      },
     });
 
   } catch (error: unknown) {
@@ -205,7 +242,7 @@ export async function deleteAluno(formData: FormData) {
     throw new Error("Acesso negado.");
   }
 
-  const id = formData.get('id') as string;
+  const id = formData.get('id') as string; 
   const fotoUrl = formData.get('fotoUrl') as string | null;
 
   if (!id) {
@@ -213,11 +250,19 @@ export async function deleteAluno(formData: FormData) {
   }
 
   try {
+    const usuarioAlvo = await prisma.usuario.findUnique({
+        where: { id },
+        include: { perfilAluno: true }
+    });
+
+    if (usuarioAlvo?.perfilAluno) {
+         await prisma.anotacao.deleteMany({ where: { alunoId: usuarioAlvo.perfilAluno.id } });
+    }
+
     if (fotoUrl) {
       await del(fotoUrl);
     }
     
-    await prisma.anotacao.deleteMany({ where: { alunoId: id } });
     await prisma.usuario.delete({ where: { id } });
 
     revalidatePath("/admin/alunos");

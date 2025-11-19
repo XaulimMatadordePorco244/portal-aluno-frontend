@@ -13,7 +13,7 @@ export async function POST(
 ) {
   try {
     const user = await getCurrentUser();
-      const { id: parteId } = await params;
+    const { id: parteId } = await params;
 
     if (user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -27,7 +27,13 @@ export async function POST(
     const { novaAnalise, parteAtualizada } = await prisma.$transaction(async (tx) => {
       const parte = await tx.parte.findUnique({
         where: { id: parteId },
-        include: { autor: true } 
+        include: { 
+          autor: {
+            include: {
+              perfilAluno: true
+            }
+          } 
+        } 
       });
 
       if (!parte) {
@@ -37,7 +43,13 @@ export async function POST(
       const parteAtualizada = await tx.parte.update({
         where: { id: parteId },
         data: { status: 'ANALISADA' },
-        include: { autor: true } 
+        include: { 
+          autor: {
+            include: {
+              perfilAluno: true
+            }
+          } 
+        } 
       });
 
       const novaAnalise = await tx.analise.create({
@@ -70,7 +82,7 @@ export async function POST(
         to: autor.email,
         subject: `Sua parte foi analisada: ${parteAtualizada.assunto}`,
         react: ParteAnaliseEmail({
-          alunoNome: autor.nomeDeGuerra || autor.nome,
+          alunoNome: autor.perfilAluno?.nomeDeGuerra || autor.nome,
           parteAssunto: parteAtualizada.assunto,
           resultado: novaAnalise.resultado,
           observacoes: novaAnalise.observacoes,

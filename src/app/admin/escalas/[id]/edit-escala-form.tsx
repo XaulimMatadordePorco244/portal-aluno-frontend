@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Funcao, TipoEscala} from '@prisma/client';
+import { Funcao, TipoEscala } from '@prisma/client';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit, FileDown, Globe, PlusCircle, Save, Trash2, ChevronsUpDown } from 'lucide-react';
 import { EscalaCompleta, UserComCargoEFuncao } from './page';
@@ -46,11 +46,11 @@ type UserComCargo = UserComCargoEFuncao;
 const AUXILIAR_PREFIX = "AUXILIAR - ";
 
 function initializeState(
-    escala: EscalaCompleta, 
-    alunos: UserComCargo[], 
+    escala: EscalaCompleta,
+    alunos: UserComCargo[],
     funcaoOutroId: string
 ): SecaoState[] {
-    
+
     return GABARITO_COLABORACAO.secoes.map(secaoTemplate => {
         const itensDaSecao = escala.itens.filter(item => item.secao === secaoTemplate.nome);
 
@@ -58,12 +58,12 @@ function initializeState(
             let auxiliarUserId = '';
             let tema = '';
             let cargoPersonalizado = '';
-         
+
             if (secaoTemplate.isSecaoPalestrante) {
                 tema = item.cargo;
                 if (item.observacao && item.observacao.startsWith(AUXILIAR_PREFIX)) {
                     const auxNome = item.observacao.substring(AUXILIAR_PREFIX.length);
-                    const auxUser = alunos.find(a => a.nomeDeGuerra === auxNome);
+                    const auxUser = alunos.find(a => a.perfilAluno?.nomeDeGuerra === auxNome);
                     auxiliarUserId = auxUser?.id || '';
                 }
             }
@@ -95,15 +95,20 @@ function UserCombobox({ users, value, onChange }: { users: UserComCargo[], value
     const [open, setOpen] = useState(false);
     const selectedUser = users.find(u => u.id === value);
 
+
     const formatUserDisplay = (user: UserComCargo) => {
-        return `${user.cargo?.abreviacao || ''} ${user.nomeDeGuerra}`.trim();
+        const perfil = user.perfilAluno;
+        if (perfil) {
+            return `${perfil.cargo?.abreviacao || ''} ${perfil.nomeDeGuerra || user.nome}`.trim();
+        }
+        return user.nome;
     }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                    {selectedUser 
+                    {selectedUser
                         ? formatUserDisplay(selectedUser)
                         : "Selecione..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -137,15 +142,15 @@ function UserCombobox({ users, value, onChange }: { users: UserComCargo[], value
 
 type FuncaoComCategoria = Funcao & { categoria: string | null };
 
-export function EditEscalaForm({ 
-    escalaInicial, 
-    alunos, 
-    admins, 
-    funcoes: funcoesProp 
-}: { 
-    escalaInicial: EscalaCompleta, 
-    alunos: UserComCargo[], 
-    admins: UserComCargo[], 
+export function EditEscalaForm({
+    escalaInicial,
+    alunos,
+    admins,
+    funcoes: funcoesProp
+}: {
+    escalaInicial: EscalaCompleta,
+    alunos: UserComCargo[],
+    admins: UserComCargo[],
     funcoes: FuncaoComCategoria[]
 }) {
     const router = useRouter();
@@ -159,7 +164,7 @@ export function EditEscalaForm({
     const [elaboradoPor, setElaboradoPor] = useState(escalaInicial.elaboradoPor);
     const [pdfUrl, setPdfUrl] = useState(escalaInicial.pdfUrl);
     const [status, setStatus] = useState(escalaInicial.status);
-    
+
     const [fardamento, setFardamento] = useState(escalaInicial.fardamento || GABARITO_COLABORACAO.fardamento);
     const [observacoes, setObservacoes] = useState(escalaInicial.observacoes || GABARITO_COLABORACAO.observacoes);
 
@@ -184,24 +189,25 @@ export function EditEscalaForm({
         const novasSecoes = [...secoes];
         const secao = novasSecoes[secaoIndex];
         const ultimaFuncaoId = secao.itens[secao.itens.length - 1]?.funcaoId || '';
-        
-        secao.itens.push({ 
-            id: `item-${Date.now()}`, 
-            funcaoId: ultimaFuncaoId, 
-            cargoPersonalizado: '', 
-            horarioInicio: '13:00', 
-            horarioFim: '17:45', 
-            userId: '', 
-            tema: '', 
-            auxiliarUserId: '' 
+
+        secao.itens.push({
+            id: `item-${Date.now()}`,
+            funcaoId: ultimaFuncaoId,
+            cargoPersonalizado: '',
+            horarioInicio: '13:00',
+            horarioFim: '17:45',
+            userId: '',
+            tema: '',
+            auxiliarUserId: ''
         });
         setSecoes(novasSecoes);
     };
 
     const handleRemoveItem = (secaoIndex: number, itemIndex: number) => {
         const novasSecoes = [...secoes];
-        novasSecoes[secaoIndex].itens.splice(itemIndex, 1);
-        setSecoes(novasSecoes);
+        const novasSecoesCopy = [...secoes];
+        novasSecoesCopy[secaoIndex].itens.splice(itemIndex, 1);
+        setSecoes(novasSecoesCopy);
     };
 
     const handleSaveChanges = async () => {
@@ -219,7 +225,8 @@ export function EditEscalaForm({
                     funcaoIdFinal = null;
                     const auxiliar = alunos.find(a => a.id === item.auxiliarUserId);
                     if (auxiliar) {
-                        observacaoFinal = `AUXILIAR - ${auxiliar.nomeDeGuerra || auxiliar.nome}`;
+                        const nomeAuxiliar = auxiliar.perfilAluno?.nomeDeGuerra || auxiliar.nome;
+                        observacaoFinal = `AUXILIAR - ${nomeAuxiliar}`;
                     }
                 } else if (funcao?.id === funcaoOutroId) {
                     cargoFinal = item.cargoPersonalizado;
@@ -258,7 +265,7 @@ export function EditEscalaForm({
                 const errorData = await response.json();
                 throw new Error(errorData.error || "Falha ao salvar alterações.");
             }
-            
+
             const updatedEscala: EscalaCompleta = await response.json();
 
             setDataEscala(updatedEscala.dataEscala);
@@ -347,7 +354,8 @@ export function EditEscalaForm({
 
     const getAlunoName = (alunoId: string, isSecaoAdmin: boolean) => {
         const userList = isSecaoAdmin ? admins : alunos;
-        return userList.find(u => u.id === alunoId)?.nomeDeGuerra || 'N/A';
+        const u = userList.find(u => u.id === alunoId);
+        return u?.perfilAluno?.nomeDeGuerra || u?.nome || 'N/A';
     };
 
     const getFuncaoName = (funcaoId: string, cargoPersonalizado?: string) => {
@@ -450,7 +458,7 @@ export function EditEscalaForm({
                             <CardTitle>{secao.nome}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            
+
                             {secao.itens.length === 0 && !isEditing && (
                                 <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção.</p>
                             )}
@@ -458,13 +466,13 @@ export function EditEscalaForm({
                             {secao.itens.map((item, itemIndex) => {
                                 const funcoesFiltradas = funcoesProp.filter(f => f.categoria === secao.categoriaEsperada || f.id === funcaoOutroId);
                                 const isOutroSelecionado = item.funcaoId === funcaoOutroId;
-                                
+
                                 return (
                                     <div key={item.id} className="grid grid-cols-12 gap-x-4 gap-y-3 border p-4 rounded-md relative">
                                         {isEditing ? (
                                             <>
                                                 <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => handleRemoveItem(secaoIndex, itemIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                
+
                                                 {secao.isSecaoPalestrante ? (
                                                     <>
                                                         <div className="col-span-12 md:col-span-4 space-y-2"><Label>Tema da Palestra</Label><Input placeholder="Tema..." value={item.tema} onChange={e => handleItemChange(secaoIndex, itemIndex, 'tema', e.target.value)} /></div>

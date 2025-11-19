@@ -3,21 +3,25 @@ import { notFound } from "next/navigation";
 import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
-import { Cargo, Funcao, Usuario, Escala, EscalaItem } from "@prisma/client";
+import { Cargo, Funcao, Usuario, Escala, EscalaItem, PerfilAluno } from "@prisma/client";
 
 export type UserComCargoEFuncao = Usuario & {
-  funcao: Funcao | null;
-  cargo: Cargo | null;
+  perfilAluno: (PerfilAluno & {
+    funcao: Funcao | null;
+    cargo: Cargo | null;
+  }) | null;
 };
 
-
 export type EscalaItemCompleto = EscalaItem & {
-  aluno: Usuario;
-  funcaoId: string | null; 
+  aluno: PerfilAluno & {
+    usuario: Usuario;
+    funcao: Funcao | null;
+  };
+  funcaoId: string | null;
 };
 
 export type EscalaCompleta = Escala & {
-  itens: EscalaItemCompleto[]; 
+  itens: EscalaItemCompleto[];
   criadoPor: Usuario;
 };
 
@@ -29,8 +33,9 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
         include: {
           aluno: {
             include: {
-              funcao: true
-            }
+              usuario: true,
+              funcao: true,
+            },
           },
         },
         orderBy: {
@@ -43,11 +48,11 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
 
   if (!escala) return null;
 
- 
   return {
     ...escala,
     itens: escala.itens.map(item => ({
       ...item,
+      alunoId: item.aluno.usuarioId,
       funcaoId: item.aluno.funcao?.id || null
     }))
   };
@@ -58,21 +63,31 @@ async function getFormData() {
     prisma.usuario.findMany({
       where: { role: 'ALUNO', status: 'ATIVO' },
       include: {
-        funcao: true,
-        cargo: true
+        perfilAluno: {
+          include: {
+            funcao: true,
+            cargo: true
+          }
+        }
       },
       orderBy: {
-        cargo: { precedencia: 'asc' }
+        perfilAluno: {
+          cargo: { precedencia: 'asc' }
+        }
       }
     }),
     prisma.usuario.findMany({
       where: { role: 'ADMIN' },
       include: {
-        funcao: true,
-        cargo: true
+        perfilAluno: {
+          include: {
+            funcao: true,
+            cargo: true
+          }
+        }
       },
       orderBy: {
-        cargo: { precedencia: 'asc' }
+        nome: 'asc'
       }
     }),
     prisma.funcao.findMany({
@@ -97,7 +112,7 @@ export default async function DetalheEscalaPage({ params }: PageProps) {
   const { id } = await params;
 
   const [escala, formData] = await Promise.all([
-    getEscalaDetailsSimple(id), 
+    getEscalaDetailsSimple(id),
     getFormData(),
     getCurrentUser()
   ]);

@@ -25,10 +25,15 @@ export async function POST(
 
     const oficiais = await prisma.usuario.findMany({
       where: {
-        cargo: {
-          tipo: 'POSTO',
+        perfilAluno: {
+          cargo: {
+            tipo: 'POSTO',
+          },
         },
       },
+      include: {
+        perfilAluno: true 
+      }
     });
 
     if (oficiais.length === 0) {
@@ -55,7 +60,10 @@ export async function POST(
       });
     });
 
-    return NextResponse.json({ message: `Processo iniciado. Oficial ${oficialSorteado.nomeDeGuerra} foi designado.` });
+    
+    const nomeExibicao = oficialSorteado.perfilAluno?.nomeDeGuerra || oficialSorteado.nome;
+
+    return NextResponse.json({ message: `Processo iniciado. Oficial ${nomeExibicao} foi designado.` });
 
   } catch (error) {
     console.error("Erro ao iniciar apuração:", error);

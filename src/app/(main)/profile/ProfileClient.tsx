@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from 'lucide-react';
-import { Usuario, Cargo } from '@prisma/client';
+import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
 
 type UserWithCargo = Usuario & {
-  cargo?: Cargo | null;
-  companhia?: { nome: string } | null;
+  perfilAluno: (PerfilAluno & {
+    cargo: Cargo | null;
+    companhia: Companhia | null;
+  }) | null;
 };
 
 const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
@@ -23,9 +25,11 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
   const [email, setEmail] = useState(user.email || '');
   const [isLoading, setIsLoading] = useState(false);
 
+  const perfil = user.perfilAluno;
+
   const nameParts = useMemo(() => {
     const fullName = user.nome;
-    const warName = user.nomeDeGuerra;
+    const warName = perfil?.nomeDeGuerra;
 
     if (!fullName) {
       return { before: '', match: warName || 'Perfil', after: '' };
@@ -45,7 +49,7 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
       match: warName,
       after: fullName.substring(index + warName.length),
     };
-  }, [user.nome, user.nomeDeGuerra]);
+  }, [user.nome, perfil?.nomeDeGuerra]);
 
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
@@ -70,7 +74,7 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
               <strong className="font-bold">{nameParts.match.toUpperCase()}</strong>
               {nameParts.after}
             </h1>
-            <p className="text-md text-muted-foreground">Nº: {user.numero || 'N/A'}</p>
+            <p className="text-md text-muted-foreground">Nº: {perfil?.numero || 'N/A'}</p>
           </div>
         </div>
 
@@ -79,10 +83,10 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
             
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground mb-2">Dados Institucionais</h2>
-              <InfoField label="Companhia" value={user.companhia?.nome} />
-              <InfoField label="Graduação/Posto" value={user.cargo?.nome} />
-              <InfoField label="Ano de Ingresso" value={user.anoIngresso} />
-              <InfoField label="Conceito" value={user.conceito} />
+              <InfoField label="Companhia" value={perfil?.companhia?.nome} />
+              <InfoField label="Graduação/Posto" value={perfil?.cargo?.nome} />
+              <InfoField label="Ano de Ingresso" value={perfil?.anoIngresso} />
+              <InfoField label="Conceito" value={perfil?.conceito} />
             </div>
 
             <div className="space-y-2">

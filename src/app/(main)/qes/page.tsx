@@ -7,21 +7,25 @@ import { getCurrentUserWithRelations } from '@/lib/auth';
 
 async function getQESList() {
   return await prisma.qES.findMany({
-    orderBy: { dataInicio: 'desc' }, 
-  });
+    orderBy: { dataInicio: 'desc' },
+  }); 
 }
 
 export default async function AlunoQESPage() {
   const qesList = await getQESList();
   const user = await getCurrentUserWithRelations();
 
+  const perfil = user?.perfilAluno;
+  const nomeExibicao = perfil?.nomeDeGuerra || user?.nome || '';
+  const cargoExibicao = perfil?.cargo?.abreviacao || 'Aluno';
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Quadro de Estudo Semanal</h1>
         <p className="text-muted-foreground">
-          {user?.nomeDeGuerra ? `Aspirante ${user.nomeDeGuerra}, ` : ''}
-          aqui estão todos os QES publicados.
+          {nomeExibicao ? `Olá, ${cargoExibicao} ${nomeExibicao}. ` : ''}
+          Aqui estão todos os QES publicados.
         </p>
       </div>
 

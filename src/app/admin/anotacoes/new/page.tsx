@@ -5,9 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 async function getData() {
   const alunos = await prisma.usuario.findMany({
     where: { role: 'ALUNO', status: 'ATIVO' },
-    orderBy: { nome: 'asc' },
+    orderBy: { 
+      perfilAluno: {
+        nomeDeGuerra: 'asc'
+      }
+    },
     include: { 
-      companhia: true 
+      perfilAluno: {
+        include: {
+          companhia: true
+        }
+      } 
     },
   });
 
