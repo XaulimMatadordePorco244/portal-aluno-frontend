@@ -6,9 +6,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-   
     if (Array.isArray(body)) {
-  
       for (const user of body) {
         if (!user.nome || !user.cpf || !user.password) {
           return NextResponse.json(
@@ -18,31 +16,36 @@ export async function POST(req: Request) {
         }
       }
 
- 
-      const usersData = await Promise.all(
-        body.map(async (user) => {
-          const hashedPassword = await bcrypt.hash(user.password, 10);
-          return {
-            ...user,
+
+      const results = [];
+      
+      for (const user of body) {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+
+        const { perfilAluno, ...userData } = user;
+        
+        const result = await prisma.usuario.create({
+          data: {
+            ...userData,
             password: hashedPassword,
-          };
-        })
-      );
-
-
-      const result = await prisma.usuario.createMany({
-        data: usersData,
-        skipDuplicates: true, 
-      });
+            perfilAluno: perfilAluno ? {
+              create: perfilAluno
+            } : undefined
+          },
+          include: {
+            perfilAluno: true
+          }
+        });
+        
+        results.push(result);
+      }
 
       return NextResponse.json({
-        message: `${result.count} usuários criados com sucesso.`,
+        message: `${results.length} usuários criados com sucesso.`,
+        results
       });
-    }
-    
-
-    else {
-      const { nome, cpf, password, ...rest } = body;
+    } else {
+      const { nome, cpf, password, perfilAluno, ...rest } = body;
 
       if (!nome || !cpf || !password) {
         return NextResponse.json(
@@ -59,6 +62,12 @@ export async function POST(req: Request) {
           cpf,
           password: hashedPassword,
           ...rest,
+          perfilAluno: perfilAluno ? {
+            create: perfilAluno
+          } : undefined
+        },
+        include: {
+          perfilAluno: true
         }
       });
 
