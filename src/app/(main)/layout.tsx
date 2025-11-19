@@ -1,5 +1,5 @@
 import { Header } from "@/components/header";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUserWithRelations } from "@/lib/auth";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,12 +15,12 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserWithRelations();
 
   const userForHeader = user ? {
     ...user,
-    nomeDeGuerra: user.nomeDeGuerra ?? null,
-    cargo: user.cargo ?? null
+    nomeDeGuerra: user.perfilAluno?.nomeDeGuerra ?? null,
+    cargo: user.perfilAluno?.cargo?.nome ?? null
   } : null;
 
   return (

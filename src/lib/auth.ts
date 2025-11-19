@@ -1,16 +1,14 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient(); 
-
+import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 interface UserPayload {
   userId: string;
   nome: string;
   role: string;
-  nomeDeGuerra?: string | null; 
-  cargo?: string | null; 
+  iat?: number;
+  exp?: number;
 }
 
 export async function getCurrentUser(): Promise<UserPayload | null> {
@@ -23,19 +21,16 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
 
   try {
     if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET não está definida.");
+      console.error("JWT_SECRET não definida");
+      return null;
     }
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as UserPayload;
     return decoded;
-  } catch (error) {
-    console.error("Falha ao verificar o token:", error);
+  } catch {
     return null;
   }
 }
-
-
-import { Prisma } from '@prisma/client';
-
 
 const userWithRelationsQuery = Prisma.validator<Prisma.UsuarioDefaultArgs>()({
   include: {
@@ -49,9 +44,7 @@ const userWithRelationsQuery = Prisma.validator<Prisma.UsuarioDefaultArgs>()({
   },
 });
 
-
 export type UserWithRelations = Prisma.UsuarioGetPayload<typeof userWithRelationsQuery>;
-
 
 export async function getCurrentUserWithRelations(): Promise<UserWithRelations | null> {
   const sessionUser = await getCurrentUser();
@@ -65,7 +58,7 @@ export async function getCurrentUserWithRelations(): Promise<UserWithRelations |
       where: {
         id: sessionUser.userId,
       },
-       include: userWithRelationsQuery.include, 
+      include: userWithRelationsQuery.include, 
     });
 
     return user;
@@ -79,16 +72,5 @@ export function canAccessAdminArea(user: UserWithRelations | null): boolean {
   if (!user) {
     return false;
   }
-
-
-  if (user.role === 'ADMIN') {
-    return true;
-  }
-
-
-  if (user.perfilAluno?.funcao?.nome === 'Comandante Geral') {
-    return true;
-  }
-
-  return false;
+  return user.role === 'ADMIN';
 }
