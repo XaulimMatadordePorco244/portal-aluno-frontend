@@ -69,7 +69,8 @@ export default async function DashboardPage() {
 
   const profileId = user.perfilAluno?.id;
 
-  const [qesItems, latestAnnotations, { rankingData }, latestCIs] = await Promise.all([
+  
+  const [qesItems, latestAnnotations, { rankingData }, latestCIs, latestInformativos] = await Promise.all([
     prisma.qES.findMany({
       take: 3,
       orderBy: { createdAt: 'desc' },
@@ -87,6 +88,10 @@ export default async function DashboardPage() {
         { anoReferencia: 'desc' },
         { numeroSequencial: 'desc' }
       ],
+    }),
+    prisma.informativo.findMany({
+      take: 3,
+      orderBy: { dataPublicacao: 'desc' }
     })
   ]);
 
@@ -97,6 +102,7 @@ export default async function DashboardPage() {
       latestAnnotations={latestAnnotations}
       rankingData={rankingData}
       latestCIs={latestCIs}
+      latestInformativos={latestInformativos} 
     />
   );
 }

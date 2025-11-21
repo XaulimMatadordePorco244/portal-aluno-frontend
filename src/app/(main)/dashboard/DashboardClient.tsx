@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
-import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna} from '@prisma/client';
+import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo } from '@prisma/client';
 import Link from 'next/link';
 import { UserWithRelations } from "@/lib/auth";
 
@@ -49,13 +49,15 @@ export default function DashboardClient({
   qesItems,
   latestAnnotations,
   rankingData,
-  latestCIs
+  latestCIs,
+  latestInformativos
 }: {
   user: UserWithRelations,
   qesItems: QES[],
   latestAnnotations: AnotacaoWithType[],
   rankingData: RankingDataItem[],
-  latestCIs: ComunicacaoInterna[]
+  latestCIs: ComunicacaoInterna[],
+  latestInformativos: Informativo[]
 }) {
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
@@ -108,16 +110,37 @@ export default function DashboardClient({
           )}
         </DashboardCard>
 
-        <DashboardCard title="Informativos" linkText="Ver todos os informativos"><UniversalListItem title="Atualização do Regulamento de Uniformes" date="Publicado em: 03/09/2025" url="#" /></DashboardCard>
+        <DashboardCard
+          title="Informativos"
+          linkText="Ver todos os informativos"
+          linkHref="/informativos"
+        >
+          {latestInformativos.length > 0 ? (
+            <div>
+              {latestInformativos.map(info => (
+                <UniversalListItem
+                  key={info.id}
+                  title={info.titulo}
+                  date={`Publicado em: ${new Date(info.dataPublicacao).toLocaleDateString('pt-BR')}`}
+                  url={info.arquivoUrl || "/informativos"}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground p-4 py-8">
+              Nenhum informativo recente.
+            </p>
+          )}
+        </DashboardCard>
         <DashboardCard title="Minhas Escalas" linkText="Ver todas as escalas" linkHref="/escalas"><UniversalListItem title="EVENTO: Desfile Cívico" date="07/09/2025 - 08:00h" url="#" /></DashboardCard>
-        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas" 
+        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas"
         >
           {latestCIs.length > 0 ? (
             <div>
               {latestCIs.map((ci) => (
                 <UniversalListItem
                   key={ci.id}
-                                  title={`CI ${String(ci.numeroSequencial).padStart(3, '0')}/${ci.anoReferencia} - ${ci.titulo}`}
+                  title={`CI ${String(ci.numeroSequencial).padStart(3, '0')}/${ci.anoReferencia} - ${ci.titulo}`}
                   date={`Publicado em: ${new Date(ci.dataPublicacao).toLocaleDateString('pt-BR')}`}
                   url={ci.arquivoUrl}
                 />
@@ -131,6 +154,6 @@ export default function DashboardClient({
           )}
         </DashboardCard>
       </div>
-    </div>    
+    </div>
   );
 }
