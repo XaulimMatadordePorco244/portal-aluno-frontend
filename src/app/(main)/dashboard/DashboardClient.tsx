@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
-import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo } from '@prisma/client';
+import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo, Escala } from '@prisma/client';
 import Link from 'next/link';
 import { UserWithRelations } from "@/lib/auth";
 
@@ -50,14 +50,16 @@ export default function DashboardClient({
   latestAnnotations,
   rankingData,
   latestCIs,
-  latestInformativos
+  latestInformativos,
+  minhasEscalas
 }: {
   user: UserWithRelations,
   qesItems: QES[],
   latestAnnotations: AnotacaoWithType[],
   rankingData: RankingDataItem[],
   latestCIs: ComunicacaoInterna[],
-  latestInformativos: Informativo[]
+  latestInformativos: Informativo[],
+  minhasEscalas: Escala[]
 }) {
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
@@ -132,7 +134,32 @@ export default function DashboardClient({
             </p>
           )}
         </DashboardCard>
-        <DashboardCard title="Minhas Escalas" linkText="Ver todas as escalas" linkHref="/escalas"><UniversalListItem title="EVENTO: Desfile Cívico" date="07/09/2025 - 08:00h" url="#" /></DashboardCard>
+        <DashboardCard
+          title="Minhas Escalas"
+          linkText="Ver todas as escalas"
+          linkHref="/escalas?filtro=minhas"
+        >
+          {minhasEscalas.length > 0 ? (
+            <div>
+              {minhasEscalas.map((escala) => (
+                <UniversalListItem
+                  key={escala.id}
+
+                  title={`Escala: ${escala.tipo}`}
+
+                  date={`Data: ${new Date(escala.dataEscala).toLocaleDateString('pt-BR')}`}
+                  url={escala.pdfUrl || "#"}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+              <p className="text-sm text-muted-foreground">
+                Você não está escalado em nenhuma escala recente.
+              </p>
+            </div>
+          )}
+        </DashboardCard>
         <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas"
         >
           {latestCIs.length > 0 ? (

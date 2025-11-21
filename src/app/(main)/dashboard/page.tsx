@@ -70,18 +70,32 @@ export default async function DashboardPage() {
   const profileId = user.perfilAluno?.id;
 
   
-  const [qesItems, latestAnnotations, { rankingData }, latestCIs, latestInformativos] = await Promise.all([
+  const [
+    qesItems, 
+    latestAnnotations, 
+    { rankingData }, 
+    latestCIs, 
+    latestInformativos,
+    minhasEscalas 
+  ] = await Promise.all([
+    
     prisma.qES.findMany({
       take: 3,
       orderBy: { createdAt: 'desc' },
     }),
+    
+    
     profileId ? prisma.anotacao.findMany({
       where: { alunoId: profileId },
       include: { tipo: true },
       orderBy: { data: 'desc' },
       take: 3,
     }) : [],
+    
+  
     getRankingSnippet(user),
+    
+
     prisma.comunicacaoInterna.findMany({
       take: 3,
       orderBy: [
@@ -89,10 +103,25 @@ export default async function DashboardPage() {
         { numeroSequencial: 'desc' }
       ],
     }),
+    
     prisma.informativo.findMany({
       take: 3,
       orderBy: { dataPublicacao: 'desc' }
-    })
+    }),
+
+  
+    profileId ? prisma.escala.findMany({
+      where: {
+        status: 'PUBLICADA',
+        itens: {
+          some: {
+            alunoId: profileId 
+          }
+        }
+      },
+      take: 3,
+      orderBy: { dataEscala: 'desc' }
+    }) : []
   ]);
 
   return (
@@ -102,7 +131,8 @@ export default async function DashboardPage() {
       latestAnnotations={latestAnnotations}
       rankingData={rankingData}
       latestCIs={latestCIs}
-      latestInformativos={latestInformativos} 
+      latestInformativos={latestInformativos}
+      minhasEscalas={minhasEscalas} 
     />
   );
 }
