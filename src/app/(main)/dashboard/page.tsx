@@ -69,7 +69,7 @@ export default async function DashboardPage() {
 
   const profileId = user.perfilAluno?.id;
 
-  const [qesItems, latestAnnotations, { rankingData }] = await Promise.all([
+  const [qesItems, latestAnnotations, { rankingData }, latestCIs] = await Promise.all([
     prisma.qES.findMany({
       take: 3,
       orderBy: { createdAt: 'desc' },
@@ -80,7 +80,14 @@ export default async function DashboardPage() {
       orderBy: { data: 'desc' },
       take: 3,
     }) : [],
-    getRankingSnippet(user)
+    getRankingSnippet(user),
+    prisma.comunicacaoInterna.findMany({
+      take: 3,
+      orderBy: [
+        { anoReferencia: 'desc' },
+        { numeroSequencial: 'desc' }
+      ],
+    })
   ]);
 
   return (
@@ -89,6 +96,7 @@ export default async function DashboardPage() {
       qesItems={qesItems}
       latestAnnotations={latestAnnotations}
       rankingData={rankingData}
+      latestCIs={latestCIs}
     />
   );
 }

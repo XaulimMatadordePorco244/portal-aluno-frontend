@@ -132,6 +132,7 @@ model Usuario {
   partesCriadas      Parte[]
   analisesFeitas     Analise[]
   logsAtor           LogParte[]
+  comunicacoesCriadas ComunicacaoInterna[] @relation("CIsCriadas")
   anotacoesFeitas    Anotacao[]         @relation("AnotacoesFeitasPeloAutor")
   escalasCriadas     Escala[]           @relation("EscalasCriadas")
   qesCriados         QES[]
@@ -184,6 +185,36 @@ model PerfilAluno {
   @@index([funcaoId])
   @@index([companhiaId])
   @@map("perfis_alunos")
+}
+
+model ComunicacaoInterna {
+  id                String   @id @default(cuid())
+  
+
+  titulo            String  
+  assunto           String   
+  resumo            String?  @db.Text 
+  
+  
+  arquivoUrl        String   
+  nomeArquivoGerado String   
+  
+
+  anoReferencia     Int      
+  numeroSequencial  Int      
+
+  dataPublicacao    DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+
+  autorId           String
+  autor             Usuario  @relation("CIsCriadas", fields: [autorId], references: [id], onDelete: Restrict)
+
+  @@unique([anoReferencia, numeroSequencial]) 
+  @@index([dataPublicacao])
+  @@index([assunto])       
+  @@map("comunicacoes_internas")
 }
 
 model Responsabilidade {

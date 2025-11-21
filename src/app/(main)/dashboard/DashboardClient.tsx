@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { ArrowRight, ExternalLink } from "lucide-react";
-import { QES, Anotacao, TipoDeAnotacao } from '@prisma/client';
+import { ArrowRight, ExternalLink, FileText } from "lucide-react";
+import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna} from '@prisma/client';
 import Link from 'next/link';
 import { UserWithRelations } from "@/lib/auth";
 
@@ -48,12 +48,14 @@ export default function DashboardClient({
   user,
   qesItems,
   latestAnnotations,
-  rankingData
+  rankingData,
+  latestCIs
 }: {
   user: UserWithRelations,
   qesItems: QES[],
   latestAnnotations: AnotacaoWithType[],
-  rankingData: RankingDataItem[]
+  rankingData: RankingDataItem[],
+  latestCIs: ComunicacaoInterna[]
 }) {
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
@@ -108,8 +110,27 @@ export default function DashboardClient({
 
         <DashboardCard title="Informativos" linkText="Ver todos os informativos"><UniversalListItem title="Atualização do Regulamento de Uniformes" date="Publicado em: 03/09/2025" url="#" /></DashboardCard>
         <DashboardCard title="Minhas Escalas" linkText="Ver todas as escalas" linkHref="/escalas"><UniversalListItem title="EVENTO: Desfile Cívico" date="07/09/2025 - 08:00h" url="#" /></DashboardCard>
-        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações"><UniversalListItem title="CI Nº 12/2025 - Documentos" date="Publicado em: 02/09/2025" url="#" /></DashboardCard>
+        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas" 
+        >
+          {latestCIs.length > 0 ? (
+            <div>
+              {latestCIs.map((ci) => (
+                <UniversalListItem
+                  key={ci.id}
+                                  title={`CI ${String(ci.numeroSequencial).padStart(3, '0')}/${ci.anoReferencia} - ${ci.titulo}`}
+                  date={`Publicado em: ${new Date(ci.dataPublicacao).toLocaleDateString('pt-BR')}`}
+                  url={ci.arquivoUrl}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grow flex-col items-center justify-center py-8 text-center px-4">
+              <FileText className="h-8 w-8 text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhuma comunicação publicada este ano.</p>
+            </div>
+          )}
+        </DashboardCard>
       </div>
-    </div>
+    </div>    
   );
 }
