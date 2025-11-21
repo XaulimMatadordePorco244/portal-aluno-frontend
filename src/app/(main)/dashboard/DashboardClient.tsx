@@ -110,10 +110,7 @@ export default function DashboardClient({
 
         <DashboardCard title="Informativos" linkText="Ver todos os informativos"><UniversalListItem title="Atualização do Regulamento de Uniformes" date="Publicado em: 03/09/2025" url="#" /></DashboardCard>
         <DashboardCard title="Minhas Escalas" linkText="Ver todas as escalas" linkHref="/escalas"><UniversalListItem title="EVENTO: Desfile Cívico" date="07/09/2025 - 08:00h" url="#" /></DashboardCard>
-        <DashboardCard
-          title="Comunicações Internas"
-          linkText="Ver todas as comunicações"
-          linkHref="/comunicacoes-internas" 
+        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas" 
         >
           {latestCIs.length > 0 ? (
             <div>

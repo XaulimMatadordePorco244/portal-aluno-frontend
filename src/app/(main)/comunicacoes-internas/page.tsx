@@ -11,7 +11,7 @@ import { CIFilters } from "./filters"
 
 export const metadata: Metadata = {
   title: "Comunicações Internas",
-  description: "Mural de avisos e documentos oficiais.",
+  description: "Mural de Comunicações Internas da Instituição",
 }
 
 export default async function ComunicacoesPage({
@@ -66,7 +66,7 @@ export default async function ComunicacoesPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Comunicações Internas</h1>
           <p className="text-muted-foreground">
-            Acesse todos os comunicados oficiais, escalas e avisos da instituição.
+            Acesse todos os comunicados internos da instituição.
           </p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default async function ComunicacoesPage({
       {comunicacoes.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
           <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold">Nenhuma comunicação encontrada</h3>
+          <h3 className="text-lg font-semibold">Nenhuma C.I. encontrada</h3>
           <p className="text-muted-foreground">Tente ajustar os filtros de busca.</p>
         </div>
       ) : (
