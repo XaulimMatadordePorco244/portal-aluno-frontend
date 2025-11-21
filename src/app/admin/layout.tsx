@@ -27,7 +27,7 @@ export default async function AdminLayout({
     redirect('/dashboard'); 
   }
 
-  const displayName = user.role === 'ADMIN' ? user.nome : (user.perfilAluno?.nomeDeGuerra || user.nome);
+  const displayName = user.role === 'ADMIN' ? user.nome : (user.nome);
 
   return (
     <div className="flex min-h-screen">
