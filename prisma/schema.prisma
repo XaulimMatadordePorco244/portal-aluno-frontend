@@ -130,6 +130,7 @@ model Usuario {
   genero               GeneroUsuario?
 
   partesCriadas      Parte[]
+  informativosCriados Informativo[] @relation("InformativosCriados")
   analisesFeitas     Analise[]
   logsAtor           LogParte[]
   comunicacoesCriadas ComunicacaoInterna[] @relation("CIsCriadas")
@@ -435,4 +436,25 @@ model EscalaItem {
   @@index([escalaId])
   @@index([alunoId])
   @@map("escala_itens")
+}
+
+model Informativo {
+  id             String   @id @default(cuid())
+  
+  titulo         String
+  descricao      String?  @db.Text 
+  
+
+  arquivoUrl     String?  
+  nomeArquivo    String? 
+
+  dataPublicacao DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  autorId        String
+  autor          Usuario  @relation("InformativosCriados", fields: [autorId], references: [id], onDelete: Restrict)
+
+  @@index([dataPublicacao])
+  @@map("informativos")
 }
