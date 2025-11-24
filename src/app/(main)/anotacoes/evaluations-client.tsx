@@ -15,8 +15,9 @@ import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown } from 'lucide
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PDFBuilder } from '@/lib/pdfUtils';
-import { UserWithRelations } from '@/lib/auth';
+import { UserWithRelations } from '@/lib/auth'; 
 import { Prisma } from '@prisma/client';
+
 
 type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
   include: {
@@ -44,6 +45,12 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
   const [activeFilter, setActiveFilter] = useState<AnnotationFilterType>('Todos');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  const perfil = user.perfilAluno;
+
+
+  const conceitoAtualValor = Number(perfil?.conceitoAtual ?? perfil?.conceitoInicial ?? 0).toFixed(2);
+
 
   const filteredByDate = useMemo(() => {
     if (!startDate && !endDate) return anotacoes;
@@ -102,10 +109,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
     }
   }, [filteredByDate, activeFilter]);
 
-  const perfil = user.perfilAluno;
-  const conceitoBase = parseFloat(perfil?.conceito || '0');
-  const somaDosPontosFiltrados = filteredByDate.reduce((sum, item) => sum + Number(item.pontos), 0);
-  const conceitoReal = (conceitoBase + somaDosPontosFiltrados).toFixed(2);
 
   const generateStatement = async () => { 
     const pdfBuilder = new PDFBuilder();
@@ -121,6 +124,7 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
   
     pdfBuilder
         .addKeyValueLine('Aluno:', nomeFormatado, { keySpace: 12 })
+        .addKeyValueLine('Conceito Atual:', conceitoAtualValor, { keySpace: 28 }) // Adicionado ao PDF
         .addKeyValueLine('Data de Emissão:', new Date().toLocaleDateString('pt-BR'), { keySpace: 32 })
         .addKeyValueLine('Filtro Aplicado:', activeFilter, { keySpace: 27 })
         .addSpacing(5);
@@ -128,7 +132,7 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
     autoTable(doc, {
       startY: pdfBuilder.currentY,
       head: [['Data', 'Anotação', 'Pontos', 'Detalhes']],
-          body: filteredAnnotations.map(a => [
+      body: filteredAnnotations.map(a => [
         format(new Date(a.data), "dd/MM/yyyy", { locale: ptBR }),
         a.tipo.titulo,
         (Number(a.pontos) > 0 ? '+' : '') + a.pontos,
@@ -165,10 +169,13 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
         <div className="flex items-center gap-4 w-full md:w-auto">
           <Award size={40} className="text-yellow-500 flex shrink-0" />
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Conceito (período)</p>
-            <p className="text-3xl font-bold text-foreground">{conceitoReal}</p>
+           
+            <p className="text-sm font-medium text-muted-foreground">Conceito Atual</p> 
+            <p className="text-3xl font-bold text-foreground">{conceitoAtualValor}</p>
           </div>
         </div>
+        
+      
         <div className="w-full md:w-auto grid grid-cols-2 lg:grid-cols-4 gap-4 border-t md:border-t-0 md:border-l pt-6 md:pt-0 md:pl-6">
           <InfoPill label="Elogios" count={summaryStats.elogio.count} points={summaryStats.elogio.points} />
           <InfoPill label="Punições" count={summaryStats.punicao.count} points={summaryStats.punicao.points} />

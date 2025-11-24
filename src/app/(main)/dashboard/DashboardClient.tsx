@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
-import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo } from '@prisma/client';
+import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo, Escala } from '@prisma/client';
 import Link from 'next/link';
 import { UserWithRelations } from "@/lib/auth";
 
@@ -14,7 +14,7 @@ type RankingDataItem = {
   id: string;
   nomeDeGuerra: string | null | undefined;
   nome: string;
-  conceito: string | null | undefined;
+  conceitoAtual: string | null | undefined;
   rank: number;
   numero: string | null | undefined;
   cargo: { nome: string | null; abreviacao: string | null; } | null | undefined;
@@ -22,7 +22,7 @@ type RankingDataItem = {
 
 const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (<Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-accent"><div className="flex justify-between items-center"><div><p className="font-semibold text-foreground text-sm truncate">{title}</p><p className="text-xs text-muted-foreground">{date}</p></div><ExternalLink className="h-4 w-4 text-muted-foreground" /></div></Link>);
 const AnnotationListItem = ({ title, date }: { title: string; date: string }) => (<div className="border-b last:border-b-0 p-3 hover:bg-accent flex justify-between items-center"><div><p className="font-semibold text-foreground text-sm">{title}</p><p className="text-xs text-muted-foreground">{date}</p></div><Button variant="ghost" size="sm" disabled>Ver detalhes</Button></div>);
-const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (<div className="bg-card rounded-lg shadow-lg border flex flex-col"><h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg">{title}</h2><div className="grow flex flex-col"><div className="flex grow">{children}</div><Link href={linkHref} className="p-3 text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg">{linkText} <ArrowRight className="ml-2 h-4 w-4" /></Link></div></div>);
+const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (<div className="bg-card rounded-lg shadow-lg border grow flex-col"><h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg">{title}</h2><div className="grow flex-col"><div className="grow">{children}</div><Link href={linkHref} className="p-3 text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg">{linkText} <ArrowRight className="ml-2 h-4 w-4" /></Link></div></div>);
 
 const RankingListItem = ({ rank, nome, conceito, numero, cargo, isCurrentUser }: { rank: number; nome: React.ReactNode; conceito: string | null | undefined; numero: string | null | undefined; cargo: string | null | undefined; isCurrentUser?: boolean }) => (
   <div className={`border-b last:border-b-0 p-3 ${isCurrentUser ? 'bg-primary/10' : 'hover:bg-accent'}`}>
@@ -50,14 +50,16 @@ export default function DashboardClient({
   latestAnnotations,
   rankingData,
   latestCIs,
-  latestInformativos
+  latestInformativos,
+  minhasEscalas
 }: {
   user: UserWithRelations,
   qesItems: QES[],
   latestAnnotations: AnotacaoWithType[],
   rankingData: RankingDataItem[],
   latestCIs: ComunicacaoInterna[],
-  latestInformativos: Informativo[]
+  latestInformativos: Informativo[],
+  minhasEscalas: Escala[]
 }) {
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
@@ -77,7 +79,7 @@ export default function DashboardClient({
                 key={aluno.id}
                 rank={aluno.rank}
                 nome={aluno.nomeDeGuerra || aluno.nome}
-                conceito={aluno.conceito}
+                conceito={aluno.conceitoAtual}
                 numero={aluno.numero}
                 cargo={aluno.cargo?.abreviacao || 'S/ Cargo'}
                 isCurrentUser={aluno.id === user.id}
@@ -132,7 +134,32 @@ export default function DashboardClient({
             </p>
           )}
         </DashboardCard>
-        <DashboardCard title="Minhas Escalas" linkText="Ver todas as escalas" linkHref="/escalas"><UniversalListItem title="EVENTO: Desfile Cívico" date="07/09/2025 - 08:00h" url="#" /></DashboardCard>
+        <DashboardCard
+          title="Minhas Escalas"
+          linkText="Ver todas as escalas"
+          linkHref="/escalas?filtro=minhas"
+        >
+          {minhasEscalas.length > 0 ? (
+            <div>
+              {minhasEscalas.map((escala) => (
+                <UniversalListItem
+                  key={escala.id}
+
+                  title={`Escala: ${escala.tipo}`}
+
+                  date={`Data: ${new Date(escala.dataEscala).toLocaleDateString('pt-BR')}`}
+                  url={escala.pdfUrl || "#"}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+              <p className="text-sm text-muted-foreground">
+                Você não está escalado em nenhuma escala recente.
+              </p>
+            </div>
+          )}
+        </DashboardCard>
         <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas"
         >
           {latestCIs.length > 0 ? (

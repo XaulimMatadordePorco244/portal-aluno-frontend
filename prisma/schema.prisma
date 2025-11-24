@@ -153,9 +153,11 @@ model PerfilAluno {
   usuario              Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   numero               String? @unique
-  conceito             String?
+  conceitoInicial             String?
+  conceitoAtual               String?
   anoIngresso          Int?
   nomeDeGuerra         String?
+  foraDeData           Boolean  @default(false)
 
   tipagemSanguinea     tipagemSanguinea?
   aptidaoFisicaStatus  AptidaoFisicaStatus?

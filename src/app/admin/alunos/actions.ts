@@ -91,6 +91,24 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
   const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
 
   try {
+   
+    const usuarioExistente = await prisma.usuario.findUnique({
+      where: { cpf }
+    });
+
+    if (usuarioExistente) {
+      return { message: 'Já existe um usuário com este CPF.' };
+    }
+
+   
+    const numeroExistente = await prisma.perfilAluno.findUnique({
+      where: { numero }
+    });
+
+    if (numeroExistente) {
+      return { message: 'Já existe um aluno com este número.' };
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     let uploadedFotoUrl: string | null = null;
 
@@ -99,11 +117,29 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
       uploadedFotoUrl = blob.url;
     }
 
+  
+    let cargo = await prisma.cargo.findUnique({
+      where: { nome: finalCargoNome }
+    });
+
+    if (!cargo) {
+    
+      cargo = await prisma.cargo.create({
+        data: {
+          nome: finalCargoNome,
+          abreviacao: finalCargoNome.substring(0, 10).toUpperCase(),
+          categoria: 'QUADRO',
+          tipo: 'POSTO',
+          precedencia: await getNextPrecedencia(),
+        }
+      });
+    }
+
     await prisma.usuario.create({
       data: {
         nome,
         cpf,
-        email,
+        email: email || null,
         password: hashedPassword,
         fotoUrl: uploadedFotoUrl,
         status: "ATIVO",
@@ -112,29 +148,43 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
           create: {
             numero,
             nomeDeGuerra,
-            conceito: conceitoInicial,
+            conceitoInicial: conceitoInicial,
             companhia: {
-                connect: { id: companhiaId }
+              connect: { id: companhiaId }
             },
             cargo: {
-               connect: { nome: finalCargoNome }
-            }
+              connect: { id: cargo.id }
+            },
+            termoResponsabilidadeAssinado: false,
+            aptidaoFisicaLaudo: false,
+            fazCursoExterno: false
           }
         }
       },
     });
 
   } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-      return { message: 'Já existe um usuário com este CPF ou Número.' };
-    }
     console.error("Erro ao criar aluno:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { message: 'Já existe um usuário com este CPF ou número.' };
+    }
     return { message: "Ocorreu um erro ao criar o aluno." };
   }
 
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
+
+
+async function getNextPrecedencia(): Promise<number> {
+  const maxCargo = await prisma.cargo.findFirst({
+    orderBy: { precedencia: 'desc' },
+    select: { precedencia: true }
+  });
+  
+  return (maxCargo?.precedencia || 0) + 1;
+}
+
 
 export async function updateAluno(prevState: AlunoState, formData: FormData) {
   const user = await getCurrentUserWithRelations();
@@ -209,7 +259,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
       dataPerfilUpdate.cargo = {
         connect: { nome: finalCargoNome },
       };
-      dataPerfilUpdate.conceito = '7.0';
+      dataPerfilUpdate.conceitoInicial = '7.0';
 
       await prisma.anotacao.deleteMany({ where: { alunoId: alunoAtual.perfilAluno.id } });
     }
