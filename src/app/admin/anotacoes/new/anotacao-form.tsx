@@ -243,7 +243,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
       </div>
 
       {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-      {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
+     
 
       <div className="flex gap-2 pt-4">
         <SubmitButton />

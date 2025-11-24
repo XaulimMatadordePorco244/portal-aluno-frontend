@@ -14,7 +14,7 @@ type RankingDataItem = {
   id: string;
   nomeDeGuerra: string | null | undefined;
   nome: string;
-  conceito: string | null | undefined;
+  conceitoAtual: string | null | undefined;
   rank: number;
   numero: string | null | undefined;
   cargo: { nome: string | null; abreviacao: string | null; } | null | undefined;
@@ -79,7 +79,7 @@ export default function DashboardClient({
                 key={aluno.id}
                 rank={aluno.rank}
                 nome={aluno.nomeDeGuerra || aluno.nome}
-                conceito={aluno.conceito}
+                conceito={aluno.conceitoAtual}
                 numero={aluno.numero}
                 cargo={aluno.cargo?.abreviacao || 'S/ Cargo'}
                 isCurrentUser={aluno.id === user.id}

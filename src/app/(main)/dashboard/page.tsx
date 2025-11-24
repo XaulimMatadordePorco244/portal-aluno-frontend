@@ -18,7 +18,7 @@ async function getRankingSnippet(user: UserWithRelations) {
     },
     orderBy: {
       perfilAluno: {
-        conceito: 'desc',
+        conceitoAtual: 'desc',
       },
     },
     include: {
@@ -52,7 +52,7 @@ async function getRankingSnippet(user: UserWithRelations) {
     nome: peer.nome,
     nomeDeGuerra: peer.perfilAluno?.nomeDeGuerra,
     numero: peer.perfilAluno?.numero,
-    conceito: peer.perfilAluno?.conceito,
+    conceitoAtual: peer.perfilAluno?.conceitoAtual,
     cargo: peer.perfilAluno?.cargo,
     rank: startIndex + index + 1,
   }));

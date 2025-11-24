@@ -157,6 +157,7 @@ model PerfilAluno {
   conceitoAtual               String?
   anoIngresso          Int?
   nomeDeGuerra         String?
+  foraDeData           Boolean  @default(false)
 
   tipagemSanguinea     tipagemSanguinea?
   aptidaoFisicaStatus  AptidaoFisicaStatus?

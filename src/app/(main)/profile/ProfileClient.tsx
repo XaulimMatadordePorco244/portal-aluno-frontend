@@ -86,7 +86,7 @@ export default function ProfileClient({ user }: { user: UserWithCargo }) {
               <InfoField label="Companhia" value={perfil?.companhia?.nome} />
               <InfoField label="Graduação/Posto" value={perfil?.cargo?.nome} />
               <InfoField label="Ano de Ingresso" value={perfil?.anoIngresso} />
-              <InfoField label="Conceito" value={perfil?.conceito} />
+              <InfoField label="Conceito" value={perfil?.conceitoAtual} />
             </div>
 
             <div className="space-y-2">

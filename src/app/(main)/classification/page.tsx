@@ -53,7 +53,7 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
                     <FormattedName fullName={aluno.nome} warName={perfil?.nomeDeGuerra} />
                   </TableCell>
                   <TableCell className="font-mono border-r">{perfil?.numero || 'N/A'}</TableCell>
-                  <TableCell>{isCurrentUser ? (perfil?.conceito || '—') : '—'}</TableCell>
+                  <TableCell>{isCurrentUser ? (perfil?.conceitoAtual || '—') : '—'}</TableCell>
                 </TableRow>
               );
             })}
@@ -112,8 +112,8 @@ export default async function ClassificationPage() {
 
       const rankedAlunos = alunos
         .sort((a, b) => {
-          const conceitoA = parseFloat(a.perfilAluno?.conceito || '0');
-          const conceitoB = parseFloat(b.perfilAluno?.conceito || '0');
+          const conceitoA = parseFloat(a.perfilAluno?.conceitoAtual || '0');
+          const conceitoB = parseFloat(b.perfilAluno?.conceitoAtual || '0');
           return conceitoB - conceitoA;
         })
         .map((aluno, index) => ({

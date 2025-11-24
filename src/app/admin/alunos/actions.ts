@@ -148,7 +148,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
           create: {
             numero,
             nomeDeGuerra,
-            conceito: conceitoInicial,
+            conceitoInicial: conceitoInicial,
             companhia: {
               connect: { id: companhiaId }
             },
@@ -259,7 +259,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
       dataPerfilUpdate.cargo = {
         connect: { nome: finalCargoNome },
       };
-      dataPerfilUpdate.conceito = '7.0';
+      dataPerfilUpdate.conceitoInicial = '7.0';
 
       await prisma.anotacao.deleteMany({ where: { alunoId: alunoAtual.perfilAluno.id } });
     }
