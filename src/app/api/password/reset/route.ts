@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.usuario.findFirst({
       where: {
         passwordResetToken: hashedToken,
         passwordResetExpires: { gte: new Date() },
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
 
-    await prisma.user.update({
+    await prisma.usuario.update({
       where: { id: user.id },
       data: {
         password: hashedPassword,

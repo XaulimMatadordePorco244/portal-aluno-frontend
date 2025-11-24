@@ -20,22 +20,24 @@ export async function validateUserByNumber(
 
   let user;
   try {
-  
-    user = await prisma.user.findUnique({
-      where: { numero: numero.trim() },
+    user = await prisma.usuario.findFirst({
+      where: { 
+        perfilAluno: { 
+          numero: numero 
+        }
+      },
+      select: {
+        validationId: true
+      }
     });
 
-  } catch (error) {
- 
-    console.error("Erro na busca do banco de dados:", error);
+  } catch {
     return { error: "Ocorreu um erro ao consultar o banco de dados. Tente novamente." };
   }
-
 
   if (!user) {
     return { error: "Aluno não encontrado com este número de matrícula." };
   }
   
-
   redirect(`/validar/${user.validationId}`);
 }

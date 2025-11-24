@@ -23,12 +23,17 @@ export async function POST(
       return NextResponse.json({ error: 'Este processo não pode ser iniciado ou já foi iniciado.' }, { status: 400 });
     }
 
-    const oficiais = await prisma.user.findMany({
+    const oficiais = await prisma.usuario.findMany({
       where: {
-        cargo: {
-          tipo: 'POSTO',
+        perfilAluno: {
+          cargo: {
+            tipo: 'POSTO',
+          },
         },
       },
+      include: {
+        perfilAluno: true 
+      }
     });
 
     if (oficiais.length === 0) {
@@ -42,7 +47,7 @@ export async function POST(
         data: {
           processoId: parteId,
           titulo: "Parecer do Oficial Investigador",
-          status: "Pendente",
+          status: "PENDENTE",
           responsavelId: oficialSorteado.id,
         }
       });
@@ -50,12 +55,15 @@ export async function POST(
         data: {
           processoId: parteId,
           titulo: "Parecer da Coordenação",
-          status: "Aguardando Etapa Anterior",
+          status: "EM_ANALISE",
         }
       });
     });
 
-    return NextResponse.json({ message: `Processo iniciado. Oficial ${oficialSorteado.nomeDeGuerra} foi designado.` });
+    
+    const nomeExibicao = oficialSorteado.perfilAluno?.nomeDeGuerra || oficialSorteado.nome;
+
+    return NextResponse.json({ message: `Processo iniciado. Oficial ${nomeExibicao} foi designado.` });
 
   } catch (error) {
     console.error("Erro ao iniciar apuração:", error);

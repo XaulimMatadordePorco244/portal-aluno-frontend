@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@prisma/client";
+import { Usuario } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { deleteAluno } from "./actions";
 
-export function AlunoActions({ aluno }: { aluno: User }) {
+export function AlunoActions({ aluno }: { aluno: Usuario }) {
   const handleDelete = () => {
     if (confirm(`Tem certeza que deseja apagar o aluno "${aluno.nome}"? Esta ação não pode ser desfeita.`)) {
       const formData = new FormData();

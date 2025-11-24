@@ -7,21 +7,25 @@ import { getCurrentUserWithRelations } from '@/lib/auth';
 
 async function getQESList() {
   return await prisma.qES.findMany({
-    orderBy: { dataInicio: 'desc' }, 
-  });
+    orderBy: { dataInicio: 'desc' },
+  }); 
 }
 
 export default async function AlunoQESPage() {
   const qesList = await getQESList();
   const user = await getCurrentUserWithRelations();
 
+  const perfil = user?.perfilAluno;
+  const nomeExibicao = perfil?.nomeDeGuerra || user?.nome || '';
+  const cargoExibicao = perfil?.cargo?.abreviacao || 'Aluno';
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Quadro de Estudo Semanal</h1>
         <p className="text-muted-foreground">
-          {user?.nomeDeGuerra ? `Aspirante ${user.nomeDeGuerra}, ` : ''}
-          aqui estão todos os QES publicados.
+          {nomeExibicao ? `Olá, ${cargoExibicao} ${nomeExibicao}. ` : ''}
+          Aqui estão todos os QES publicados.
         </p>
       </div>
 
@@ -40,7 +44,7 @@ export default async function AlunoQESPage() {
                   <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow flex items-end">
+              <CardContent className="grow flex items-end">
                 <Button asChild className="w-full">
                   <Link href={qes.arquivoUrl} target="_blank" rel="noopener noreferrer">
                     <Download className="mr-2 h-4 w-4" />

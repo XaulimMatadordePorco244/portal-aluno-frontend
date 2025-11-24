@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Funcao, TipoEscala, User } from '@prisma/client';
+import { Funcao, TipoEscala } from '@prisma/client';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit, FileDown, Globe, PlusCircle, Save, Trash2, ChevronsUpDown } from 'lucide-react';
-import { EscalaCompleta, UserComCargoEFuncao } from './page'; // Importando tipos do page.tsx
+import { EscalaCompleta, UserComCargoEFuncao } from './page';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,20 +20,19 @@ import { StatusEscala } from '@prisma/client';
 import { Textarea } from '@/components/ui/textarea';
 import { GABARITO_COLABORACAO } from '../new/escala-form';
 
-// --- Tipos de Estado (copiados do escala-form.tsx) ---
 type ItemState = {
-    id: string; // ID do EscalaItem (ou temp)
+    id: string;
     funcaoId: string;
     horarioInicio: string;
     horarioFim: string;
-    userId: string; // ID do Aluno/Admin
+    userId: string;
     tema: string;
     cargoPersonalizado: string;
     auxiliarUserId: string;
 };
 
 type SecaoState = {
-    id: string; // ID temporário da seção
+    id: string;
     nome: string;
     categoriaEsperada: string;
     permiteMultiplosItens: boolean;
@@ -41,85 +40,75 @@ type SecaoState = {
     isSecaoPalestrante: boolean;
     itens: ItemState[];
 };
-// ---------------------------------------------------
 
-// Tipo para os usuários vindos do page.tsx
 type UserComCargo = UserComCargoEFuncao;
-
 
 const AUXILIAR_PREFIX = "AUXILIAR - ";
 
 function initializeState(
-    escala: EscalaCompleta, 
-    alunos: UserComCargo[], 
+    escala: EscalaCompleta,
+    alunos: UserComCargo[],
     funcaoOutroId: string
 ): SecaoState[] {
-    
-    // Mapeia as SEÇÕES definidas no gabarito
+
     return GABARITO_COLABORACAO.secoes.map(secaoTemplate => {
-        
-        // Encontra os itens do banco de dados para esta seção
         const itensDaSecao = escala.itens.filter(item => item.secao === secaoTemplate.nome);
 
-        // Mapeia os itens do BD para o ItemState do formulário
         const itensState: ItemState[] = itensDaSecao.map(item => {
             let auxiliarUserId = '';
             let tema = '';
             let cargoPersonalizado = '';
-         
-            
-            // Lógica Específica para PALESTRANTE
+
             if (secaoTemplate.isSecaoPalestrante) {
-                tema = item.cargo; // O tema é salvo no 'cargo'
+                tema = item.cargo;
                 if (item.observacao && item.observacao.startsWith(AUXILIAR_PREFIX)) {
                     const auxNome = item.observacao.substring(AUXILIAR_PREFIX.length);
-                    const auxUser = alunos.find(a => a.nomeDeGuerra === auxNome);
+                    const auxUser = alunos.find(a => a.perfilAluno?.nomeDeGuerra === auxNome);
                     auxiliarUserId = auxUser?.id || '';
                 }
             }
-            // Lógica Específica para FUNCAO_OUTRO_ID
             else if (item.funcaoId === funcaoOutroId) {
-                cargoPersonalizado = item.cargo; // O nome 'Outro' é salvo no 'cargo'
+                cargoPersonalizado = item.cargo;
             }
 
             return {
-                id: item.id, // ID real do EscalaItem
+                id: item.id,
                 funcaoId: item.funcaoId || '',
                 horarioInicio: item.horarioInicio,
                 horarioFim: item.horarioFim,
-                userId: item.alunoId || '', // 'alunoId' do BD vira 'userId' no estado
+                userId: item.alunoId || '',
                 tema: tema,
                 cargoPersonalizado: cargoPersonalizado,
                 auxiliarUserId: auxiliarUserId,
             };
         });
 
-        // Retorna a estrutura SecaoState
         return {
             ...secaoTemplate,
-            id: `secao-${secaoTemplate.nome}`, // ID temporário para o React
+            id: `secao-${secaoTemplate.nome}`,
             itens: itensState
         };
     });
 }
 
-/**
- * Combobox genérico para selecionar um usuário (Aluno ou Admin)
- * Exibe o cargo (abreviação) antes do nome.
- */
 function UserCombobox({ users, value, onChange }: { users: UserComCargo[], value: string, onChange: (value: string) => void }) {
     const [open, setOpen] = useState(false);
     const selectedUser = users.find(u => u.id === value);
 
+
     const formatUserDisplay = (user: UserComCargo) => {
-        return `${user.cargo?.abreviacao || ''} ${user.nomeDeGuerra}`.trim();
+        const perfil = user.perfilAluno;
+        if (perfil) {
+            return `${perfil.cargo?.abreviacao || ''} ${perfil.nomeDeGuerra || user.nome}`.trim();
+        }
+        return user.nome;
     }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                    {selectedUser 
+                    {selectedUser
                         ? formatUserDisplay(selectedUser)
                         : "Selecione..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -151,19 +140,18 @@ function UserCombobox({ users, value, onChange }: { users: UserComCargo[], value
     );
 }
 
-// Tipo Funcao com Categoria (para filtrar o <Select>)
 type FuncaoComCategoria = Funcao & { categoria: string | null };
 
-export function EditEscalaForm({ 
-    escalaInicial, 
-    alunos, 
-    admins, 
-    funcoes: funcoesProp 
-}: { 
-    escalaInicial: EscalaCompleta, 
-    alunos: UserComCargo[], 
-    admins: UserComCargo[], 
-    funcoes: FuncaoComCategoria[] // Assumindo que 'funcoes' de page.tsx tem 'categoria'
+export function EditEscalaForm({
+    escalaInicial,
+    alunos,
+    admins,
+    funcoes: funcoesProp
+}: {
+    escalaInicial: EscalaCompleta,
+    alunos: UserComCargo[],
+    admins: UserComCargo[],
+    funcoes: FuncaoComCategoria[]
 }) {
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
@@ -171,21 +159,17 @@ export function EditEscalaForm({
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
-    // Estado refatorado (espelhando escala-form.tsx)
     const [dataEscala, setDataEscala] = useState(escalaInicial.dataEscala);
     const [tipo, setTipo] = useState(escalaInicial.tipo);
     const [elaboradoPor, setElaboradoPor] = useState(escalaInicial.elaboradoPor);
     const [pdfUrl, setPdfUrl] = useState(escalaInicial.pdfUrl);
     const [status, setStatus] = useState(escalaInicial.status);
-    
-    // Fardamento e Observações como estados separados
+
     const [fardamento, setFardamento] = useState(escalaInicial.fardamento || GABARITO_COLABORACAO.fardamento);
     const [observacoes, setObservacoes] = useState(escalaInicial.observacoes || GABARITO_COLABORACAO.observacoes);
 
-    // Encontra o ID da função "OUTRO"
     const funcaoOutroId = useMemo(() => funcoesProp.find(f => f.nome.toUpperCase() === 'OUTRO')?.id || '', [funcoesProp]);
 
-    // Estado das Seções
     const [secoes, setSecoes] = useState<SecaoState[]>(() => initializeState(escalaInicial, alunos, funcaoOutroId));
 
     const hoje = new Date();
@@ -193,11 +177,11 @@ export function EditEscalaForm({
     const dataDaEscalaObj = new Date(dataEscala);
     const isBloqueada = dataDaEscalaObj < hoje;
 
-    // --- Handlers (copiados/adaptados do escala-form.tsx) ---
-
     const handleItemChange = (secaoIndex: number, itemIndex: number, field: keyof ItemState, value: string) => {
         const novasSecoes = [...secoes];
-        (novasSecoes[secaoIndex].itens[itemIndex] as any)[field] = value;
+        const itemCopy: ItemState = { ...novasSecoes[secaoIndex].itens[itemIndex] };
+        itemCopy[field] = value;
+        novasSecoes[secaoIndex].itens[itemIndex] = itemCopy;
         setSecoes(novasSecoes);
     };
 
@@ -205,16 +189,16 @@ export function EditEscalaForm({
         const novasSecoes = [...secoes];
         const secao = novasSecoes[secaoIndex];
         const ultimaFuncaoId = secao.itens[secao.itens.length - 1]?.funcaoId || '';
-        
-        secao.itens.push({ 
-            id: `item-${Date.now()}`, 
-            funcaoId: ultimaFuncaoId, 
-            cargoPersonalizado: '', 
-            horarioInicio: '13:00', 
-            horarioFim: '17:45', 
-            userId: '', 
-            tema: '', 
-            auxiliarUserId: '' 
+
+        secao.itens.push({
+            id: `item-${Date.now()}`,
+            funcaoId: ultimaFuncaoId,
+            cargoPersonalizado: '',
+            horarioInicio: '13:00',
+            horarioFim: '17:45',
+            userId: '',
+            tema: '',
+            auxiliarUserId: ''
         });
         setSecoes(novasSecoes);
     };
@@ -225,12 +209,9 @@ export function EditEscalaForm({
         setSecoes(novasSecoes);
     };
 
-    // --- Fim dos Handlers de Seção ---
-
     const handleSaveChanges = async () => {
         setIsSubmitting(true);
 
-        // Lógica de "achatamento" (flatten) do estado (espelhada do escala-form.tsx)
         const todosItens = secoes.flatMap(secao =>
             secao.itens.map(item => {
                 const funcao = funcoesProp.find(f => f.id === item.funcaoId);
@@ -240,10 +221,11 @@ export function EditEscalaForm({
 
                 if (secao.isSecaoPalestrante) {
                     cargoFinal = item.tema || 'PALESTRA';
-                    funcaoIdFinal = null; // Palestrante não tem ID de função
+                    funcaoIdFinal = null;
                     const auxiliar = alunos.find(a => a.id === item.auxiliarUserId);
                     if (auxiliar) {
-                        observacaoFinal = `AUXILIAR - ${auxiliar.nomeDeGuerra || auxiliar.nome}`;
+                        const nomeAuxiliar = auxiliar.perfilAluno?.nomeDeGuerra || auxiliar.nome;
+                        observacaoFinal = `AUXILIAR - ${nomeAuxiliar}`;
                     }
                 } else if (funcao?.id === funcaoOutroId) {
                     cargoFinal = item.cargoPersonalizado;
@@ -252,17 +234,17 @@ export function EditEscalaForm({
                 }
 
                 return {
-                    id: item.id.startsWith('item-') ? undefined : item.id, // Envia 'undefined' para novos itens
+                    id: item.id.startsWith('item-') ? undefined : item.id,
                     secao: secao.nome,
                     cargo: cargoFinal,
                     horarioInicio: item.horarioInicio,
                     horarioFim: item.horarioFim,
-                    alunoId: item.userId || null, // 'userId' do estado vira 'alunoId'
+                    alunoId: item.userId || null,
                     observacao: observacaoFinal,
-                    funcaoId: funcaoIdFinal, // Salva o ID da função
+                    funcaoId: funcaoIdFinal,
                 }
             })
-        ).filter(item => item.alunoId && item.cargo); // Filtra itens válidos
+        ).filter(item => item.alunoId && item.cargo);
 
         try {
             const response = await fetch(`/api/escalas/${escalaInicial.id}`, {
@@ -272,7 +254,6 @@ export function EditEscalaForm({
                     dataEscala: dataEscala,
                     tipo: tipo,
                     elaboradoPor: elaboradoPor,
-                    // Envia fardamento e observacoes no nível superior
                     fardamento: fardamento,
                     observacoes: observacoes,
                     itens: todosItens,
@@ -283,18 +264,17 @@ export function EditEscalaForm({
                 const errorData = await response.json();
                 throw new Error(errorData.error || "Falha ao salvar alterações.");
             }
-            
+
             const updatedEscala: EscalaCompleta = await response.json();
 
-            // Atualiza o estado local com os dados retornados
             setDataEscala(updatedEscala.dataEscala);
             setTipo(updatedEscala.tipo);
             setElaboradoPor(updatedEscala.elaboradoPor);
-            setPdfUrl(null); // PDF anterior é invalidado
-            setStatus(StatusEscala.RASCUNHO); // Salvar sempre volta para rascunho
+            setPdfUrl(null);
+            setStatus(StatusEscala.RASCUNHO);
             setFardamento(updatedEscala.fardamento || '');
             setObservacoes(updatedEscala.observacoes || '');
-            setSecoes(initializeState(updatedEscala, alunos, funcaoOutroId)); // Re-inicializa
+            setSecoes(initializeState(updatedEscala, alunos, funcaoOutroId));
 
             toast.success("Sucesso!", {
                 description: "As alterações foram salvas. O PDF foi invalidado e a escala retornou para Rascunho."
@@ -313,7 +293,6 @@ export function EditEscalaForm({
 
     const handleGeneratePdf = async () => {
         setIsGeneratingPdf(true);
-        // ... (lógica de gerar PDF é a mesma)
         const toastId = toast.loading("Gerando PDF...");
         try {
             const response = await fetch(`/api/escalas/${escalaInicial.id}/generate-pdf`, { method: 'POST' });
@@ -330,7 +309,6 @@ export function EditEscalaForm({
     };
 
     const handlePublish = async () => {
-        // ... (lógica de publicar é a mesma)
         if (status === 'RASCUNHO' && !pdfUrl) {
             toast.error("Ação bloqueada", { description: "Você deve gerar o PDF antes de publicar." });
             return;
@@ -363,7 +341,6 @@ export function EditEscalaForm({
 
     const handleCancelEdit = () => {
         setIsEditing(false);
-        // Reseta todo o estado para os valores iniciais
         setDataEscala(escalaInicial.dataEscala);
         setTipo(escalaInicial.tipo);
         setElaboradoPor(escalaInicial.elaboradoPor);
@@ -374,10 +351,10 @@ export function EditEscalaForm({
         setSecoes(initializeState(escalaInicial, alunos, funcaoOutroId));
     }
 
-    // Busca os nomes para o modo de visualização
     const getAlunoName = (alunoId: string, isSecaoAdmin: boolean) => {
         const userList = isSecaoAdmin ? admins : alunos;
-        return userList.find(u => u.id === alunoId)?.nomeDeGuerra || 'N/A';
+        const u = userList.find(u => u.id === alunoId);
+        return u?.perfilAluno?.nomeDeGuerra || u?.nome || 'N/A';
     };
 
     const getFuncaoName = (funcaoId: string, cargoPersonalizado?: string) => {
@@ -390,7 +367,6 @@ export function EditEscalaForm({
     return (
         <div className="space-y-6">
 
-            {/* Cabeçalho e Botões de Ação */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="icon" asChild>
@@ -406,7 +382,6 @@ export function EditEscalaForm({
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {/* ... (Botões de Ação: Editar, Salvar, Cancelar, PDF, Publicar) ... */}
                     {!isEditing ? (
                         <>
                             <Button onClick={() => setIsEditing(true)} disabled={isBloqueada}><Edit className="mr-2 h-4 w-4" /> Editar</Button>
@@ -426,7 +401,6 @@ export function EditEscalaForm({
                 </div>
             </div>
 
-            {/* Aviso de Bloqueio */}
             {isBloqueada && !isEditing && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                     <p className="text-yellow-800 text-sm font-medium">
@@ -435,7 +409,6 @@ export function EditEscalaForm({
                 </div>
             )}
 
-            {/* Card: Informações Gerais */}
             <Card>
                 <CardHeader>
                     <CardTitle>Informações Gerais</CardTitle>
@@ -477,7 +450,6 @@ export function EditEscalaForm({
                 </CardContent>
             </Card>
 
-            {/* Seções Dinâmicas (Baseado no GABARITO.secoes) */}
             <div className="space-y-6">
                 {secoes.map((secao, secaoIndex) => (
                     <Card key={secao.id}>
@@ -485,23 +457,21 @@ export function EditEscalaForm({
                             <CardTitle>{secao.nome}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            
+
                             {secao.itens.length === 0 && !isEditing && (
                                 <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção.</p>
                             )}
 
                             {secao.itens.map((item, itemIndex) => {
-                                // Lógica de filtro do <Select> (copiada do escala-form.tsx)
                                 const funcoesFiltradas = funcoesProp.filter(f => f.categoria === secao.categoriaEsperada || f.id === funcaoOutroId);
                                 const isOutroSelecionado = item.funcaoId === funcaoOutroId;
-                                
+
                                 return (
                                     <div key={item.id} className="grid grid-cols-12 gap-x-4 gap-y-3 border p-4 rounded-md relative">
                                         {isEditing ? (
                                             <>
-                                                {/* --- MODO EDIÇÃO --- */}
                                                 <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => handleRemoveItem(secaoIndex, itemIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                
+
                                                 {secao.isSecaoPalestrante ? (
                                                     <>
                                                         <div className="col-span-12 md:col-span-4 space-y-2"><Label>Tema da Palestra</Label><Input placeholder="Tema..." value={item.tema} onChange={e => handleItemChange(secaoIndex, itemIndex, 'tema', e.target.value)} /></div>
@@ -520,7 +490,6 @@ export function EditEscalaForm({
                                             </>
                                         ) : (
                                             <>
-                                                {/* --- MODO VISUALIZAÇÃO --- */}
                                                 {secao.isSecaoPalestrante ? (
                                                     <>
                                                         <div className="col-span-12 md:col-span-4"><Label>Tema</Label><p className="font-medium text-sm">{item.tema || 'N/A'}</p></div>
@@ -549,7 +518,6 @@ export function EditEscalaForm({
                     </Card>
                 ))}
 
-                {/* Card: Fardamento */}
                 {tipo === 'COLABORACAO' && (
                     <Card>
                         <CardHeader><CardTitle>Fardamento</CardTitle></CardHeader>
@@ -563,7 +531,6 @@ export function EditEscalaForm({
                     </Card>
                 )}
 
-                {/* Card: Observações */}
                 {tipo === 'COLABORACAO' && (
                     <Card>
                         <CardHeader><CardTitle>Observações</CardTitle></CardHeader>

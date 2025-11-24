@@ -16,7 +16,13 @@ async function getProcessoDetails(id: string): Promise<ProcessoCompleto | null> 
     const processo = await prisma.parte.findUnique({
         where: { id },
         include: {
-            autor: { include: { cargo: true } },
+            autor: {
+                include: {
+                    perfilAluno: {
+                        include: { cargo: true }
+                    }
+                }
+            },
             analises: {
                 include: { analista: true },
                 orderBy: { createdAt: 'desc' }
@@ -54,7 +60,9 @@ export default async function AdminProcessoDetailsPage({
     if (!processo) {
         notFound();
     }
-    const nomeFormatado = `${processo.autor.cargo?.abreviacao || ''} GM ${processo.autor.nomeDeGuerra || processo.autor.nome}`;
+
+    const perfil = processo.autor.perfilAluno;
+    const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || processo.autor.nome}`;
 
     return (
         <>
