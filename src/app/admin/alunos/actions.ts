@@ -113,7 +113,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     let uploadedFotoUrl: string | null = null;
 
     if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
+      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       uploadedFotoUrl = blob.url;
     }
 
@@ -243,7 +243,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
       if (alunoAtual.fotoUrl) {
         await del(alunoAtual.fotoUrl);
       }
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
+      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       dataUsuarioUpdate.fotoUrl = blob.url;
     }
 
