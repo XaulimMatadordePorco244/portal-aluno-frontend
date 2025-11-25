@@ -14,6 +14,15 @@ export const metadata: Metadata = {
   description: "Mural de Comunicações Internas da Instituição",
 }
 
+
+interface WhereCondition {
+  assunto?: string;
+  dataPublicacao?: {
+    gte: Date;
+    lte: Date;
+  };
+}
+
 export default async function ComunicacoesPage({
   searchParams,
 }: {
@@ -24,7 +33,8 @@ export default async function ComunicacoesPage({
   const filterAssunto = typeof params.assunto === "string" ? params.assunto : undefined
   const filterData = typeof params.data === "string" ? params.data : undefined
 
-  const whereCondition: any = {}
+
+  const whereCondition: WhereCondition = {}
 
   if (filterAssunto) {
     whereCondition.assunto = filterAssunto

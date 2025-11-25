@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Plus, Pencil, Trash2, FileText } from "lucide-react"
+import { Plus, Pencil,  FileText } from "lucide-react"
 
 import  prisma  from "@/lib/prisma"
 import { getCurrentUserWithRelations, canAccessAdminArea } from "@/lib/auth"

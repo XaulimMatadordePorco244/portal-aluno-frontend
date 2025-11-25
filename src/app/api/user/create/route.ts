@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
-
 interface UsuarioCreateData {
   nome: string;
   cpf: string;
@@ -45,8 +44,34 @@ interface RelacaoResponsabilidade {
   tipoParentesco: string;
 }
 
-export async function POST(req: Request) {
+interface PrismaUsuarioCreateData {
+  nome: string;
+  cpf: string;
+  password: string;
+  role: 'ALUNO' | 'ADMIN' | 'RESPONSAVEL';
+  status: 'ATIVO' | 'INATIVO' | 'SUSPENSO';
+  email?: string | null;
+  fotoUrl?: string | null;
+  rg?: string | null;
+  rgEstadoEmissor?: string | null;
+  dataNascimento?: string | null;
+  telefone?: string | null;
+  genero?: 'MASCULINO' | 'FEMININO' | null;
+  perfilAluno?: {
+    create: Omit<PerfilAlunoCreateData, 'cargoId' | 'funcaoId' | 'companhiaId'> & {
+      cargoId?: string;
+      funcaoId?: string;
+      companhiaId?: string;
+      termoResponsabilidadeAssinado: boolean;
+      aptidaoFisicaLaudo: boolean;
+      fazCursoExterno: boolean;
+      conceito: string;
+      anoIngresso: number;
+    };
+  };
+}
 
+export async function POST(req: Request) {
   if (req.method !== 'POST') {
     return NextResponse.json(
       { error: 'Método não permitido' },
@@ -58,12 +83,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { action, data } = body;
 
-
     if (action === 'criar-usuario') {
       return await criarUsuarios(data);
     }
 
-  
     if (action === 'criar-responsabilidades') {
       return await criarResponsabilidades(data);
     }
@@ -83,7 +106,6 @@ export async function POST(req: Request) {
   }
 }
 
-
 async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   const users = Array.isArray(data) ? data : [data];
   const results = [];
@@ -92,7 +114,6 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
 
   for (const user of users) {
     try {
-     
       if (!user.nome || !user.cpf || !user.password || !user.role) {
         errors.push({
           cpf: user.cpf,
@@ -102,7 +123,6 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
         continue;
       }
 
-   
       if (user.cpf.length !== 11 || !/^\d+$/.test(user.cpf)) {
         errors.push({
           cpf: user.cpf,
@@ -111,7 +131,6 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
         });
         continue;
       }
-
 
       const usuarioExistente = await prisma.usuario.findUnique({
         where: { cpf: user.cpf }
@@ -126,21 +145,23 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
         continue;
       }
 
-  
       const hashedPassword = await bcrypt.hash(user.password, 10);
       const { perfilAluno, ...userData } = user;
 
-      
-      const usuarioData: any = {
+      const usuarioData: PrismaUsuarioCreateData = {
         ...userData,
         password: hashedPassword,
         status: user.status || 'ATIVO',
-        
         email: user.email?.trim() || null,
+        fotoUrl: user.fotoUrl || null,
+        rg: user.rg || null,
+        rgEstadoEmissor: user.rgEstadoEmissor || null,
+        dataNascimento: user.dataNascimento || null,
+        telefone: user.telefone || null,
+        genero: user.genero || null,
       };
 
       if (user.role === 'ALUNO' && perfilAluno) {
-     
         if (perfilAluno.numero) {
           const numeroExistente = await prisma.perfilAluno.findUnique({
             where: { numero: perfilAluno.numero }
@@ -158,16 +179,26 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
 
         usuarioData.perfilAluno = {
           create: {
-            ...perfilAluno,
-            termoResponsabilidadeAssinado: perfilAluno.termoResponsabilidadeAssinado || false,
-            aptidaoFisicaLaudo: perfilAluno.aptidaoFisicaLaudo || false,
-            fazCursoExterno: perfilAluno.fazCursoExterno || false,
+            numero: perfilAluno.numero,
             conceito: perfilAluno.conceito || '7.0',
             anoIngresso: perfilAluno.anoIngresso || new Date().getFullYear(),
+            nomeDeGuerra: perfilAluno.nomeDeGuerra,
+            tipagemSanguinea: perfilAluno.tipagemSanguinea,
+            aptidaoFisicaStatus: perfilAluno.aptidaoFisicaStatus,
+            aptidaoFisicaLaudo: perfilAluno.aptidaoFisicaLaudo || false,
+            aptidaoFisicaObs: perfilAluno.aptidaoFisicaObs,
+            escola: perfilAluno.escola,
+            serieEscolar: perfilAluno.serieEscolar,
+            endereco: perfilAluno.endereco,
+            termoResponsabilidadeAssinado: perfilAluno.termoResponsabilidadeAssinado || false,
+            fazCursoExterno: perfilAluno.fazCursoExterno || false,
+            cursoExternoDescricao: perfilAluno.cursoExternoDescricao,
+            cargoId: perfilAluno.cargoId,
+            funcaoId: perfilAluno.funcaoId,
+            companhiaId: perfilAluno.companhiaId,
           }
         };
       }
-
 
       const result = await prisma.usuario.create({
         data: usuarioData,
@@ -203,14 +234,12 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   });
 }
 
-
 async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
   const results = [];
   const errors = [];
 
   for (const relacao of relacoes) {
     try {
-
       if (!relacao.alunoCpf || !relacao.responsavelCpf || !relacao.tipoParentesco) {
         errors.push({
           alunoCpf: relacao.alunoCpf,
@@ -219,7 +248,6 @@ async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
         });
         continue;
       }
-
 
       const [aluno, responsavel] = await Promise.all([
         prisma.usuario.findUnique({ 
@@ -262,7 +290,6 @@ async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
         continue;
       }
 
-    
       const relacaoExistente = await prisma.responsabilidade.findFirst({
         where: {
           alunoId: aluno.id,
