@@ -13,7 +13,7 @@ async function getMinhasTarefas() {
     const tarefas = await prisma.etapaProcesso.findMany({
         where: {
             responsavelId: user.userId,
-            status: "Pendente", 
+            status: "PENDENTE", 
         },
         include: {
             processo: true, 

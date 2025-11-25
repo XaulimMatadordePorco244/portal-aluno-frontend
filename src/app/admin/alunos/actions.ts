@@ -7,7 +7,7 @@ import { getCurrentUserWithRelations } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { put, del } from "@vercel/blob";
-import { Prisma } from "@prisma/client"; 
+import { Prisma } from "@prisma/client";
 
 export type AlunoState = {
   errors?: {
@@ -17,7 +17,7 @@ export type AlunoState = {
     password?: string[];
     numero?: string[];
     nomeDeGuerra?: string[];
-    companhia?: string[];
+    companhiaId?: string[];
     cargoNome?: string[];
     cargoOutro?: string[];
     fotoUrl?: string[];
@@ -31,13 +31,13 @@ const baseAlunoSchema = z.object({
   email: z.string().email("Formato de e-mail inválido.").optional().or(z.literal('')),
   numero: z.string().min(1, "O número do aluno é obrigatório."),
   nomeDeGuerra: z.string().min(1, "O nome de guerra é obrigatório."),
-  companhia: z.string().min(1, "A companhia é obrigatória."),
-  cargoNome: z.string().min(1, "O cargo é obrigatório."), 
+  companhiaId: z.string().min(1, "A companhia é obrigatória."),
+  cargoNome: z.string().min(1, "O cargo é obrigatório."),
   cargoOutro: z.string().optional(),
   ingressoForaDeData: z.string().optional(),
-  fotoUrl: z
-    .instanceof(File)
-    .refine((file) => !file || file.size === 0 || file.type.startsWith("image/"), "O arquivo precisa ser uma imagem.")
+  fotoUrl: z.any()
+    .refine((file) => !file || file.size === 0 || (file instanceof File && file.type.startsWith("image/")),
+      "O arquivo precisa ser uma imagem.")
     .optional(),
 }).refine(data => {
   if (data.cargoNome === 'OUTRO') {
@@ -49,16 +49,12 @@ const baseAlunoSchema = z.object({
   path: ["cargoOutro"],
 });
 
-
-
-const UpdateAlunoSchema = baseAlunoSchema.extend({
+const UpdateAlunoSchema = baseAlunoSchema.safeExtend({
   id: z.string(),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres.").optional().or(z.literal('')),
 });
 
-
-
-const CreateAlunoSchema = baseAlunoSchema.extend({
+const CreateAlunoSchema = baseAlunoSchema.safeExtend({
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
 });
 
@@ -68,46 +64,125 @@ export async function createAluno(prevState: AlunoState, formData: FormData) {
     return { message: "Acesso negado." };
   }
 
-  const validatedFields = CreateAlunoSchema.safeParse(Object.fromEntries(formData.entries()));
+  const validatedFields = CreateAlunoSchema.safeParse({
+    nome: formData.get('nome'),
+    cpf: formData.get('cpf'),
+    email: formData.get('email'),
+    numero: formData.get('numero'),
+    nomeDeGuerra: formData.get('nomeDeGuerra'),
+    companhiaId: formData.get('companhiaId'),
+    cargoNome: formData.get('cargoNome'),
+    cargoOutro: formData.get('cargoOutro'),
+    ingressoForaDeData: formData.get('ingressoForaDeData'),
+    fotoUrl: formData.get('fotoUrl'),
+    password: formData.get('password'),
+  });
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
-  
-  const { cargoNome, cargoOutro, fotoUrl, password, ingressoForaDeData, ...data } = validatedFields.data;
+
+  const { 
+    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId, ingressoForaDeData,
+    fotoUrl, password, nome, cpf, email
+  } = validatedFields.data;
+
   const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
   const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
 
   try {
+   
+    const usuarioExistente = await prisma.usuario.findUnique({
+      where: { cpf }
+    });
+
+    if (usuarioExistente) {
+      return { message: 'Já existe um usuário com este CPF.' };
+    }
+
+   
+    const numeroExistente = await prisma.perfilAluno.findUnique({
+      where: { numero }
+    });
+
+    if (numeroExistente) {
+      return { message: 'Já existe um aluno com este número.' };
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     let uploadedFotoUrl: string | null = null;
 
-    if (fotoUrl && fotoUrl.size > 0) {
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
+    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
+      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
       uploadedFotoUrl = blob.url;
     }
 
-    await prisma.user.create({
+  
+    let cargo = await prisma.cargo.findUnique({
+      where: { nome: finalCargoNome }
+    });
+
+    if (!cargo) {
+    
+      cargo = await prisma.cargo.create({
+        data: {
+          nome: finalCargoNome,
+          abreviacao: finalCargoNome.substring(0, 10).toUpperCase(),
+          categoria: 'QUADRO',
+          tipo: 'POSTO',
+          precedencia: await getNextPrecedencia(),
+        }
+      });
+    }
+
+    await prisma.usuario.create({
       data: {
-        ...data,
+        nome,
+        cpf,
+        email: email || null,
         password: hashedPassword,
-        cargo: { connect: { nome: finalCargoNome } },
-        conceito: conceitoInicial,
         fotoUrl: uploadedFotoUrl,
-        status: "ATIVO", 
-        role: "ALUNO",     
+        status: "ATIVO",
+        role: "ALUNO",
+        perfilAluno: {
+          create: {
+            numero,
+            nomeDeGuerra,
+            conceitoInicial: conceitoInicial,
+            companhia: {
+              connect: { id: companhiaId }
+            },
+            cargo: {
+              connect: { id: cargo.id }
+            },
+            termoResponsabilidadeAssinado: false,
+            aptidaoFisicaLaudo: false,
+            fazCursoExterno: false
+          }
+        }
       },
     });
+
   } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-      return { message: 'Já existe um usuário com este CPF ou Número.' };
-    }
     console.error("Erro ao criar aluno:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { message: 'Já existe um usuário com este CPF ou número.' };
+    }
     return { message: "Ocorreu um erro ao criar o aluno." };
   }
 
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
+}
+
+
+async function getNextPrecedencia(): Promise<number> {
+  const maxCargo = await prisma.cargo.findFirst({
+    orderBy: { precedencia: 'desc' },
+    select: { precedencia: true }
+  });
+  
+  return (maxCargo?.precedencia || 0) + 1;
 }
 
 
@@ -117,66 +192,92 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
     return { message: "Acesso negado." };
   }
 
-  const formObject = Object.fromEntries(formData.entries());
-
-  if (!formObject.id) formObject.id = formData.get('id') as string;
-
-  const validatedFields = UpdateAlunoSchema.safeParse(formObject);
+  const validatedFields = UpdateAlunoSchema.safeParse({
+    id: formData.get('id'),
+    nome: formData.get('nome'),
+    cpf: formData.get('cpf'),
+    email: formData.get('email'),
+    numero: formData.get('numero'),
+    nomeDeGuerra: formData.get('nomeDeGuerra'),
+    companhiaId: formData.get('companhiaId'),
+    cargoNome: formData.get('cargoNome'),
+    cargoOutro: formData.get('cargoOutro'),
+    ingressoForaDeData: formData.get('ingressoForaDeData'),
+    fotoUrl: formData.get('fotoUrl'),
+    password: formData.get('password'),
+  });
 
   if (!validatedFields.success) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
-  
-  const { id, password, fotoUrl, cargoNome, cargoOutro, ...dataToUpdateRaw } = validatedFields.data;
-  
-  try {
-    const alunoAtual = await prisma.user.findUnique({ where: { id }, include: { cargo: true } });
-    if (!alunoAtual) {
-      return { message: "Aluno não encontrado." };
-    }
-    
 
-    const dataForPrisma: Prisma.UserUpdateInput = {
-      ...dataToUpdateRaw, 
+  const { 
+    id, password, fotoUrl, 
+    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId,
+    ...userData 
+  } = validatedFields.data;
+
+  try {
+    const alunoAtual = await prisma.usuario.findUnique({ 
+      where: { id }, 
+      include: { 
+        perfilAluno: {
+          include: { cargo: true }
+        } 
+      } 
+    });
+
+    if (!alunoAtual || !alunoAtual.perfilAluno) {
+      return { message: "Aluno ou perfil não encontrado." };
+    }
+
+    const dataUsuarioUpdate: Prisma.UsuarioUpdateInput = {
+      ...userData,
     };
 
-
     if (password) {
-      dataForPrisma.password = await bcrypt.hash(password, 10);
+      dataUsuarioUpdate.password = await bcrypt.hash(password, 10);
     }
 
-
-    if (fotoUrl && fotoUrl.size > 0) {
+    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
       if (alunoAtual.fotoUrl) {
         await del(alunoAtual.fotoUrl);
       }
-      const blob = await put(`alunos/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
-      dataForPrisma.fotoUrl = blob.url;
+      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
+      dataUsuarioUpdate.fotoUrl = blob.url;
     }
-
 
     const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
-       if (alunoAtual.cargo?.nome !== finalCargoNome) {
-      dataForPrisma.cargo = {
-        connect: {
-          nome: finalCargoNome, 
-        },
+    
+    const dataPerfilUpdate: Prisma.PerfilAlunoUpdateInput = {
+       numero,
+       nomeDeGuerra,
+       companhia: { connect: { id: companhiaId } } 
+    };
+    
+    if (alunoAtual.perfilAluno.cargo?.nome !== finalCargoNome) {
+      dataPerfilUpdate.cargo = {
+        connect: { nome: finalCargoNome },
       };
+      dataPerfilUpdate.conceitoInicial = '7.0';
 
-      dataForPrisma.conceito = '7.0';
-      await prisma.anotacao.deleteMany({ where: { alunoId: id } });
+      await prisma.anotacao.deleteMany({ where: { alunoId: alunoAtual.perfilAluno.id } });
     }
 
-  
-    await prisma.user.update({
+    await prisma.usuario.update({
       where: { id },
-      data: dataForPrisma,
+      data: {
+        ...dataUsuarioUpdate,
+        perfilAluno: {
+          update: dataPerfilUpdate
+        }
+      },
     });
 
   } catch (error: unknown) {
     console.error("Erro ao atualizar o aluno:", error);
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-        return { message: 'Já existe um usuário com este CPF ou Número.' };
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
+      return { message: 'Já existe um usuário com este CPF ou Número.' };
     }
     return { message: "Ocorreu um erro ao atualizar o aluno." };
   }
@@ -185,14 +286,13 @@ export async function updateAluno(prevState: AlunoState, formData: FormData) {
   redirect("/admin/alunos");
 }
 
-
 export async function deleteAluno(formData: FormData) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     throw new Error("Acesso negado.");
   }
 
-  const id = formData.get('id') as string;
+  const id = formData.get('id') as string; 
   const fotoUrl = formData.get('fotoUrl') as string | null;
 
   if (!id) {
@@ -200,12 +300,20 @@ export async function deleteAluno(formData: FormData) {
   }
 
   try {
+    const usuarioAlvo = await prisma.usuario.findUnique({
+        where: { id },
+        include: { perfilAluno: true }
+    });
+
+    if (usuarioAlvo?.perfilAluno) {
+         await prisma.anotacao.deleteMany({ where: { alunoId: usuarioAlvo.perfilAluno.id } });
+    }
+
     if (fotoUrl) {
       await del(fotoUrl);
     }
     
-    await prisma.anotacao.deleteMany({ where: { alunoId: id } });
-    await prisma.user.delete({ where: { id } });
+    await prisma.usuario.delete({ where: { id } });
 
     revalidatePath("/admin/alunos");
     return { success: true };

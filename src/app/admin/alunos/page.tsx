@@ -7,7 +7,13 @@ import Link from "next/link";
 import { AlunoActions } from "./aluno-actions";
 
 async function getAlunos() {
-    return await prisma.user.findMany({
+    return await prisma.usuario.findMany({
+        where: {
+            role: 'ALUNO'
+        },
+        include: {
+            perfilAluno: true
+        },
         orderBy: { nome: 'asc' }
     });
 }
@@ -50,7 +56,7 @@ export default async function AdminAlunosPage() {
                             {alunos.map((aluno) => (
                                 <TableRow key={aluno.id}>
                                     <TableCell className="font-medium">{aluno.nome}</TableCell>
-                                    <TableCell>{aluno.numero || 'N/A'}</TableCell>
+                                    <TableCell>{aluno.perfilAluno?.numero || 'N/A'}</TableCell>
                                     <TableCell>{aluno.cpf}</TableCell>
                                     <TableCell>{aluno.status}</TableCell>
                                     <TableCell className="text-right">

@@ -1,8 +1,10 @@
 import jsPDF from 'jspdf';
-import { Parte, User, Cargo } from '@prisma/client';
+import { Parte, Usuario, Cargo, PerfilAluno } from '@prisma/client';
 
 type ParteData = Parte & {
-    autor: User & { cargo: Cargo | null }
+    autor: Usuario & {
+        perfilAluno: (PerfilAluno & { cargo: Cargo | null }) | null
+    }
 };
 
 const toBase64 = async (url: string) => {
@@ -26,15 +28,19 @@ export async function generatePartePDF(data: ParteData) {
     const logoGuardaMirim = await toBase64(logoUrl); 
     const brasaoMarcaDagua = await toBase64(logoUrl);
     
+    const perfil = data.autor.perfilAluno;
     
     const numero = data.numeroDocumento || 'DOC-S/N';
     const nome = data.autor.nome;
-    const registro = data.autor.numero || 'N/A';
-    const cargo = data.autor.cargo?.nome || 'Não informado';
+    const registro = perfil?.numero || 'N/A';
+    const cargo = perfil?.cargo?.nome || 'Não informado';
     const dataCriacao = new Date(data.createdAt).toLocaleDateString('pt-BR');
     const assunto = data.assunto;
     const descricao = data.conteudo;
-    const responsavel = data.autor.nome; 
+    
+    const responsavel = perfil?.nomeDeGuerra 
+        ? `${perfil.cargo?.abreviacao || ''} GM ${perfil.nomeDeGuerra}` 
+        : data.autor.nome;
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();

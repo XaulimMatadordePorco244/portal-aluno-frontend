@@ -1,69 +1,90 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
-
-const prisma = new PrismaClient();
-
-
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { cpf, password } = body;
+    const { cpf, password } = await req.json();
+
 
     if (!cpf || !password) {
-      return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'CPF e senha são obrigatórios.' },
+        { status: 400 }
+      );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: { cpf },
-      include: { cargo: true }
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Credenciais inválidas.' },
+        { status: 401 }
+      );
     }
+
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Credenciais inválidas.' },
+        { status: 401 }
+      );
     }
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error("A variável de ambiente JWT_SECRET não está definida.");
+
+    const secret = process.env.JWT_SECRET;
+    
+    if (!secret) {
+      throw new Error('A variável de ambiente JWT_SECRET não está definida.');
     }
 
     const token = jwt.sign(
-      {
-        userId: user.id,
-        nome: user.nome,
-        nomeDeGuerra: user.nomeDeGuerra,
-        cargoId: user.cargoId,
-        cargo: user.cargo,
-        role: user.role
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      { userId: user.id, role: user.role, nome: user.nome }, 
+      secret,
+      { expiresIn: '1d' } 
     );
 
-
-    const response = NextResponse.json({ message: 'Login bem-sucedido!' });
-
-
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      maxAge: 60 * 60 * 24,
-      path: '/',
+     const cookieStore = await cookies(); 
+    
+    cookieStore.set('auth_token', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict', 
+      maxAge: 60 * 60 * 24 , 
+      path: '/', 
     });
 
 
-    return response;
+    let redirectUrl = '/dashboard';
+
+    switch (user.role) {
+      case 'ADMIN':
+        redirectUrl = '/admin';
+        break;
+
+      default:
+        redirectUrl = '/dashboard';
+    }
+
+    const { ...userWithoutPassword } = user;
+
+    return NextResponse.json({
+      message: 'Login realizado com sucesso.',
+      user: userWithoutPassword,
+      redirectUrl
+    });
 
   } catch (error) {
-    console.error("Erro no login:", error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    console.error('Erro no login:', error);
+    return NextResponse.json(
+      { error: 'Ocorreu um erro interno ao processar o login.' },
+      { status: 500 }
+    );
   }
 }

@@ -11,13 +11,11 @@ import Link from 'next/link';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User } from '@prisma/client';
+import { Usuario, PerfilAluno, Cargo, Companhia } from '@prisma/client';
 import Image from 'next/image';
 
 function SubmitButton() {
@@ -25,26 +23,32 @@ function SubmitButton() {
   return <Button type="submit" disabled={pending}>{pending ? 'Salvando...' : 'Salvar Alterações'}</Button>;
 }
 
-const cargosPadrao = [
-  "ALUNO SOLDADO", "SOLDADO", "CABO", "3º SARGENTO", "2º SARGENTO", 
-  "1º SARGENTO", "SUB TENENTE", "ASPIRANTE", "2º TENENTE", "1º TENENTE", 
-  "CAPITÃO", "MAJOR", "TENENTE CORONEL", "CORONEL"
-];
-
-
-type UserWithCargoString = User & {
-  cargo?: string | null;
+type UsuarioCompleto = Usuario & {
+  perfilAluno: (PerfilAluno & {
+    cargo: Cargo | null;
+    companhia: Companhia | null;
+  }) | null;
 };
 
-export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString }) {
+export default function EditAlunoForm({ 
+  aluno, 
+  cargosDisponiveis,
+  companhiasDisponiveis 
+}: { 
+  aluno: UsuarioCompleto, 
+  cargosDisponiveis: Cargo[],
+  companhiasDisponiveis: Companhia[]
+}) {
   const [state, formAction] = useActionState(updateAluno, undefined);
 
- 
-  const isCargoPadrao = cargosPadrao.includes(aluno.cargo || "");
-  const [selectedCargo, setSelectedCargo] = useState(isCargoPadrao ? (aluno.cargo || "") : "OUTRO");
-  const [outroCargo, setOutroCargo] = useState(isCargoPadrao ? "" : (aluno.cargo || ""));
+  const perfil = aluno.perfilAluno;
+  const cargoAtualNome = perfil?.cargo?.nome || "";
+  
+  const isCargoListado = cargosDisponiveis.some(c => c.nome === cargoAtualNome);
+  
+  const [selectedCargo, setSelectedCargo] = useState(isCargoListado ? cargoAtualNome : (cargoAtualNome ? "OUTRO" : ""));
+  const [outroCargo, setOutroCargo] = useState(!isCargoListado ? cargoAtualNome : "");
 
- 
   const getFinalCargoValue = () => {
     return selectedCargo === 'OUTRO' ? outroCargo : selectedCargo;
   };
@@ -52,7 +56,7 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="id" value={aluno.id} />
-          <input type="hidden" name="cargo" value={getFinalCargoValue() || ""} />
+      <input type="hidden" name="cargoNome" value={getFinalCargoValue() || ""} />
       
       <div className="space-y-2">
         <Label htmlFor="nome">Nome Completo</Label>
@@ -63,7 +67,7 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
-          <Input id="nomeDeGuerra" name="nomeDeGuerra" required defaultValue={aluno.nomeDeGuerra || ''} />
+          <Input id="nomeDeGuerra" name="nomeDeGuerra" required defaultValue={perfil?.nomeDeGuerra || ''} />
           {state?.errors?.nomeDeGuerra && <p className="text-sm text-red-500 mt-1">{state.errors.nomeDeGuerra[0]}</p>}
         </div>
         <div className="space-y-2">
@@ -76,22 +80,22 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="numero">Número do Aluno</Label>
-          <Input id="numero" name="numero" required defaultValue={aluno.numero || ''} />
+          <Input id="numero" name="numero" required defaultValue={perfil?.numero || ''} />
           {state?.errors?.numero && <p className="text-sm text-red-500 mt-1">{state.errors.numero[0]}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="companhia">Companhia</Label>
-          <Select name="companhia" required defaultValue={aluno.companhia || ''}>
+          <Label htmlFor="companhiaId">Companhia</Label>
+          <Select name="companhiaId" required defaultValue={perfil?.companhia?.id || ''}>
             <SelectTrigger><SelectValue placeholder="Selecione a companhia" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="1ª Companhia">1ª Companhia</SelectItem>
-              <SelectItem value="2ª Companhia">2ª Companhia</SelectItem>
-              <SelectItem value="3ª Companhia">3ª Companhia</SelectItem>
-              <SelectItem value="4ª Companhia">4ª Companhia</SelectItem>
-              <SelectItem value="5ª Companhia">5ª Companhia</SelectItem>
+              {companhiasDisponiveis.map((comp) => (
+                <SelectItem key={comp.id} value={comp.id}>
+                  {comp.nome}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {state?.errors?.companhia && <p className="text-sm text-red-500 mt-1">{state.errors.companhia[0]}</p>}
+          {state?.errors?.companhiaId && <p className="text-sm text-red-500 mt-1">{state.errors.companhiaId[0]}</p>}
         </div>
       </div>
 
@@ -100,26 +104,11 @@ export default function EditAlunoForm({ aluno }: { aluno: UserWithCargoString })
         <Select name="cargoSelect" required onValueChange={setSelectedCargo} defaultValue={selectedCargo}>
           <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
           <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Praças</SelectLabel>
-              <SelectItem value="ALUNO SOLDADO">ALUNO SOLDADO</SelectItem>
-              <SelectItem value="SOLDADO">SOLDADO</SelectItem>
-              <SelectItem value="CABO">CABO</SelectItem>
-              <SelectItem value="3º SARGENTO">3º SARGENTO</SelectItem>
-              <SelectItem value="2º SARGENTO">2º SARGENTO</SelectItem>
-              <SelectItem value="1º SARGENTO">1º SARGENTO</SelectItem>
-              <SelectItem value="SUB TENENTE">SUB TENENTE</SelectItem>
-              <SelectItem value="ASPIRANTE">ASPIRANTE</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Oficiais</SelectLabel>
-              <SelectItem value="2º TENENTE">2º TENENTE</SelectItem>
-              <SelectItem value="1º TENENTE">1º TENENTE</SelectItem>
-              <SelectItem value="CAPITÃO">CAPITÃO</SelectItem>
-              <SelectItem value="MAJOR">MAJOR</SelectItem>
-              <SelectItem value="TENENTE CORONEL">TENENTE CORONEL</SelectItem>
-              <SelectItem value="CORONEL">CORONEL</SelectItem>
-            </SelectGroup>
+            {cargosDisponiveis.map((cargo) => (
+              <SelectItem key={cargo.id} value={cargo.nome}>
+                {cargo.nome}
+              </SelectItem>
+            ))}
             <SelectItem value="OUTRO">OUTRO</SelectItem>
           </SelectContent>
         </Select>

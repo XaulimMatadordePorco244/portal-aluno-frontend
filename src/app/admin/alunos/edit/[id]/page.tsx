@@ -10,9 +10,25 @@ export default async function EditAlunoPage({
 }) {
   const { id } = await params;
   
-  const aluno = await prisma.user.findUnique({
-    where: { id },
-  });
+  const [aluno, cargos, companhias] = await Promise.all([
+    prisma.usuario.findUnique({
+      where: { id },
+      include: { 
+        perfilAluno: {
+          include: {
+            companhia: true,
+            cargo: true
+          }
+        } 
+      },
+    }),
+    prisma.cargo.findMany({
+      orderBy: { precedencia: 'asc' }
+    }),
+    prisma.companhia.findMany({
+      orderBy: { nome: 'asc' }
+    })
+  ]);
 
   if (!aluno) {
     notFound();
@@ -24,11 +40,15 @@ export default async function EditAlunoPage({
         <CardHeader>
           <CardTitle>Editar Aluno</CardTitle>
           <CardDescription>
-            Altere os dados de {aluno.nomeDeGuerra}.
+            Altere os dados de {aluno.perfilAluno?.nomeDeGuerra || aluno.nome}.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <EditAlunoForm aluno={aluno} />
+          <EditAlunoForm 
+            aluno={aluno} 
+            cargosDisponiveis={cargos}
+            companhiasDisponiveis={companhias}
+          />
         </CardContent>
       </Card>
     </div>
