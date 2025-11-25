@@ -77,21 +77,20 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
 
     for (const anotacao of filteredByDate) {
       const pontos = Number(anotacao.pontos);
-      const titulo = anotacao.tipo.titulo.toLowerCase();
-
-      if (pontos > 0) {
+     
+      if (pontos > 0.5) {
         stats.elogio.count++;
         stats.elogio.points += pontos;
       }
-      if (pontos < 0) {
+      if (pontos < -0.3) {
         stats.punicao.count++;
         stats.punicao.points += pontos;
       }
-      if (titulo.includes('fo+')) {
+      if (pontos === 0.5) {
         stats.foPositivo.count++;
         stats.foPositivo.points += pontos;
       }
-      if (titulo.includes('fo-')) {
+      if (pontos === -0.3) {
         stats.foNegativo.count++;
         stats.foNegativo.points += pontos;
       }
@@ -101,10 +100,10 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
 
   const filteredAnnotations = useMemo(() => {
     switch (activeFilter) {
-      case 'Elogio': return filteredByDate.filter(a => Number(a.pontos) > 0);
-      case 'Punição': return filteredByDate.filter(a => Number(a.pontos) < 0);
-      case 'FO+': return filteredByDate.filter(a => a.tipo.titulo.toLowerCase().includes('fo+'));
-      case 'FO-': return filteredByDate.filter(a => a.tipo.titulo.toLowerCase().includes('fo-'));
+      case 'Elogio': return filteredByDate.filter(a => Number(a.pontos) > 0.5);
+      case 'Punição': return filteredByDate.filter(a => Number(a.pontos) < -0.3);
+      case 'FO+': return filteredByDate.filter(a => Number(a.pontos) === 0.5);
+      case 'FO-': return filteredByDate.filter(a => Number(a.pontos) === -0.3);
       default: return filteredByDate;
     }
   }, [filteredByDate, activeFilter]);
@@ -124,7 +123,7 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
   
     pdfBuilder
         .addKeyValueLine('Aluno:', nomeFormatado, { keySpace: 12 })
-        .addKeyValueLine('Conceito Atual:', conceitoAtualValor, { keySpace: 28 }) // Adicionado ao PDF
+        .addKeyValueLine('Conceito Atual:', conceitoAtualValor, { keySpace: 28 }) 
         .addKeyValueLine('Data de Emissão:', new Date().toLocaleDateString('pt-BR'), { keySpace: 32 })
         .addKeyValueLine('Filtro Aplicado:', activeFilter, { keySpace: 27 })
         .addSpacing(5);
