@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { Loader2, UploadCloud, FileText } from "lucide-react"
+import { Loader2, UploadCloud } from "lucide-react"
 
 
 import { Button } from "@/components/ui/Button"
@@ -107,7 +107,7 @@ export function CIForm({ autorId }: CIFormProps) {
 
                 router.refresh()
 
-            } catch (error) {
+            } catch {
                 toast.error("Erro inesperado", {
                     description: "Ocorreu um erro ao tentar enviar o formulário.",
                 })

@@ -136,7 +136,7 @@ export async function deleteInformativo(id: string) {
     revalidatePath("/informativos")
     
     return { success: true }
-  } catch (error) {
+  } catch  {
     return { error: "Erro ao excluir" }
   }
 }

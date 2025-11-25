@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         redirectUrl = '/dashboard';
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    const { ...userWithoutPassword } = user;
 
     return NextResponse.json({
       message: 'Login realizado com sucesso.',
