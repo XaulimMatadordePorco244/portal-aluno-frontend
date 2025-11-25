@@ -74,12 +74,12 @@ export function AdminSidebar() {
     
     
     const managementLinks = [
-        { href: "/admin/gerenciar-alunos", label: "Gerenciar Alunos", icon: UserCog, disabled: true },
-        { href: "/admin/cargos", label: "Gerenciar Cargos", icon: Shield, disabled: true },
-        { href: "/admin/regulamentos", label: "Gerenciar Regulamentos", icon: BookOpen, disabled: true },
-        { href: "/admin/anotacoes", label: "Gerenciar Anotações", icon: ClipboardList, disabled: true },
-        { href: "/admin/qes", label: "Gerenciar QES", icon: FileQuestion, disabled: true },
-        { href: "/admin/qpe", label: "Gerenciar QPE", icon: GanttChartSquare, disabled: true },
+        { href: "/admin/gerenciar-alunos", label: "Gerenciar Alunos", icon: UserCog},
+        { href: "/admin/cargos", label: "Gerenciar Cargos", icon: Shield},
+        { href: "/admin/regulamentos", label: "Gerenciar Regulamentos", icon: BookOpen},
+        { href: "/admin/anotacoes", label: "Gerenciar Anotações", icon: ClipboardList },
+        { href: "/admin/qes", label: "Gerenciar QES", icon: FileQuestion },
+        { href: "/admin/qpe", label: "Gerenciar QPE", icon: GanttChartSquare},
     ];
 
     return (
@@ -89,7 +89,7 @@ export function AdminSidebar() {
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
-            <div className="flex grow">
+            <div className="grow">
                
                 <div className={cn(
                     "flex items-center gap-2 p-2 mb-4",
