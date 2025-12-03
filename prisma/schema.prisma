@@ -97,6 +97,18 @@ enum GeneroUsuario {
   FEMININO
 }
 
+enum CargoHistoryStatus {
+  ATIVO
+  FECHADO
+  REVERTIDO
+}
+
+enum CargoLogTipo {
+  PROMOCAO
+  DESPROMOCAO
+  REVERSAO
+}
+
 enum tipagemSanguinea {
   A_POSITIVO
   A_NEGATIVO
@@ -109,81 +121,84 @@ enum tipagemSanguinea {
 }
 
 model Usuario {
-  id                   String  @id @default(cuid())
-  cpf                  String  @unique @db.VarChar(11)
+  id                   String        @id @default(cuid())
+  cpf                  String        @unique @db.VarChar(11)
   password             String
   nome                 String
-  email                String? @unique
+  email                String?       @unique
   fotoUrl              String?
-  validationId         String  @unique @default(cuid())
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  passwordResetToken   String? @unique
+  validationId         String        @unique @default(cuid())
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  passwordResetToken   String?       @unique
   passwordResetExpires DateTime?
   status               StatusUsuario @default(ATIVO)
   role                 Role
 
-  rg                   String?
-  rgEstadoEmissor      String?
-  dataNascimento       DateTime? @db.Date
-  telefone             String?
-  genero               GeneroUsuario?
+  rg              String?
+  rgEstadoEmissor String?
+  dataNascimento  DateTime?      @db.Date
+  telefone        String?
+  genero          GeneroUsuario?
 
-  partesCriadas      Parte[]
-  informativosCriados Informativo[] @relation("InformativosCriados")
-  analisesFeitas     Analise[]
-  logsAtor           LogParte[]
+  partesCriadas       Parte[]
+  informativosCriados Informativo[]        @relation("InformativosCriados")
+  analisesFeitas      Analise[]
+  logsAtor            LogParte[]
   comunicacoesCriadas ComunicacaoInterna[] @relation("CIsCriadas")
-  anotacoesFeitas    Anotacao[]         @relation("AnotacoesFeitasPeloAutor")
-  escalasCriadas     Escala[]           @relation("EscalasCriadas")
-  qesCriados         QES[]
-  etapasResponsavel  EtapaProcesso[]
+  anotacoesFeitas     Anotacao[]           @relation("AnotacoesFeitasPeloAutor")
+  escalasCriadas      Escala[]             @relation("EscalasCriadas")
+  qesCriados          QES[]
+  etapasResponsavel   EtapaProcesso[]
 
-  perfilAluno        PerfilAluno?
+  perfilAluno PerfilAluno?
 
-  responsaveis       Responsabilidade[] @relation("Aluno")
-  dependentes        Responsabilidade[] @relation("Responsavel")
+  responsaveis Responsabilidade[] @relation("Aluno")
+  dependentes  Responsabilidade[] @relation("Responsavel")
+
+  logsCargoAdmin CargoLog[]
 
   @@map("usuarios")
 }
 
 model PerfilAluno {
-  id                   String   @id @default(cuid())
-  usuarioId            String   @unique
-  usuario              Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  numero               String? @unique
-  conceitoInicial             String?
-  conceitoAtual               String?
-  anoIngresso          Int?
-  nomeDeGuerra         String?
-  foraDeData           Boolean  @default(false)
+  numero          String? @unique
+  conceitoInicial String?
+  conceitoAtual   String?
+  anoIngresso     Int?
+  nomeDeGuerra    String?
+  foraDeData      Boolean @default(false)
 
-  tipagemSanguinea     tipagemSanguinea?
-  aptidaoFisicaStatus  AptidaoFisicaStatus?
-  aptidaoFisicaLaudo   Boolean  @default(false)
-  aptidaoFisicaObs     String?  @db.Text
-  escola               String?
-  serieEscolar         String?
-  endereco             String?  @db.Text
-  termoResponsabilidadeAssinado Boolean @default(false)
-  fazCursoExterno      Boolean  @default(false)
-  cursoExternoDescricao String?  @db.Text
+  tipagemSanguinea              tipagemSanguinea?
+  aptidaoFisicaStatus           AptidaoFisicaStatus?
+  aptidaoFisicaLaudo            Boolean              @default(false)
+  aptidaoFisicaObs              String?              @db.Text
+  escola                        String?
+  serieEscolar                  String?
+  endereco                      String?              @db.Text
+  termoResponsabilidadeAssinado Boolean              @default(false)
+  fazCursoExterno               Boolean              @default(false)
+  cursoExternoDescricao         String?              @db.Text
 
-  cargoId              String?
-  funcaoId             String?
-  companhiaId          String?
+  cargoId     String?
+  funcaoId    String?
+  companhiaId String?
 
-  funcao               Funcao?         @relation(fields: [funcaoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  cargo                Cargo?          @relation(fields: [cargoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  companhia            Companhia?      @relation(fields: [companhiaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  
-  anotacoesRecebidas   Anotacao[]      @relation("AnotacoesDoAluno")
-  escalasAtribuidas    EscalaItem[]    @relation("EscalasAtribuidas")
+  funcao    Funcao?    @relation(fields: [funcaoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  cargo     Cargo?     @relation(fields: [cargoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  companhia Companhia? @relation(fields: [companhiaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
+  historicoCargos    CargoHistory[]
+  anotacoesRecebidas Anotacao[]     @relation("AnotacoesDoAluno")
+  escalasAtribuidas  EscalaItem[]   @relation("EscalasAtribuidas")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([cargoId])
   @@index([funcaoId])
   @@index([companhiaId])
@@ -191,47 +206,43 @@ model PerfilAluno {
 }
 
 model ComunicacaoInterna {
-  id                String   @id @default(cuid())
-  
+  id String @id @default(cuid())
 
-  titulo            String  
-  assunto           String   
-  resumo            String?  @db.Text 
-  
-  
-  arquivoUrl        String   
-  nomeArquivoGerado String   
-  
+  titulo  String
+  assunto String
+  resumo  String? @db.Text
 
-  anoReferencia     Int      
-  numeroSequencial  Int      
+  arquivoUrl        String
+  nomeArquivoGerado String
 
-  dataPublicacao    DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  anoReferencia    Int
+  numeroSequencial Int
 
+  dataPublicacao DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  autorId           String
-  autor             Usuario  @relation("CIsCriadas", fields: [autorId], references: [id], onDelete: Restrict)
+  autorId String
+  autor   Usuario @relation("CIsCriadas", fields: [autorId], references: [id], onDelete: Restrict)
 
-  @@unique([anoReferencia, numeroSequencial]) 
+  @@unique([anoReferencia, numeroSequencial])
   @@index([dataPublicacao])
-  @@index([assunto])       
+  @@index([assunto])
   @@map("comunicacoes_internas")
 }
 
 model Responsabilidade {
-  id              String   @id @default(cuid())
-  responsavelId   String
-  alunoId         String
-  
-  responsavel     Usuario  @relation("Responsavel", fields: [responsavelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  aluno           Usuario  @relation("Aluno", fields: [alunoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  
-  tipoParentesco  String?
+  id            String @id @default(cuid())
+  responsavelId String
+  alunoId       String
 
-  createdAt       DateTime @default(now())
-  
+  responsavel Usuario @relation("Responsavel", fields: [responsavelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  aluno       Usuario @relation("Aluno", fields: [alunoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  tipoParentesco String?
+
+  createdAt DateTime @default(now())
+
   @@unique([responsavelId, alunoId])
   @@index([responsavelId])
   @@index([alunoId])
@@ -239,13 +250,13 @@ model Responsabilidade {
 }
 
 model Companhia {
-  id         String      @id @default(cuid())
-  nome       String      @unique
-  abreviacao String?     @unique
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  
-  alunos     PerfilAluno[]
+  id         String   @id @default(cuid())
+  nome       String   @unique
+  abreviacao String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  alunos PerfilAluno[]
 
   @@map("companhias")
 }
@@ -271,23 +282,26 @@ model TipoDeAnotacao {
 }
 
 model Anotacao {
-  id        String   @id @default(cuid())
-  pontos    Float
-  detalhes  String?  @db.Text
-  data      DateTime
-  tipoId    String
-  alunoId   String
-  autorId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  pontos       Float
+  detalhes     String?  @db.Text
+  data         DateTime
+  tipoId       String
+  alunoId      String
+  autorId      String
+  blocoCargoId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  tipo  TipoDeAnotacao @relation(fields: [tipoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  aluno PerfilAluno    @relation("AnotacoesDoAluno", fields: [alunoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  autor Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  tipo       TipoDeAnotacao @relation(fields: [tipoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  aluno      PerfilAluno    @relation("AnotacoesDoAluno", fields: [alunoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  autor      Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  blocoCargo CargoHistory?  @relation(fields: [blocoCargoId], references: [id], onDelete: SetNull)
 
   @@index([tipoId])
   @@index([alunoId])
   @@index([autorId])
+  @@index([blocoCargoId])
 }
 
 model QES {
@@ -299,9 +313,9 @@ model QES {
   dataFim    DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
+
   autor Usuario @relation(fields: [autorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  
+
   @@index([autorId])
 }
 
@@ -315,16 +329,18 @@ model Cargo {
   precedencia Int            @unique
   classe      ClasseOficial?
   divisaUrl   String?
-  
-  alunos      PerfilAluno[]
+
+  alunos PerfilAluno[]
+
+  historicoCargos CargoHistory[]
 }
 
 model Funcao {
-  id        String      @id @default(cuid())
-  nome      String      @unique
+  id        String  @id @default(cuid())
+  nome      String  @unique
   categoria String?
-  
-  alunos    PerfilAluno[]
+
+  alunos PerfilAluno[]
 }
 
 model Parte {
@@ -340,7 +356,7 @@ model Parte {
   dataEnvio       DateTime?
 
   etapas   EtapaProcesso[]
-  autor    Usuario       @relation(fields: [autorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  autor    Usuario         @relation(fields: [autorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   analises Analise[]
   logs     LogParte[]
 
@@ -441,22 +457,61 @@ model EscalaItem {
 }
 
 model Informativo {
-  id             String   @id @default(cuid())
-  
-  titulo         String
-  descricao      String?  @db.Text 
-  
+  id String @id @default(cuid())
 
-  arquivoUrl     String?  
-  nomeArquivo    String? 
+  titulo    String
+  descricao String? @db.Text
+
+  arquivoUrl  String?
+  nomeArquivo String?
 
   dataPublicacao DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  autorId        String
-  autor          Usuario  @relation("InformativosCriados", fields: [autorId], references: [id], onDelete: Restrict)
+  autorId String
+  autor   Usuario @relation("InformativosCriados", fields: [autorId], references: [id], onDelete: Restrict)
 
   @@index([dataPublicacao])
   @@map("informativos")
+}
+
+model CargoHistory {
+  id                String             @id @default(cuid())
+  alunoId           String
+  cargoId           String
+  cargoNomeSnapshot String
+  conceitoInicial   Float              @default(7.0)
+  conceitoAtual     Float              @default(7.0)
+  dataInicio        DateTime           @default(now())
+  dataFim           DateTime?
+  status            CargoHistoryStatus @default(ATIVO)
+  motivo            String?            @db.Text
+
+  aluno     PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  cargo     Cargo       @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+  anotacoes Anotacao[]
+  logs      CargoLog[]
+
+  @@index([alunoId, dataInicio])
+  @@index([status])
+  @@map("cargo_history")
+}
+
+model CargoLog {
+  id        String       @id @default(cuid())
+  blocoId   String
+  adminId   String
+  tipo      CargoLogTipo
+  motivo    String?      @db.Text
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  bloco CargoHistory @relation(fields: [blocoId], references: [id], onDelete: Cascade)
+  admin Usuario      @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([blocoId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("cargo_logs")
 }
