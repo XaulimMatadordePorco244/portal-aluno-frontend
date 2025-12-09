@@ -60,7 +60,16 @@ export interface ReversaoCargoData {
 export function useCargoHistory(alunoId?: string) {
   const { data, error, isLoading, mutate } = useSWR<CargoHistoryItem[]>(
     alunoId ? `${API_BASE}/historico?alunoId=${alunoId}` : null,
-    fetcher
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+      onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+         if (error.status === 404 || error.status === 403) return;
+        if (retryCount >= 3) return;
+        setTimeout(() => revalidate({ retryCount }), 5000);
+      }
+    }
   );
 
   return {

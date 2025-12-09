@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, Button, Row, Col, Alert, Space, Tooltip, Modal } from 'antd';
+import { Card, Button, Row, Col, Alert, Space, Tooltip, Modal, message } from 'antd';
 import { PlusOutlined, SyncOutlined, HistoryOutlined } from '@ant-design/icons';
 import CargoTimeline from './CargoTimeline';
 import TransicaoCargoModal from './TransicaoCargoModal';
 import { useCargoHistory, reverterCargo, inicializarHistorico } from '@/hooks/useCargoHistory';
-
+import { useAuth } from '@/hooks/useAuth';
 
 interface CargoHistoryContainerProps {
   alunoId: string;
@@ -22,11 +22,15 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [isInicializando, setIsInicializando] = useState(false);
   const { historico, isLoading, mutate } = useCargoHistory(alunoId);
-  
 
-  const isAdmin = true; 
+  const { user, isAdmin, loading: authLoading } = useAuth();
 
   const handleReverter = async (blocoId: string) => {
+    if (!isAdmin) {
+      message.error('Você não tem permissão para realizar esta ação.');
+      return;
+    }
+
     Modal.confirm({
       title: 'Confirmar Reversão',
       content: (
@@ -54,9 +58,10 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
         try {
           await reverterCargo({
             alunoId,
-            motivo: 'Reversão solicitada pelo administrador'
+            motivo: `Reversão solicitada por ${user?.nome}`
           });
           mutate();
+          message.success('Transição revertida com sucesso!');
         } catch (error: any) {
           Modal.error({
             title: 'Erro',
@@ -68,10 +73,16 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
   };
 
   const handleInicializar = async () => {
+    if (!isAdmin) {
+      message.error('Você não tem permissão para realizar esta ação.');
+      return;
+    }
+
     setIsInicializando(true);
     try {
       await inicializarHistorico(alunoId);
       mutate();
+      message.success('Histórico inicializado com sucesso!');
     } catch (error: any) {
       Modal.error({
         title: 'Erro',
@@ -83,6 +94,17 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
   };
 
   const cargoAtual = historico?.find(item => item.status === 'ATIVO')?.cargo;
+
+
+  if (authLoading) {
+    return (
+      <Card loading={true}>
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          Verificando permissões...
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div>
@@ -98,7 +120,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
         </Col>
         <Col>
           <Space>
-            {isAdmin && !historico?.length && (
+            {isAdmin && (!historico || historico.length === 0) && (
               <Tooltip title="Criar histórico inicial para este aluno">
                 <Button
                   icon={<SyncOutlined />}
@@ -115,6 +137,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setModalVisible(true)}
+                disabled={isLoading}
               >
                 Nova Transição
               </Button>
@@ -123,7 +146,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
         </Col>
       </Row>
 
-      {!historico?.length && isAdmin && (
+      {isAdmin && (!historico || historico.length === 0) && (
         <Alert
           message="Histórico não inicializado"
           description="Este aluno ainda não possui histórico de cargos. Clique em 'Inicializar Histórico' para criar o registro inicial."
@@ -138,7 +161,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
           alunoId={alunoId}
           isAdmin={isAdmin}
           onReverter={handleReverter}
-          showReverter={!!historico?.length && historico.length > 1}
+          showReverter={!!historico && historico.length > 1}
         />
       </Card>
 
@@ -150,6 +173,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
           alunoId={alunoId}
           cargos={cargos}
           cargoAtual={cargoAtual}
+          adminNome={user?.nome}
         />
       )}
     </div>

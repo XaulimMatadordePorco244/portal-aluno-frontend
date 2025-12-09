@@ -14,6 +14,7 @@ interface TransicaoCargoModalProps {
   alunoId: string;
   cargos: Array<{ id: string; nome: string; abreviacao: string }>;
   cargoAtual?: { id: string; nome: string };
+  adminNome?: string;
 }
 
 const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
@@ -22,17 +23,18 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
   onSuccess,
   alunoId,
   cargos,
-  cargoAtual
+  cargoAtual,
+  adminNome
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [tipoTransicao, setTipoTransicao] = useState<'PROMOCAO' | 'DESPROMOCAO'>('PROMOCAO');
   const [erroPermissao, setErroPermissao] = useState('');
 
-  // Reset form quando modal abrir
   useEffect(() => {
     if (visible) {
       form.resetFields();
+      form.setFieldValue('tipo', 'PROMOCAO');
       setTipoTransicao('PROMOCAO');
       setErroPermissao('');
     }
@@ -50,7 +52,12 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
         motivo: values.motivo
       });
 
-      message.success(`Transição realizada com sucesso! ${result.aluno?.nome} agora é ${result.cargoNovo?.nome}`);
+      message.success(
+        `Transição realizada com sucesso! ${
+          result.aluno?.nome ? `${result.aluno.nome} agora é ${result.cargoNovo?.nome}` : 
+          'Transição registrada'
+        }`
+      );
       form.resetFields();
       onSuccess();
       onClose();
@@ -72,7 +79,7 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
       open={visible}
       onCancel={onClose}
       footer={[
-        <Button key="cancel" onClick={onClose}>
+        <Button key="cancel" onClick={onClose} disabled={loading}>
           Cancelar
         </Button>,
         <Button
@@ -85,6 +92,8 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
         </Button>,
       ]}
       width={600}
+      maskClosable={false}
+      destroyOnClose
     >
       {erroPermissao && (
         <Alert
@@ -110,6 +119,7 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
           <Select 
             onChange={(value) => setTipoTransicao(value)}
             placeholder="Selecione o tipo"
+            disabled={loading}
           >
             <Option value="PROMOCAO">Promoção</Option>
             <Option value="DESPROMOCAO">Despromoção</Option>
@@ -126,9 +136,12 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
             placeholder="Selecione o cargo"
             showSearch
             optionFilterProp="children"
-            filterOption={(input, option) =>
-              (option?.children as string).toLowerCase().includes(input.toLowerCase())
-            }
+            filterOption={(input, option) => {
+              const children = option?.children;
+              return String(children).toLowerCase().includes(input.toLowerCase());
+            }}
+            loading={loading}
+            disabled={loading}
           >
             {cargos.map((cargo) => (
               <Option key={cargo.id} value={cargo.id}>
@@ -148,6 +161,7 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
             placeholder="Ex: Mérito por desempenho excepcional, Conclusão de curso, etc."
             maxLength={500}
             showCount
+            disabled={loading}
           />
         </Form.Item>
 
@@ -157,6 +171,7 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
             description={
               <div>
                 <p><strong>Cargo atual:</strong> {cargoAtual.nome}</p>
+                <p><strong>Responsável:</strong> {adminNome || 'Administrador'}</p>
                 <ul style={{ margin: '8px 0', paddingLeft: 20 }}>
                   <li>O conceito será redefinido para 7.0</li>
                   <li>As anotações permanecerão no período anterior</li>

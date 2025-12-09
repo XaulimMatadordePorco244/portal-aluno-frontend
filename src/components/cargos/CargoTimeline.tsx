@@ -25,14 +25,16 @@ const { Panel } = Collapse;
 interface CargoTimelineProps {
   alunoId: string;
   isAdmin?: boolean;
-  onReverter?: (blocoId: string) => void;
+  onReverter?: (blocoId: string) => Promise<void>;
+  showReverter?: boolean;
 }
 
-const CargoTimeline: React.FC<CargoTimelineProps> = ({ 
+export default function CargoTimeline({ 
   alunoId, 
   isAdmin = false,
-  onReverter 
-}) => {
+  onReverter, 
+  showReverter 
+}: CargoTimelineProps) {
   const { historico, isLoading } = useCargoHistory(alunoId);
 
   const getStatusIcon = (status: string) => {
@@ -104,7 +106,7 @@ const CargoTimeline: React.FC<CargoTimelineProps> = ({
               </div>
             }
             extra={
-              isAdmin && item.status === 'ATIVO' && historico.length > 1 && onReverter && (
+              isAdmin && item.status === 'ATIVO' && historico.length > 1 && onReverter && showReverter && (
                 <Tooltip title="Reverter para cargo anterior">
                   <Button 
                     size="small" 
@@ -181,5 +183,3 @@ const CargoTimeline: React.FC<CargoTimelineProps> = ({
     </Timeline>
   );
 };
-
-export default CargoTimeline;
