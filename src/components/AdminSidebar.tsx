@@ -75,7 +75,7 @@ export function AdminSidebar() {
     
     const managementLinks = [
         { href: "/admin/gerenciar-alunos", label: "Gerenciar Alunos", icon: UserCog},
-        { href: "/admin/cargos", label: "Gerenciar Cargos", icon: Shield},
+        { href: "/admin/cargos/gerenciar", label: "Gerenciar Cargos", icon: Shield},
         { href: "/admin/regulamentos", label: "Gerenciar Regulamentos", icon: BookOpen},
         { href: "/admin/anotacoes", label: "Gerenciar Anotações", icon: ClipboardList },
         { href: "/admin/qes", label: "Gerenciar QES", icon: FileQuestion },
