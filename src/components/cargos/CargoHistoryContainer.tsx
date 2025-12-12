@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
-import { 
-  Alert, 
-  AlertDescription, 
-  AlertTitle 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle
 } from '@/components/ui/alert';
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -29,9 +29,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { 
-  Plus, 
-  RefreshCw, 
+import {
+  Plus,
+  RefreshCw,
   History,
   AlertTriangle
 } from 'lucide-react';
@@ -125,7 +125,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
   return (
     <TooltipProvider>
       <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 p-2 rounded-lg">
               <History className="h-6 w-6 text-primary" />
@@ -141,7 +141,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
               )}
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {isAdmin && (!historico || historico.length === 0) && (
               <Tooltip>
@@ -161,7 +161,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
                 </TooltipContent>
               </Tooltip>
             )}
-            
+
             {isAdmin && cargos.length > 0 && (
               <Button
                 onClick={() => setModalVisible(true)}
@@ -204,8 +204,8 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
 
         {isAdmin && cargos.length > 0 && (
           <TransicaoCargoModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
+            open={modalVisible}
+            onOpenChange={setModalVisible}
             onSuccess={() => mutate()}
             alunoId={alunoId}
             cargos={cargos}
@@ -221,7 +221,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
               <AlertDialogDescription asChild>
                 <div className="space-y-4">
                   <p>Tem certeza que deseja reverter esta transição?</p>
-                  
+
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Atenção</AlertTitle>
@@ -239,7 +239,7 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={confirmReverter}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
