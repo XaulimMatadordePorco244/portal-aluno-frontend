@@ -26,22 +26,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
 
+    const result = await prisma.$transaction(async (tx) => {
+   
       const aluno = await tx.perfilAluno.findUnique({
         where: { id: alunoId },
-        include: { cargo: true, usuario: true }
+        select: {
+          id: true,
+          cargoId: true,
+          conceitoAtual: true,
+          numero: true,
+          usuario: {
+            select: {
+              nome: true
+            }
+          },
+          cargo: {
+            select: {
+              nome: true
+            }
+          }
+        }
       });
 
       if (!aluno) {
         throw new Error('Aluno não encontrado');
       }
 
+   
       const blocoAtual = await tx.cargoHistory.findFirst({
         where: {
           alunoId,
           status: 'ATIVO'
-        }
+        },
+        select: { id: true }
       });
 
       if (blocoAtual) {
@@ -55,13 +73,16 @@ export async function POST(request: NextRequest) {
         });
       }
 
+
       const novoCargo = await tx.cargo.findUnique({
-        where: { id: novoCargoId }
+        where: { id: novoCargoId },
+        select: { id: true, nome: true }
       });
 
       if (!novoCargo) {
         throw new Error('Cargo não encontrado');
       }
+
 
       const novoBloco = await tx.cargoHistory.create({
         data: {
@@ -73,9 +94,9 @@ export async function POST(request: NextRequest) {
           status: 'ATIVO',
           dataInicio: new Date(),
           motivo
-        }
+        },
+        select: { id: true }
       });
-
 
       await tx.perfilAluno.update({
         where: { id: alunoId },
@@ -84,6 +105,7 @@ export async function POST(request: NextRequest) {
           conceitoAtual: '7.0'
         }
       });
+
 
       await tx.cargoLog.create({
         data: {
@@ -113,11 +135,22 @@ export async function POST(request: NextRequest) {
           numero: aluno.numero
         }
       };
+    }, {
+      maxWait: 10000,
+      timeout: 10000,
     });
 
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Erro na transição de cargo:', error);
+    
+    if (error.code === 'P2028') {
+      return NextResponse.json(
+        { error: 'Operação demorou muito tempo. Tente novamente.' },
+        { status: 504 }
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || 'Erro interno do servidor' },
       { status: 500 }
