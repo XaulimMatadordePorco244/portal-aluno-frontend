@@ -133,3 +133,22 @@ export async function inicializarHistorico(alunoId: string) {
 
   return response.json();
 }
+export async function verificarCargosDisponiveis(
+  alunoId: string, 
+  tipo: 'PROMOCAO' | 'DESPROMOCAO'
+) {
+  try {
+    const response = await fetch(`${API_BASE}/cargos-disponiveis?alunoId=${alunoId}&tipo=${tipo}`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao buscar cargos disponíveis');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Erro:', error);
+    throw error;
+  }
+}
