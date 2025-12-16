@@ -45,6 +45,13 @@ export function AlunoActions({ aluno }: { aluno: Usuario }) {
           <Trash2 className="mr-2 h-4 w-4" />
           <span>Apagar</span>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href={`/admin/alunos/${aluno.id}`}>
+            <Edit className="mr-2 h-4 w-4" />
+            <span>Ver Perfil Completo</span>
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -54,15 +54,17 @@ export default async function AdminAlunosPage() {
                         </TableHeader>
                         <TableBody>
                             {alunos.map((aluno) => (
-                                <TableRow key={aluno.id}>
-                                    <TableCell className="font-medium">{aluno.nome}</TableCell>
-                                    <TableCell>{aluno.perfilAluno?.numero || 'N/A'}</TableCell>
-                                    <TableCell>{aluno.cpf}</TableCell>
-                                    <TableCell>{aluno.status}</TableCell>
-                                    <TableCell className="text-right">
-                                        <AlunoActions aluno={aluno} />
-                                    </TableCell>
-                                </TableRow>
+                                <Link key={aluno.id} href={`/admin/alunos/${aluno.perfilAluno?.id}`} className="contents">
+                                    <TableRow>
+                                        <TableCell className="font-medium">{aluno.nome}</TableCell>
+                                        <TableCell>{aluno.perfilAluno?.numero || 'N/A'}</TableCell>
+                                        <TableCell>{aluno.cpf}</TableCell>
+                                        <TableCell>{aluno.status}</TableCell>
+                                        <TableCell className="text-right">
+                                            <AlunoActions aluno={aluno} />
+                                        </TableCell>
+                                    </TableRow>
+                                </Link>
                             ))}
                             {alunos.length === 0 && (
                                 <TableRow>
