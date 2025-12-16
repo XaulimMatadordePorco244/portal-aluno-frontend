@@ -1,65 +1,73 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { 
-  User, 
-  Star, 
-  Users, 
-  Briefcase, 
-  Hash,
-  Info,
+import React from 'react'
+import { Metadata } from 'next'
+import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/Button'
+import {
+  ArrowLeft,
+  History,
   CalendarDays,
-  History
-} from 'lucide-react';
-import CargoHistoryContainer from '@/components/cargos/CargoHistoryContainer';
-import prisma from '@/lib/prisma';
-import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
+  ShieldAlert,
+  FileText
+} from 'lucide-react'
+import CargoHistoryContainer from '@/components/cargos/CargoHistoryContainer'
+import prisma from '@/lib/prisma'
+import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth'
 
 interface PageProps {
   params: Promise<{
-    id: string;
-  }>;
+    id: string
+  }>
+}
+
+const highlightWarName = (fullName: string, warName?: string) => {
+  if (!warName) return <span className="font-medium text-foreground">{fullName}</span>
+
+  const escapedWarName = warName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escapedWarName})`, 'gi')
+  const parts = fullName.split(regex)
+
+  return (
+    <span className="text-lg text-muted-foreground">
+      {parts.map((part, index) =>
+        part.toLowerCase() === warName.toLowerCase() ? (
+          <strong key={index} className="font-bold text-foreground">{part}</strong>
+        ) : (
+          <span key={index}>{part}</span>
+        )
+      )}
+    </span>
+  )
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  
+  const { id } = await params
   const aluno = await prisma.perfilAluno.findUnique({
     where: { id },
-    include: { usuario: true, cargo: true, companhia: true }
-  });
+    include: { usuario: true }
+  })
 
   return {
-    title: `Histórico de Cargos - ${aluno?.usuario.nome || 'Aluno'}`,
-    description: `Gerencie o histórico de cargos de ${aluno?.usuario.nome || 'este aluno'}`,
-  };
+    title: `Histórico - ${aluno?.usuario.nome || 'Aluno'}`
+  }
 }
 
 export default async function AdminAlunoCargosPage({ params }: PageProps) {
-  const { id } = await params;
-  
-  const user = await getCurrentUserWithRelations();
-  
+  const { id } = await params
+  const user = await getCurrentUserWithRelations()
+
   if (!user || !canAccessAdminArea(user)) {
-    redirect('/dashboard');
+    redirect('/dashboard')
   }
 
   const aluno = await prisma.perfilAluno.findUnique({
@@ -67,22 +75,19 @@ export default async function AdminAlunoCargosPage({ params }: PageProps) {
     include: {
       usuario: true,
       cargo: true,
-      funcao: true,
       companhia: true,
       historicoCargos: {
         where: { status: 'ATIVO' },
         take: 1
       }
     }
-  });
+  })
 
-  if (!aluno) {
-    notFound();
-  }
+  if (!aluno) notFound()
 
   const cargos = await prisma.cargo.findMany({
     orderBy: { precedencia: 'asc' }
-  });
+  })
 
   const historicoCompleto = await prisma.cargoHistory.findMany({
     where: { alunoId: id },
@@ -90,249 +95,157 @@ export default async function AdminAlunoCargosPage({ params }: PageProps) {
     include: {
       logs: {
         include: {
-          admin: {
-            select: {
-              nome: true
-            }
-          }
+          admin: { select: { nome: true } }
         },
-        orderBy: {
-          createdAt: 'desc'
-        },
+        orderBy: { createdAt: 'desc' },
         take: 1
       }
     }
-  });
+  })
 
-  const totalTransicoes = historicoCompleto.length;
-  const totalPromocoes = historicoCompleto.filter(h => 
-    h.status !== 'REVERTIDO'
-  ).length - 1; 
-  const cargoAtual = historicoCompleto.find(h => h.status === 'ATIVO');
-
-  function CustomBreadcrumb({ alunoNome }: { alunoNome: string }) {
-    return (
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/admin/alunos">Alunos</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href={`/admin/alunos/${id}`}>
-              {alunoNome}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Cargos</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
+  const cargoAtual = historicoCompleto.find(h => h.status === 'ATIVO')
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+      <div className="flex flex-col gap-4 border-b pb-6">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Link
+            href={`/admin/alunos/${id}/promover`}
+            className="hover:text-foreground transition-colors flex items-center gap-1 text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar para Movimentação
+          </Link>
+        </div>
 
-      <CustomBreadcrumb alunoNome={aluno.usuario.nome} />
-
- 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Informações do Aluno</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-       
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <User className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="text-lg font-semibold">{aluno.usuario.nome}</h3>
-                  {aluno.nomeDeGuerra && (
-                    <Badge variant="outline" className="mt-1">
-                      &quot;{aluno.nomeDeGuerra}&quot;
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Número:</span>
-                  <span>{aluno.numero || 'Não informado'}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Companhia:</span>
-                  <span>{aluno.companhia?.nome || 'Não atribuída'}</span>
-                </div>
-              </div>
-            </div>
-
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Cargo Atual</h3>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Cargo:</span>
-                  <span className={!aluno.cargo ? "text-muted-foreground" : ""}>
-                    {aluno.cargo?.nome || 'Não definido'}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="font-medium">Conceito:</span>
-                  <Badge variant="secondary" className="font-mono">
-                    {aluno.conceitoAtual || '7.0'}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Função:</span>
-                  <span>{aluno.funcao?.nome || 'Não definida'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Estatísticas</h3>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Total de Transições:</span>
-                  <Badge variant="outline">{totalTransicoes}</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Promoções/Despromoções:</span>
-                  <Badge 
-                    variant={totalPromocoes > 0 ? "default" : "outline"}
-                    className={totalPromocoes > 0 ? "bg-green-500" : ""}
-                  >
-                    {totalPromocoes}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Cargo desde:</span>
-                  <span>
-                    {cargoAtual?.dataInicio 
-                      ? new Date(cargoAtual.dataInicio).toLocaleDateString('pt-BR')
-                      : 'Data não disponível'
-                    }
-                  </span>
-                </div>
-              </div>
-            </div>
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Histórico de Cargos
+            </h1>
+            <p className="text-muted-foreground">
+              Linha do tempo completa e auditoria de promoções.
+            </p>
           </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/alunos/${id}`}>Ver Perfil</Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-muted/30 rounded-lg p-6 border space-y-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Aluno
+          </span>
+          <div>{highlightWarName(aluno.usuario.nome, aluno.nomeDeGuerra || '')}</div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-2">
+          <div>
+            <span className="text-xs text-muted-foreground block mb-1">Número</span>
+            <span className="font-mono text-sm">{aluno.numero || '-'}</span>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground block mb-1">Companhia</span>
+            <span className="text-sm font-medium">{aluno.companhia?.nome || '-'}</span>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground block mb-1">Cargo Atual</span>
+            <span className="text-sm font-medium">{aluno.cargo?.nome || 'Sem Cargo'}</span>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground block mb-1">Cargo desde</span>
+            <span className="text-sm font-medium">
+              {cargoAtual?.dataInicio
+                ? new Date(cargoAtual.dataInicio).toLocaleDateString('pt-BR')
+                : '-'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <Card className="bg-transparent shadow-none border-dashed">
+        <CardHeader className="p-4 flex flex-row items-center gap-3 space-y-0">
+          <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Nota do Sistema
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 text-sm text-muted-foreground space-y-1">
+          <p>Ao editar o histórico, lembre-se que ações passadas afetam a consistência dos dados.</p>
+          <p>Todas as alterações ficam registradas nos logs de auditoria abaixo.</p>
         </CardContent>
       </Card>
 
- 
-      <Alert className="bg-blue-50 border-blue-200">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertTitle className="text-blue-800">Atenção Administrador</AlertTitle>
-        <AlertDescription className="text-blue-700">
-          <div className="space-y-2">
-            <p>Ao realizar uma transição de cargo:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>O conceito do aluno será <strong>redefinido para 7.0</strong></li>
-              <li>Um novo bloco de histórico será criado</li>
-              <li>As anotações permanecem vinculadas ao período anterior</li>
-              <li>Todas as ações são <strong>auditáveis</strong> através dos logs</li>
-              <li>É possível <strong>reverter</strong> a última transição se necessário</li>
-            </ul>
-          </div>
-        </AlertDescription>
-      </Alert>
-
-  
-      <CargoHistoryContainer
-        alunoId={id}
-        cargos={cargos}
-        alunoNome={aluno.usuario.nome}
-      />
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold tracking-tight">Linha do Tempo</h3>
+        <CargoHistoryContainer
+          alunoId={id}
+          cargos={cargos}
+          alunoNome={aluno.usuario.nome}
+        />
+      </div>
 
       {historicoCompleto.length > 0 && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Logs Detalhados de Auditoria</CardTitle>
-              <Badge variant="outline" className="text-muted-foreground">
-                Apenas visível para administradores
-              </Badge>
+          <CardHeader className="border-b bg-muted/10">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Auditoria Detalhada</CardTitle>
             </div>
+            <CardDescription>
+              Registro técnico de todas as movimentações
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-4">
+          <CardContent className="p-0">
+            <ScrollArea className="h-[500px]">
+              <div className="divide-y">
                 {historicoCompleto.map((historico) => {
-                           const ultimoLog = historico.logs[0];
-                  
+                  const ultimoLog = historico.logs[0]
+
                   return (
-                    <div key={historico.id} className="space-y-2">
-                      <div className="bg-muted/50 p-3 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <History className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              Período: {new Date(historico.dataInicio).toLocaleDateString('pt-BR')}
-                              {historico.dataFim && (
-                                <> até {new Date(historico.dataFim).toLocaleDateString('pt-BR')}</>
-                              )}
-                            </span>
-                          </div>
-                          <Badge 
-                            variant={
-                              historico.status === 'ATIVO' ? 'default' :
-                              historico.status === 'FECHADO' ? 'secondary' : 'destructive'
-                            }
-                            className={
-                              historico.status === 'ATIVO' ? 'bg-green-500' :
-                              historico.status === 'FECHADO' ? '' : ''
-                            }
-                          >
+                    <div
+                      key={historico.id}
+                      className="p-4 hover:bg-muted/30 transition-colors text-sm"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="font-mono font-normal">
                             {historico.status}
                           </Badge>
+                          <span className="font-medium">
+                            {new Date(historico.dataInicio).toLocaleDateString('pt-BR')}
+                            {historico.dataFim &&
+                              ` — ${new Date(historico.dataFim).toLocaleDateString('pt-BR')}`}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono">
+                          ID: {historico.id.slice(0, 8)}...
                         </div>
                       </div>
-                      
-                      <div className="pl-7 space-y-1 text-sm text-muted-foreground">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div>
-                            <span className="font-medium">Cargo:</span>{' '}
-                            {historico.cargoNomeSnapshot}
-                          </div>
-                          <div>
-                            <span className="font-medium">Conceito:</span>{' '}
-                            {historico.conceitoAtual.toFixed(1)}
-                          </div>
-                          <div>
-                            <span className="font-medium">Admin:</span>{' '}
-                            {ultimoLog?.admin?.nome || 'Sistema'}
-                          </div>
-                          <div>
-                            <span className="font-medium">Motivo:</span>{' '}
-                            {historico.motivo || ultimoLog?.motivo || 'Não especificado'}
-                          </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-muted-foreground">
+                        <div>
+                          <span className="text-xs block text-foreground/60">Cargo Gravado</span>
+                          {historico.cargoNomeSnapshot}
+                        </div>
+                        <div>
+                          <span className="text-xs block text-foreground/60">Conceito</span>
+                          {historico.conceitoAtual.toFixed(1)}
+                        </div>
+                        <div>
+                          <span className="text-xs block text-foreground/60">Responsável</span>
+                          {ultimoLog?.admin?.nome || 'Sistema'}
+                        </div>
+                        <div>
+                          <span className="text-xs block text-foreground/60">Motivo</span>
+                          <span className="italic">
+                            {historico.motivo || ultimoLog?.motivo || '-'}
+                          </span>
                         </div>
                       </div>
-                      
-                      <Separator />
                     </div>
-                  );
+                  )
                 })}
               </div>
             </ScrollArea>
@@ -340,5 +253,5 @@ export default async function AdminAlunoCargosPage({ params }: PageProps) {
         </Card>
       )}
     </div>
-  );
+  )
 }
