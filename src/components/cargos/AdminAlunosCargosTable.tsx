@@ -23,7 +23,7 @@ interface AlunoData {
     conceitoAtual?: string;
     foraDeData: boolean;
     cargo?: { id: string; nome: string; abreviacao: string };
-    companhia?: { id: string; nome: string };
+    companhia?: { id: string; nome: string; abreviacao?: string };
     historicoCargos: Array<{ dataInicio: Date }>;
   };
 }
@@ -178,22 +178,13 @@ export function AdminAlunosTable({ data, companhias, cargos }: AdminAlunosTableP
                     </div>
                   </TableCell>
                   <TableCell>
-                    {aluno.perfilAluno.cargo ? (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {aluno.perfilAluno.cargo.nome}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {aluno.perfilAluno.cargo.abreviacao}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
-                    )}
+                    <span className="text-sm font-medium">
+                      {aluno.perfilAluno.cargo?.abreviacao || '-'}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-foreground/80">
-                      {aluno.perfilAluno.companhia?.nome || '-'}
+                      {aluno.perfilAluno.companhia?.abreviacao || '-'}
                     </span>
                   </TableCell>
                   <TableCell>

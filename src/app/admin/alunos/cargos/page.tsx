@@ -56,7 +56,7 @@ export default async function AdminAlunosCargosPage({
       usuario: { select: { id: true, nome: true, cpf: true, status: true } },
       cargo: { select: { id: true, nome: true, abreviacao: true } }, 
       funcao: { select: { id: true, nome: true } },
-      companhia: { select: { id: true, nome: true } },
+      companhia: { select: { id: true, nome: true, abreviacao: true } },
       historicoCargos: {
         select: { dataInicio: true },
         orderBy: { dataInicio: 'desc' },
@@ -83,7 +83,10 @@ export default async function AdminAlunosCargosPage({
       : undefined,
       foraDeData: aluno.foraDeData,
       cargo: aluno.cargo || undefined,
-      companhia: aluno.companhia || undefined,
+      companhia: aluno.companhia ? {
+        ...aluno.companhia,
+        abreviacao: aluno.companhia.abreviacao || undefined
+      } : undefined,
       historicoCargos: aluno.historicoCargos,
     }
   }));
