@@ -195,6 +195,8 @@ model PerfilAluno {
   historicoCargos    CargoHistory[]
   anotacoesRecebidas Anotacao[]     @relation("AnotacoesDoAluno")
   escalasAtribuidas  EscalaItem[]   @relation("EscalasAtribuidas")
+  desempenhosEscolares DesempenhoEscolar[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -203,6 +205,7 @@ model PerfilAluno {
   @@index([funcaoId])
   @@index([companhiaId])
   @@map("perfis_alunos")
+  
 }
 
 model ComunicacaoInterna {
@@ -229,6 +232,35 @@ model ComunicacaoInterna {
   @@index([dataPublicacao])
   @@index([assunto])
   @@map("comunicacoes_internas")
+}
+
+model DesempenhoEscolar {
+  id            String   @id @default(uuid())
+  alunoId       String
+  aluno         PerfilAluno @relation(fields: [alunoId], references: [id])
+  
+  anoLetivo     Int    
+  escola        String? 
+  serie         String?  
+
+  mediaB1       Float?
+  faltasB1      Int      @default(0)
+  
+  mediaB2       Float?
+  faltasB2      Int      @default(0)
+
+  mediaB3       Float?
+  faltasB3      Int      @default(0)
+
+  mediaB4       Float?
+  faltasB4      Int      @default(0)
+
+
+  qtdNotasVermelhas Int @default(0) 
+  observacoes       String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Responsabilidade {
