@@ -69,17 +69,17 @@ export function AdminSidebar() {
     const operationalLinks = [
         { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
         { href: "/admin/partes", label: "Analisar Processos", icon: FileSearch },
-        { href: "/admin/alunos", label: "Visualizar Alunos", icon: Users },
-    ];
+       ];
     
     
     const managementLinks = [
-        { href: "/admin/gerenciar-alunos", label: "Gerenciar Alunos", icon: UserCog},
-        { href: "/admin/cargos/gerenciar", label: "Gerenciar Cargos", icon: Shield},
-        { href: "/admin/regulamentos", label: "Gerenciar Regulamentos", icon: BookOpen},
-        { href: "/admin/anotacoes", label: "Gerenciar Anotações", icon: ClipboardList },
-        { href: "/admin/qes", label: "Gerenciar QES", icon: FileQuestion },
-        { href: "/admin/qpe", label: "Gerenciar QPE", icon: GanttChartSquare},
+        { href: "/admin/alunos", label: "Alunos", icon: UserCog},
+        { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Shield},
+        { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen},
+        { href: "/admin/alunos/cargos", label: "Promoções/Despromoções", icon: Shield},
+        { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
+        { href: "/admin/qes", label: "QES", icon: FileQuestion },
+        { href: "/admin/qpe", label: "QPE", icon: GanttChartSquare},
     ];
 
     return (
