@@ -206,7 +206,7 @@ export function AdminAlunosTable({ data, companhias, cargos }: AdminAlunosTableP
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/alunos/${aluno.perfilAluno.id}/promover`} className="cursor-pointer">
+                           <Link href={`/admin/alunos/${aluno.perfilAluno.id}/promover-despromover`} className="cursor-pointer">
                              Gerenciar Cargo
                            </Link>
                         </DropdownMenuItem>

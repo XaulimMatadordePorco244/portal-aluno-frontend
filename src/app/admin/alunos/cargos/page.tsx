@@ -98,9 +98,7 @@ export default async function AdminAlunosCargosPage({
           <h1 className="text-2xl font-bold tracking-tight">Cargos e Promoções</h1>
           <p className="text-muted-foreground text-sm">Gerencie o efetivo de alunos</p>
         </div>
-        <Link href="/admin/cargos/configuracao">
-          <Button variant="outline">Configurações</Button>
-        </Link>
+ 
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg bg-card">
