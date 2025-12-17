@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calculator, Save, ArrowLeft, AlertCircle } from 'lucide-react'
+import { Calculator, Save, ArrowLeft, AlertCircle, Clock } from 'lucide-react'
 import { salvarBoletim } from '@/app/admin/alunos/actions/boletim-actions' 
 import { toast } from 'sonner' 
 
@@ -21,15 +21,30 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   
-
   const [notas, setNotas] = useState({
     b1: dadosIniciais?.mediaB1?.toString() || '',
     b2: dadosIniciais?.mediaB2?.toString() || '',
     b3: dadosIniciais?.mediaB3?.toString() || '',
     b4: dadosIniciais?.mediaB4?.toString() || '',
   })
+
+  const [faltas, setFaltas] = useState({
+    b1: dadosIniciais?.faltasB1?.toString() || '0',
+    b2: dadosIniciais?.faltasB2?.toString() || '0',
+    b3: dadosIniciais?.faltasB3?.toString() || '0',
+    b4: dadosIniciais?.faltasB4?.toString() || '0',
+  })
+
+  const [vermelhas, setVermelhas] = useState({
+    b1: '0',
+    b2: '0',
+    b3: '0',
+    b4: '0',
+  })
   
   const [previaMF, setPreviaMF] = useState<string>('-')
+  const [totalFaltas, setTotalFaltas] = useState<number>(0)
+  const [totalVermelhas, setTotalVermelhas] = useState<number>(0)
 
   useEffect(() => {
     const vals = [parseFloat(notas.b1), parseFloat(notas.b2), parseFloat(notas.b3), parseFloat(notas.b4)]
@@ -44,8 +59,38 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
     }
   }, [notas])
 
+  useEffect(() => {
+    const vals = [
+        parseInt(faltas.b1) || 0, 
+        parseInt(faltas.b2) || 0, 
+        parseInt(faltas.b3) || 0, 
+        parseInt(faltas.b4) || 0
+    ]
+    const total = vals.reduce((a, b) => a + b, 0)
+    setTotalFaltas(total)
+  }, [faltas])
+
+  useEffect(() => {
+    const vals = [
+        parseInt(vermelhas.b1) || 0, 
+        parseInt(vermelhas.b2) || 0, 
+        parseInt(vermelhas.b3) || 0, 
+        parseInt(vermelhas.b4) || 0
+    ]
+    const total = vals.reduce((a, b) => a + b, 0)
+    setTotalVermelhas(total)
+  }, [vermelhas])
+
   const handleNotaChange = (val: string, key: string) => {
     setNotas(prev => ({ ...prev, [key]: val }))
+  }
+
+  const handleFaltaChange = (val: string, key: string) => {
+    setFaltas(prev => ({ ...prev, [key]: val }))
+  }
+
+  const handleVermelhaChange = (val: string, key: string) => {
+    setVermelhas(prev => ({ ...prev, [key]: val }))
   }
 
   const getColor = (val: string) => {
@@ -114,15 +159,28 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
                         />
                     </div>
                     
-                    <div>
-                        <Label className="text-xs mb-1 block">Faltas</Label>
-                        <Input 
-                            name={`faltasB${bim}`} 
-                            type="number" 
-                            min="0"
-                            className="h-8 text-sm"
-                            defaultValue={dadosIniciais?.[`faltasB${bim}`] || 0}
-                        />
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <Label className="text-[10px] mb-1 block truncate">Faltas</Label>
+                            <Input 
+                                name={`faltasB${bim}`} 
+                                type="number" 
+                                min="0"
+                                className="h-8 text-sm px-2"
+                                value={faltas[`b${bim}` as keyof typeof faltas]}
+                                onChange={(e) => handleFaltaChange(e.target.value, `b${bim}`)}
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-[10px] mb-1 block truncate text-red-600">Vermelhas</Label>
+                            <Input 
+                                type="number" 
+                                min="0"
+                                className="h-8 text-sm px-2 border-red-100 focus-visible:ring-red-500"
+                                value={vermelhas[`b${bim}` as keyof typeof vermelhas]}
+                                onChange={(e) => handleVermelhaChange(e.target.value, `b${bim}`)}
+                            />
+                        </div>
                     </div>
                 </div>
             ))}
@@ -141,28 +199,39 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
           </div>
           
           <div className="w-full md:w-1/3 space-y-4">
-             <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-100 dark:border-red-900/50 space-y-2">
-                <Label className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-xs uppercase">
-                    <AlertCircle className="h-3 w-3" /> Notas Vermelhas (Manual)
-                </Label>
-                <Input 
-                    name="qtdNotasVermelhas" 
-                    type="number" 
-                    min="0"
-                    defaultValue={dadosIniciais?.qtdNotasVermelhas || 0}
-                    className="bg-white dark:bg-background border-red-200 focus-visible:ring-red-500"
-                />
-                <p className="text-[10px] text-muted-foreground">O sistema calcula a média, mas você informa quantas vermelhas o aluno teve.</p>
-             </div>
-
-             <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-primary font-medium">
-                    <Calculator className="h-5 w-5" />
-                    <span>Prévia MF</span>
+             <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+                
+                <div className="flex items-center justify-between border-b border-primary/10 pb-2">
+                   <div className="flex items-center gap-2 text-primary font-medium">
+                       <Calculator className="h-5 w-5" />
+                       <span>Prévia MF</span>
+                   </div>
+                   <span className={`text-3xl font-bold ${parseFloat(previaMF) < 6 && previaMF !== '-' ? 'text-red-600' : 'text-foreground'}`}>
+                       {previaMF}
+                   </span>
                 </div>
-                <span className={`text-3xl font-bold ${parseFloat(previaMF) < 6 && previaMF !== '-' ? 'text-red-600' : 'text-foreground'}`}>
-                    {previaMF}
-                </span>
+
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
+                       <Clock className="h-4 w-4" />
+                       <span>Total Faltas</span>
+                   </div>
+                   <span className="text-xl font-bold text-foreground">
+                       {totalFaltas}
+                   </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-red-600 font-medium text-sm">
+                       <AlertCircle className="h-4 w-4" />
+                       <span>Total Vermelhas</span>
+                   </div>
+                   <span className="text-xl font-bold text-red-600">
+                       {totalVermelhas}
+                   </span>
+                   <input type="hidden" name="qtdNotasVermelhas" value={totalVermelhas} />
+                </div>
+
              </div>
 
              <Button type="submit" size="lg" className="w-full font-bold shadow-lg" disabled={loading}>
