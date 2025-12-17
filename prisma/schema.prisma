@@ -136,8 +136,8 @@ model TafTabela {
   exercicio     String    
   tipoMedida    TafTipoMedida 
   
-  valorMinimo   Float         
-  valorMaximo   Float?        
+  valorMinimo   Int         
+  valorMaximo   Int?        
   
   nota          Float
   anoLetivo     Int           @default(2025)
