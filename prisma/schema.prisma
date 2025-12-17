@@ -120,6 +120,66 @@ enum tipagemSanguinea {
   O_NEGATIVO
 }
 
+enum TafGenero {
+  MASCULINO
+  FEMININO
+}
+
+enum TafTipoMedida {
+  TEMPO_SEG      
+  REPETICOES   
+}
+
+model TafTabela {
+  id            String        @id @default(uuid())
+  genero        TafGenero
+  exercicio     String    
+  tipoMedida    TafTipoMedida 
+  
+  valorMinimo   Float         
+  valorMaximo   Float?        
+  
+  nota          Float
+  anoLetivo     Int           @default(2025)
+
+  createdAt     DateTime      @default(now())
+
+  @@index([genero, exercicio, anoLetivo])
+  @@map("taf_tabela")
+}
+
+model TafDesempenho {
+  id            String      @id @default(uuid())
+  
+  alunoId       String
+  aluno         PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  
+  anoLetivo     Int
+  bimestre      Int
+  dataRealizacao DateTime   @default(now())
+
+  abdominalQtd   Int        
+  abdominalNota  Float    
+
+  apoioTipo      String     
+  apoioValor     Float      
+  apoioNota      Float     
+
+  corridaTempo   Int       
+  corridaNota    Float     
+
+
+  mediaFinal     Float
+  observacoes    String?    @db.Text
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+
+  @@unique([alunoId, anoLetivo, bimestre])
+  @@map("taf_desempenho")
+}
+
 model Usuario {
   id                   String        @id @default(cuid())
   cpf                  String        @unique @db.VarChar(11)
@@ -196,6 +256,7 @@ model PerfilAluno {
   anotacoesRecebidas Anotacao[]     @relation("AnotacoesDoAluno")
   escalasAtribuidas  EscalaItem[]   @relation("EscalasAtribuidas")
   desempenhosEscolares DesempenhoEscolar[]
+  tafs TafDesempenho[]
 
 
   createdAt DateTime @default(now())
