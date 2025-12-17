@@ -5,19 +5,16 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import { 
-  Card, CardContent, CardHeader, CardTitle, CardDescription 
+  Card, CardContent, CardHeader, CardTitle 
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { 
-  Search, Filter, GraduationCap, AlertTriangle, 
-  TrendingUp, TrendingDown, FileEdit 
-} from 'lucide-react';
+import { AlertTriangle, TrendingUp, FileEdit } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import BoletimFiltros from './boletim-filtros'; 
 
 export const metadata: Metadata = {
   title: 'Admin - Monitoramento Escolar',
@@ -27,8 +24,6 @@ const NotaBadge = ({ nota }: { nota: number | null | undefined }) => {
   if (nota === null || nota === undefined) {
     return <span className="text-muted-foreground text-xs">-</span>;
   }
-  
-
   const colorClass = nota < 6 
     ? "text-red-600 font-bold bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded" 
     : "text-blue-600 dark:text-blue-400 font-medium";
@@ -46,13 +41,20 @@ export default async function NotasEscolaresPage({
 
   const params = await searchParams;
   const busca = params.q || '';
+  const ciaFilter = params.cia && params.cia !== 'todas' ? params.cia : undefined;
   const anoAtual = parseInt(params.ano || new Date().getFullYear().toString());
+
+  const companhias = await prisma.companhia.findMany({
+    orderBy: { nome: 'asc' },
+    select: { id: true, abreviacao: true }
+  }).then(companhias => companhias.filter(c => c.abreviacao !== null) as { id: string; abreviacao: string }[]);
 
   const alunos = await prisma.perfilAluno.findMany({
     where: {
+      companhiaId: ciaFilter, 
       usuario: {
         status: 'ATIVO',
-        nome: { contains: busca }
+        nome: { contains: busca } 
       },
     },
     include: {
@@ -71,7 +73,7 @@ export default async function NotasEscolaresPage({
   let countMedias = 0;
 
   const dadosProcessados = alunos.map(aluno => {
-    const boletim = aluno.desempenhosEscolares[0]; 
+    const boletim = (aluno as any).desempenhosEscolares[0]; 
     
     if (boletim) {
       if (boletim.qtdNotasVermelhas > 0) totalComVermelha++;
@@ -83,8 +85,8 @@ export default async function NotasEscolaresPage({
     }
 
     return { 
-      usuario: aluno.usuario, 
-      companhia: aluno.companhia, 
+      usuario: (aluno as any).usuario, 
+      companhia: (aluno as any).companhia, 
       boletim, 
       id: aluno.id, 
       nomeDeGuerra: aluno.nomeDeGuerra 
@@ -101,25 +103,16 @@ export default async function NotasEscolaresPage({
             <h1 className="text-3xl font-bold tracking-tight">Monitoramento Escolar</h1>
             <p className="text-muted-foreground">Acompanhamento de desempenho acadêmico - Ano {anoAtual}</p>
         </div>
-        <div className="flex items-center gap-2">
-            <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" /> Filtrar Cia
-            </Button>
-            <Button variant="default">
-                <GraduationCap className="mr-2 h-4 w-4" /> Gerar Relatório PDF
-            </Button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
          <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Média Geral da Tropa</CardTitle>
+                <CardTitle className="text-sm font-medium">Média Geral</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{mediaGeral}</div>
-                <p className="text-xs text-muted-foreground">Baseado nas médias finais lançadas.</p>
             </CardContent>
          </Card>
          
@@ -130,14 +123,14 @@ export default async function NotasEscolaresPage({
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold text-red-600">{totalComVermelha}</div>
-                <p className="text-xs text-muted-foreground">Com notas vermelhas no boletim.</p>
+                <p className="text-xs text-muted-foreground">Notas vermelhas presentes.</p>
             </CardContent>
          </Card>
 
          <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Aprovados (Antecipado)</CardTitle>
-                <GraduationCap className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
+                <div className="h-4 w-4 rounded-full bg-green-500/20" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold text-green-600">{totalAprovados}</div>
@@ -151,32 +144,26 @@ export default async function NotasEscolaresPage({
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{countMedias} / {alunos.length}</div>
-                <p className="text-xs text-muted-foreground">Cadastros atualizados este ano.</p>
             </CardContent>
          </Card>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative w-full md:w-96">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome de guerra ou matrícula..." className="pl-8" />
-        </div>
-      </div>
+      <BoletimFiltros companhias={companhias} />
 
       <div className="border rounded-lg bg-card shadow-sm overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
               <TableHead className="w-[300px]">Aluno</TableHead>
-              <TableHead>Cia / Pelotão</TableHead>
-              <TableHead className="text-center w-20">1º Bim</TableHead>
-              <TableHead className="text-center w-20">2º Bim</TableHead>
-              <TableHead className="text-center w-20">3º Bim</TableHead>
-              <TableHead className="text-center w-20">4º Bim</TableHead>
-              <TableHead className="text-center w-24 bg-muted/30 font-bold">Média Final</TableHead>
-              <TableHead className="text-center">Faltas</TableHead>
-              <TableHead className="text-center">Situação</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>Companhia</TableHead>
+              <TableHead className="text-center w-16">1º Bim</TableHead>
+              <TableHead className="text-center w-16">2º Bim</TableHead>
+              <TableHead className="text-center w-16">3º Bim</TableHead>
+              <TableHead className="text-center w-16">4º Bim</TableHead>
+              <TableHead className="text-center w-20 bg-muted/30 font-bold">M. Final</TableHead>
+              <TableHead className="text-center w-16">Faltas</TableHead>
+              <TableHead className="text-center w-24">Situação</TableHead>
+              <TableHead className="text-right w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -215,7 +202,7 @@ export default async function NotasEscolaresPage({
 
                 <TableCell className="text-center">
                     {boletim ? (
-                        <Badge variant={
+                        <Badge className="text-[10px]" variant={
                             boletim.situacao === 'APROVADO' ? 'default' : 
                             boletim.situacao === 'REPROVADO' ? 'destructive' : 'secondary'
                         }>
@@ -227,7 +214,7 @@ export default async function NotasEscolaresPage({
                 </TableCell>
 
                 <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button variant="ghost" size="icon" asChild className="h-8 w-8">
                         <Link href={`/admin/alunos/${id}/boletim`}>
                             <FileEdit className="h-4 w-4 text-primary" />
                         </Link>
@@ -238,8 +225,8 @@ export default async function NotasEscolaresPage({
             
             {dadosProcessados.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center">
-                        Nenhum aluno encontrado ou cadastrado este ano.
+                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
+                        Nenhum aluno encontrado com os filtros atuais.
                     </TableCell>
                 </TableRow>
             )}
