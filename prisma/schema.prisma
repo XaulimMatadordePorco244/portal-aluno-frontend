@@ -259,8 +259,14 @@ model DesempenhoEscolar {
   qtdNotasVermelhas Int @default(0) 
   observacoes       String?
 
+  mediaFinal  Float?
+  totalFaltas Int      @default(0)
+  situacao    String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@unique([alunoId, anoLetivo])
 }
 
 model Responsabilidade {
