@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -19,11 +18,7 @@ type RegraTaf = {
   nota: number
 }
 
-interface GerenciadorProps {
-  regras: RegraTaf[]
-}
-
-export default function TabelaGerenciador({ regras }: GerenciadorProps) {
+export default function TabelaGerenciador({ regras }: { regras: RegraTaf[] }) {
   const masc = regras.filter(r => r.genero === 'MASCULINO')
   const fem = regras.filter(r => r.genero === 'FEMININO')
 
@@ -34,9 +29,9 @@ export default function TabelaGerenciador({ regras }: GerenciadorProps) {
           <TabsTrigger value="MASCULINO">Masculino</TabsTrigger>
           <TabsTrigger value="FEMININO">Feminino</TabsTrigger>
         </TabsList>
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
+        <div className="text-sm text-muted-foreground flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded dark:text-yellow-400">
             <AlertCircle className="w-4 h-4" />
-            <span>Valores de tempo estão em segundos.</span>
+            <span>Atenção: Tempos de corrida/barra devem ser em segundos totais.</span>
         </div>
       </div>
 
@@ -65,31 +60,28 @@ function ListaExercicios({ dados }: { dados: RegraTaf[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {Object.entries(grupos).map(([exercicio, itens]) => (
-        <Card key={exercicio} className="overflow-hidden">
-          <CardHeader className="bg-muted/40 py-3">
-            <CardTitle className="text-base font-bold flex justify-between items-center">
+        <Card key={exercicio} className="border shadow-sm">
+          <CardHeader className="bg-muted/30 py-3 border-b">
+            <CardTitle className="text-base font-bold flex justify-between items-center uppercase tracking-wide">
                 {exercicio}
-                <span className="text-xs font-normal text-muted-foreground bg-background px-2 py-1 rounded border">
+                <span className="text-[10px] font-normal text-muted-foreground bg-background px-2 py-1 rounded border shadow-sm">
                     {itens[0].tipoMedida === 'TEMPO_SEG' ? 'Segundos' : 'Repetições'}
                 </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-                <thead className="bg-muted/20 text-muted-foreground">
-                    <tr>
-                        <th className="px-4 py-2 text-left font-medium w-20">Mín</th>
-                        <th className="px-4 py-2 text-left font-medium w-20">Máx</th>
-                        <th className="px-4 py-2 text-left font-medium w-20">Nota</th>
-                        <th className="w-10"></th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y">
-                    {itens.map(item => (
-                        <LinhaEditavel key={item.id} item={item} />
-                    ))}
-                </tbody>
-            </table>
+            <div className="grid grid-cols-[80px_80px_80px_1fr] gap-2 p-2 bg-muted/10 text-muted-foreground text-xs font-bold uppercase border-b text-center">
+                <div>Mínimo</div>
+                <div>Máximo</div>
+                <div>Nota</div>
+                <div>Ação</div>
+            </div>
+
+            <div className="divide-y max-h-[400px] overflow-y-auto">
+                {itens.map(item => (
+                    <LinhaEditavel key={item.id} item={item} />
+                ))}
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -99,57 +91,61 @@ function ListaExercicios({ dados }: { dados: RegraTaf[] }) {
 
 function LinhaEditavel({ item }: { item: RegraTaf }) {
     return (
-        <tr className="hover:bg-muted/10 group">
-            <form action={async (formData) => {
+        <form 
+            action={async (formData) => {
                 const res = await atualizarRegra(formData)
                 if(res.success) toast.success('Atualizado!')
                 else toast.error('Erro ao atualizar')
-            }}>
-                <input type="hidden" name="id" value={item.id} />
-                
-                <td className="p-2">
+            }}
+            className="grid grid-cols-[80px_80px_80px_1fr] gap-2 p-2 items-center hover:bg-blue-50/50 dark:hover:bg-blue-900/10 group transition-all duration-200"
+        >
+            <input type="hidden" name="id" value={item.id} />
+            
+            <div className="flex justify-center">
+                <Input 
+                    name="valorMinimo" 
+                    defaultValue={item.valorMinimo} 
+                    className="h-8 w-full px-1 text-center font-medium bg-background/50 focus:bg-background border-transparent hover:border-input focus:border-primary transition-all" 
+                    type="number" 
+                    step="0.1"
+                />
+            </div>
+
+            <div className="flex justify-center">
+                <Input 
+                    name="valorMaximo" 
+                    defaultValue={item.valorMaximo ?? ''} 
+                    placeholder="∞"
+                    className="h-8 w-full px-1 text-center font-medium bg-background/50 focus:bg-background border-transparent hover:border-input focus:border-primary transition-all" 
+                    type="number" 
+                    step="0.1"
+                />
+            </div>
+
+            <div className="flex justify-center">
+                <div className="relative w-full">
                     <Input 
-                        name="valorMinimo" 
-                        defaultValue={item.valorMinimo} 
-                        className="h-8 w-16 px-2 text-center" 
+                        name="nota" 
+                        defaultValue={item.nota} 
+                        className="h-8 w-full px-1 text-center font-bold text-blue-600 bg-blue-50/50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900 focus:ring-blue-500" 
                         type="number" 
                         step="0.1"
+                        max="10"
                     />
-                </td>
-                <td className="p-2">
-                    <Input 
-                        name="valorMaximo" 
-                        defaultValue={item.valorMaximo ?? ''} 
-                        placeholder="∞"
-                        className="h-8 w-16 px-2 text-center" 
-                        type="number" 
-                        step="0.1"
-                    />
-                </td>
-                <td className="p-2">
-                    <div className="flex items-center gap-1 font-bold text-blue-600">
-                        <Input 
-                            name="nota" 
-                            defaultValue={item.nota} 
-                            className="h-8 w-16 px-2 text-center font-bold" 
-                            type="number" 
-                            step="0.1"
-                            max="10"
-                        />
-                    </div>
-                </td>
-                <td className="p-2 text-right">
-                    <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                        type="submit"
-                        title="Salvar Linha"
-                    >
-                        <Save className="h-4 w-4 text-primary" />
-                    </Button>
-                </td>
-            </form>
-        </tr>
+                </div>
+            </div>
+
+            <div className="flex justify-center">
+                <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-8 w-8 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10"
+                    type="submit"
+                    title="Salvar alteração"
+                >
+                    <Save className="h-4 w-4" />
+                </Button>
+            </div>
+        </form>
     )
 }

@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Database } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import prisma from '@/lib/prisma'
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth'
@@ -13,10 +13,13 @@ export const metadata: Metadata = {
 
 export default async function ConfigTafPage() {
   const user = await getCurrentUserWithRelations()
-  if (!user || !canAccessAdminArea(user)) redirect('/dashboard')
+  
+  if (!user || !canAccessAdminArea(user)) {
+    redirect('/dashboard')
+  }
 
   const regras = await prisma.tafTabela.findMany({
-    where: { anoLetivo: 2025 }, 
+    where: { anoLetivo: 2025 },
     orderBy: { nota: 'desc' }
   })
 
@@ -30,7 +33,6 @@ export default async function ConfigTafPage() {
         </Button>
         <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Database className="h-6 w-6 text-muted-foreground" />
                 Critérios de Avaliação (2025)
             </h1>
             <p className="text-muted-foreground text-sm">
