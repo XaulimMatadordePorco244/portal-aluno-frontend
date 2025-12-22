@@ -79,6 +79,7 @@ export function AdminSidebar() {
         { href: "/admin/alunos/cargos", label: "Promoções/Despromoções", icon: Shield},
         { href: "/admin/nota-escolar", label: "Nota Escolar", icon: Shield},
         { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
+        { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: GanttChartSquare},
         { href: "/admin/qes", label: "QES", icon: FileQuestion },
         { href: "/admin/taf", label: "TAF", icon: FileQuestion },
         { href: "/admin/qpe", label: "QPE", icon: GanttChartSquare},

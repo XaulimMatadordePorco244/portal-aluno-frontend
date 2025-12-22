@@ -93,6 +93,8 @@ export function Header({ user }: { user: User | null }) {
               <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamentos</span></Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
                <DropdownMenuItem asChild><Link href="/escalas" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Escalas</span></Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
+               <DropdownMenuItem asChild><Link href="/sessoes-funcoes" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Sessões e Funções</span></Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
