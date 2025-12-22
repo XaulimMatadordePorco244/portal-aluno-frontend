@@ -614,3 +614,26 @@ model CargoLog {
   @@index([createdAt])
   @@map("cargo_logs")
 }
+
+model GmSessao {
+  id           String   @id @default(uuid())
+  codigo       String   
+  responsaveis String   
+  atribuicoes  String   
+  ordem        Int      @default(0) 
+  
+  updatedAt    DateTime @updatedAt
+
+  @@map("gm_sessoes")
+}
+
+model GmFuncao {
+  id          String   @id @default(uuid())
+  graduacao   String   
+  funcao      String   
+  ordem       Int      @default(0) 
+
+  updatedAt   DateTime @updatedAt
+
+  @@map("gm_funcoes")
+}
