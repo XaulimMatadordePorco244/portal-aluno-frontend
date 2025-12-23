@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { useSearchParams } from 'next/navigation'
 import { PerfilAluno, StatusFrequencia } from '@prisma/client'
 import { toast } from 'sonner'
 import { CalendarIcon, CheckCheck, Save, Search, MessageSquare } from 'lucide-react'
@@ -13,15 +13,21 @@ import { Calendar } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { buscarFrequenciaDoDia, salvarListaFrequencia } from '@/app/actions/frequencia-actions'
-import { AlertCircle } from 'lucide-react'
 
 interface ListaChamadaProps {
   alunos: (PerfilAluno & { usuario: { nome: string } })[]
 }
 
 export function ListaChamada({ alunos }: ListaChamadaProps) {
-  const [data, setData] = useState<Date>(new Date())
-  const [tipo, setTipo] = useState<string>('GERAL')
+  const searchParams = useSearchParams()
+
+  const dataUrl = searchParams.get('data')
+  const tipoUrl = searchParams.get('tipo')
+
+  const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
+
+  const [data, setData] = useState<Date>(dataInicial)
+  const [tipo, setTipo] = useState<string>(tipoUrl || 'GERAL')
   const [busca, setBusca] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -106,7 +112,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
       <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row gap-6 justify-between md:items-center">
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Data</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Data
+            </span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -117,22 +125,29 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {data.toLocaleDateString('pt-BR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {data.toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={data} onSelect={d => d && setData(d)} initialFocus />
+                <Calendar
+                  mode="single"
+                  selected={data}
+                  onSelect={d => d && setData(d)}
+                  initialFocus
+                />
               </PopoverContent>
             </Popover>
           </div>
 
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Atividade</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Atividade
+            </span>
             <Select value={tipo} onValueChange={setTipo}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue />
@@ -150,12 +165,20 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
 
         <div className="flex gap-3">
           <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 border border-emerald-200">
-            <span className="text-[10px] font-bold text-emerald-600">PRESENTES</span>
-            <span className="text-xl font-bold text-emerald-700">{presentes}</span>
+            <span className="text-[10px] font-bold text-emerald-600">
+              PRESENTES
+            </span>
+            <span className="text-xl font-bold text-emerald-700">
+              {presentes}
+            </span>
           </div>
           <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 border border-red-200">
-            <span className="text-[10px] font-bold text-red-600">FALTAS</span>
-            <span className="text-xl font-bold text-red-700">{faltas}</span>
+            <span className="text-[10px] font-bold text-red-600">
+              FALTAS
+            </span>
+            <span className="text-xl font-bold text-red-700">
+              {faltas}
+            </span>
           </div>
         </div>
       </div>
@@ -163,15 +186,28 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-1/3">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar aluno..." className="pl-9" value={busca} onChange={e => setBusca(e.target.value)} />
+          <Input
+            placeholder="Buscar aluno..."
+            className="pl-9"
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+          />
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" onClick={marcarTodosPresentes} className="flex-1 md:flex-none">
+          <Button
+            variant="outline"
+            onClick={marcarTodosPresentes}
+            className="flex-1 md:flex-none"
+          >
             <CheckCheck className="mr-2 h-4 w-4 text-emerald-600" />
             Todos Presentes
           </Button>
-          <Button onClick={salvar} disabled={loading} className="flex-1 md:flex-none min-w-[140px]">
+          <Button
+            onClick={salvar}
+            disabled={loading}
+            className="flex-1 md:flex-none min-w-[140px]"
+          >
             <Save className="mr-2 h-4 w-4" />
             {loading ? 'Salvando...' : 'Salvar Chamada'}
           </Button>
@@ -189,17 +225,19 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                 status === 'FALTA'
                   ? 'bg-red-50 border-red-200'
                   : status === 'JUSTIFICADA'
-                    ? 'bg-amber-50 border-amber-200'
-                    : status === 'PRESENTE'
-                      ? 'bg-emerald-50 border-emerald-200'
-                      : 'bg-card'
+                  ? 'bg-amber-50 border-amber-200'
+                  : status === 'PRESENTE'
+                  ? 'bg-emerald-50 border-emerald-200'
+                  : 'bg-card'
               )}
             >
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">
                   {aluno.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">{aluno.usuario.nome}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {aluno.usuario.nome}
+                </p>
               </div>
 
               <div className="flex shrink-0 gap-1 bg-background p-1 rounded-md border shadow-sm">
@@ -207,7 +245,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                   onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
                   className={cn(
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
-                    status === 'PRESENTE' ? 'bg-emerald-600 text-white' : 'text-muted-foreground'
+                    status === 'PRESENTE'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-muted-foreground'
                   )}
                 >
                   P
@@ -216,7 +256,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                   onClick={() => toggleStatus(aluno.id, 'FALTA')}
                   className={cn(
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
-                    status === 'FALTA' ? 'bg-red-600 text-white' : 'text-muted-foreground'
+                    status === 'FALTA'
+                      ? 'bg-red-600 text-white'
+                      : 'text-muted-foreground'
                   )}
                 >
                   F
@@ -225,7 +267,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                   onClick={() => toggleStatus(aluno.id, 'JUSTIFICADA')}
                   className={cn(
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
-                    status === 'JUSTIFICADA' ? 'bg-amber-500 text-white' : 'text-muted-foreground'
+                    status === 'JUSTIFICADA'
+                      ? 'bg-amber-500 text-white'
+                      : 'text-muted-foreground'
                   )}
                 >
                   J
@@ -248,7 +292,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                     <Textarea
                       placeholder="Ex: Saiu mais cedo, atestado..."
                       value={observacoes[aluno.id] || ''}
-                      onChange={e => handleObservacao(aluno.id, e.target.value)}
+                      onChange={e =>
+                        handleObservacao(aluno.id, e.target.value)
+                      }
                       className="h-20 text-sm"
                     />
                   </PopoverContent>
