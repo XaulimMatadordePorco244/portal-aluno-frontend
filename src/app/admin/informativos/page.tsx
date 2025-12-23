@@ -8,7 +8,6 @@ import  prisma  from "@/lib/prisma"
 import { getCurrentUserWithRelations, canAccessAdminArea } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
-// UI
 import { Button } from "@/components/ui/Button"
 import {
   Table,

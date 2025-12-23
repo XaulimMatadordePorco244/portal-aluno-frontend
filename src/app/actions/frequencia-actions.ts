@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 type RegistroFrequencia = {
   alunoId: string
   status: StatusFrequencia
+  observacao?: string | null
 }
 
 export async function salvarListaFrequencia(
@@ -26,12 +27,13 @@ export async function salvarListaFrequencia(
               tipo: tipo,
             },
           },
-          update: { status: reg.status },
+          update: { status: reg.status, observacao: reg.observacao },
           create: {
             alunoId: reg.alunoId,
             data: data,
             tipo: tipo,
             status: reg.status,
+            observacao: reg.observacao,
           },
         })
       )
@@ -48,7 +50,7 @@ export async function salvarListaFrequencia(
 export async function buscarFrequenciaDoDia(data: Date, tipo: string) {
   const registros = await prisma.frequencia.findMany({
     where: { data, tipo },
-    select: { alunoId: true, status: true }
+    select: { alunoId: true, status: true, observacao: true }
   })
   return registros
 }

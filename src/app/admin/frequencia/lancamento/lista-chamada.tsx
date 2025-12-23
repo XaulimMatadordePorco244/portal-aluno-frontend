@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { PerfilAluno, StatusFrequencia } from '@prisma/client'
 import { toast } from 'sonner'
-import { CalendarIcon, CheckCheck, Save, Search } from 'lucide-react'
+import { CalendarIcon, CheckCheck, Save, Search, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { buscarFrequenciaDoDia, salvarListaFrequencia } from '@/app/actions/frequencia-actions'
+import { AlertCircle } from 'lucide-react'
 
 interface ListaChamadaProps {
   alunos: (PerfilAluno & { usuario: { nome: string } })[]
@@ -24,8 +24,9 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
   const [tipo, setTipo] = useState<string>('GERAL')
   const [busca, setBusca] = useState('')
   const [loading, setLoading] = useState(false)
-  
+
   const [chamada, setChamada] = useState<Record<string, StatusFrequencia>>({})
+  const [observacoes, setObservacoes] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function carregar() {
@@ -33,14 +34,18 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
       try {
         const existentes = await buscarFrequenciaDoDia(data, tipo)
         const novoMapa: Record<string, StatusFrequencia> = {}
-        
+        const mapaObs: Record<string, string> = {}
+
         existentes.forEach(reg => {
           novoMapa[reg.alunoId] = reg.status
+          if (reg.observacao) mapaObs[reg.alunoId] = reg.observacao
         })
+
         setChamada(novoMapa)
+        setObservacoes(mapaObs)
       } catch (e) {
         console.error(e)
-        toast.error("Erro ao carregar dados.")
+        toast.error('Erro ao carregar dados.')
       } finally {
         setLoading(false)
       }
@@ -52,18 +57,24 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
     setChamada(prev => ({ ...prev, [alunoId]: status }))
   }
 
+  const handleObservacao = (alunoId: string, texto: string) => {
+    setObservacoes(prev => ({ ...prev, [alunoId]: texto }))
+  }
+
   const marcarTodosPresentes = () => {
     const novoMapa: Record<string, StatusFrequencia> = {}
-    alunos.forEach(a => novoMapa[a.id] = StatusFrequencia.PRESENTE)
+    alunos.forEach(a => (novoMapa[a.id] = StatusFrequencia.PRESENTE))
     setChamada(novoMapa)
     toast.success('Todos marcados como presente!')
   }
 
   const salvar = async () => {
     setLoading(true)
+
     const registros = Object.entries(chamada).map(([alunoId, status]) => ({
       alunoId,
-      status
+      status,
+      observacao: observacoes[alunoId] || null
     }))
 
     if (registros.length === 0) {
@@ -73,16 +84,18 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
     }
 
     const res = await salvarListaFrequencia(data, tipo, registros)
-    if (res.success) {
-      toast.success(res.message)
-    } else {
-      toast.error(res.message)
-    }
+    if (res.success) toast.success(res.message)
+    else toast.error(res.message)
+
     setLoading(false)
   }
 
   const alunosFiltrados = alunos
-    .filter(a => a.nomeDeGuerra?.toLowerCase().includes(busca.toLowerCase()) || a.usuario.nome.toLowerCase().includes(busca.toLowerCase()))
+    .filter(
+      a =>
+        a.nomeDeGuerra?.toLowerCase().includes(busca.toLowerCase()) ||
+        a.usuario.nome.toLowerCase().includes(busca.toLowerCase())
+    )
     .sort((a, b) => (a.nomeDeGuerra || '').localeCompare(b.nomeDeGuerra || ''))
 
   const presentes = Object.values(chamada).filter(s => s === 'PRESENTE').length
@@ -91,19 +104,29 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
   return (
     <div className="space-y-6">
       <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row gap-6 justify-between md:items-center">
-        
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Data</span>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant={"outline"} className={cn("w-full sm:w-60 justify-start text-left font-normal", !data && "text-muted-foreground")}>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-full sm:w-60 justify-start text-left font-normal',
+                    !data && 'text-muted-foreground'
+                  )}
+                >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                  {data.toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={data} onSelect={(d) => d && setData(d)} initialFocus />
+                <Calendar mode="single" selected={data} onSelect={d => d && setData(d)} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
@@ -112,7 +135,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Atividade</span>
             <Select value={tipo} onValueChange={setTipo}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Selecione" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="GERAL">Geral (Dia Comum)</SelectItem>
@@ -125,28 +148,24 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
           </div>
         </div>
 
-        <div className="flex gap-3 justify-start md:justify-end items-center">
-           <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">PRESENTES</span>
-              <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{presentes}</span>
-           </div>
-           <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-              <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FALTAS</span>
-              <span className="text-xl font-bold text-red-700 dark:text-red-300">{faltas}</span>
-           </div>
+        <div className="flex gap-3">
+          <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 border border-emerald-200">
+            <span className="text-[10px] font-bold text-emerald-600">PRESENTES</span>
+            <span className="text-xl font-bold text-emerald-700">{presentes}</span>
+          </div>
+          <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 border border-red-200">
+            <span className="text-[10px] font-bold text-red-600">FALTAS</span>
+            <span className="text-xl font-bold text-red-700">{faltas}</span>
+          </div>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-1/3">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar aluno..." 
-            className="pl-9" 
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
+          <Input placeholder="Buscar aluno..." className="pl-9" value={busca} onChange={e => setBusca(e.target.value)} />
         </div>
+
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" onClick={marcarTodosPresentes} className="flex-1 md:flex-none">
             <CheckCheck className="mr-2 h-4 w-4 text-emerald-600" />
@@ -160,71 +179,85 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {alunosFiltrados.map((aluno) => {
-            const status = chamada[aluno.id]
-            return (
-                <div key={aluno.id} className={cn(
-                    "p-3 rounded-lg border flex items-center justify-between gap-3 transition-all duration-200 shadow-sm",
-                    status === 'FALTA' 
-                        ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50" 
-                    : status === 'JUSTIFICADA' 
-                        ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50" 
-                    : status === 'PRESENTE' 
-                        ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50" 
-                    : "bg-card hover:border-muted-foreground/30"
-                )}>
-                    <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate text-foreground">
-                           {aluno.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate" title={aluno.usuario.nome}>
-                           {aluno.usuario.nome}
-                        </p>
-                    </div>
-                    
-                    <div className="flex shrink-0 gap-1 bg-background dark:bg-secondary/30 p-1 rounded-md border shadow-sm">
-                        <button 
-                            onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
-                            className={cn("h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-all", 
-                                status === 'PRESENTE' 
-                                  ? "bg-emerald-600 text-white shadow-sm scale-105 ring-1 ring-emerald-600" 
-                                  : "hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-muted-foreground hover:text-emerald-700 dark:hover:text-emerald-400")}
-                            title="Presente"
-                        >
-                            P
-                        </button>
-                        <button 
-                            onClick={() => toggleStatus(aluno.id, 'FALTA')}
-                            className={cn("h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-all", 
-                                status === 'FALTA' 
-                                  ? "bg-red-600 text-white shadow-sm scale-105 ring-1 ring-red-600" 
-                                  : "hover:bg-red-100 dark:hover:bg-red-900/40 text-muted-foreground hover:text-red-700 dark:hover:text-red-400")}
-                            title="Falta"
-                        >
-                            F
-                        </button>
-                        <button 
-                            onClick={() => toggleStatus(aluno.id, 'JUSTIFICADA')}
-                            className={cn("h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-all", 
-                                status === 'JUSTIFICADA' 
-                                  ? "bg-amber-500 text-white shadow-sm scale-105 ring-1 ring-amber-500" 
-                                  : "hover:bg-amber-100 dark:hover:bg-amber-900/40 text-muted-foreground hover:text-amber-700 dark:hover:text-amber-400")}
-                            title="Justificada"
-                        >
-                            J
-                        </button>
-                    </div>
-                </div>
-            )
+        {alunosFiltrados.map(aluno => {
+          const status = chamada[aluno.id]
+          return (
+            <div
+              key={aluno.id}
+              className={cn(
+                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm',
+                status === 'FALTA'
+                  ? 'bg-red-50 border-red-200'
+                  : status === 'JUSTIFICADA'
+                    ? 'bg-amber-50 border-amber-200'
+                    : status === 'PRESENTE'
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-card'
+              )}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">
+                  {aluno.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{aluno.usuario.nome}</p>
+              </div>
+
+              <div className="flex shrink-0 gap-1 bg-background p-1 rounded-md border shadow-sm">
+                <button
+                  onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
+                  className={cn(
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    status === 'PRESENTE' ? 'bg-emerald-600 text-white' : 'text-muted-foreground'
+                  )}
+                >
+                  P
+                </button>
+                <button
+                  onClick={() => toggleStatus(aluno.id, 'FALTA')}
+                  className={cn(
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    status === 'FALTA' ? 'bg-red-600 text-white' : 'text-muted-foreground'
+                  )}
+                >
+                  F
+                </button>
+                <button
+                  onClick={() => toggleStatus(aluno.id, 'JUSTIFICADA')}
+                  className={cn(
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    status === 'JUSTIFICADA' ? 'bg-amber-500 text-white' : 'text-muted-foreground'
+                  )}
+                >
+                  J
+                </button>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        'h-8 w-8 rounded flex items-center justify-center',
+                        observacoes[aluno.id]
+                          ? 'bg-blue-100 text-blue-600 border border-blue-200'
+                          : 'text-gray-400 hover:bg-gray-100'
+                      )}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3">
+                    <Textarea
+                      placeholder="Ex: Saiu mais cedo, atestado..."
+                      value={observacoes[aluno.id] || ''}
+                      onChange={e => handleObservacao(aluno.id, e.target.value)}
+                      className="h-20 text-sm"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )
         })}
       </div>
-      
-      {alunosFiltrados.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/30">
-             <Search className="h-10 w-10 mb-2 opacity-20" />
-             <p>Nenhum aluno encontrado.</p>
-          </div>
-      )}
     </div>
   )
 }
