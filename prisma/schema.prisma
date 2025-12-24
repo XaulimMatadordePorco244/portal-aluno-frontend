@@ -130,6 +130,50 @@ enum TafTipoMedida {
   REPETICOES   
 }
 
+enum StatusFrequencia {
+  PRESENTE
+  FALTA
+  JUSTIFICADA
+}
+
+enum TipoEvento {
+  FERIADO      
+  AULA_EXTRA   
+  CANCELADO     
+  EVENTO        
+}
+
+model GmEventoCalendario {
+  id          String   @id @default(uuid())
+  titulo      String
+  descricao   String?
+  data        DateTime
+  tipo        TipoEvento
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("gm_eventos_calendario")
+}
+
+model Frequencia {
+  id        String   @id @default(uuid())
+  
+  alunoId   String
+  aluno     PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  
+  data      DateTime
+  tipo      String   @default("GERAL") 
+  status    StatusFrequencia
+  
+  observacao String? 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([alunoId, data, tipo]) 
+  @@map("gm_frequencia")
+}
+
 model TafTabela {
   id            String        @id @default(uuid())
   genero        TafGenero
@@ -257,6 +301,7 @@ model PerfilAluno {
   escalasAtribuidas  EscalaItem[]   @relation("EscalasAtribuidas")
   desempenhosEscolares DesempenhoEscolar[]
   tafs TafDesempenho[]
+  frequencias Frequencia[]
 
 
   createdAt DateTime @default(now())
