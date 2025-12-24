@@ -196,9 +196,9 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
 
       return data.url;
 
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro no upload', {
-        description: error.message || 'Não foi possível fazer upload da divisa',
+        description: error instanceof Error ? error.message : 'Não foi possível fazer upload da divisa',
       });
       return null;
     } finally {
@@ -326,9 +326,9 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
       form.reset();
       router.refresh();
 
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro', {
-        description: error.message || 'Não foi possível salvar o cargo',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar o cargo',
       });
     } finally {
       setLoading(false);

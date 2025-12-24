@@ -30,8 +30,8 @@ export default async function OrganizacaoPage() {
 
       <Tabs defaultValue="sessoes" className="w-full">
         <TabsList>
-          <TabsTrigger value="sessoes" className="gap-2"><Building2 className="w-4 h-4"/> Sessões (G's)</TabsTrigger>
-          <TabsTrigger value="funcoes" className="gap-2"><Users className="w-4 h-4"/> Funções (Praças)</TabsTrigger>
+          <TabsTrigger value="sessoes" className="gap-2"><Building2 className="w-4 h-4"/> Sessões </TabsTrigger>
+          <TabsTrigger value="funcoes" className="gap-2"><Users className="w-4 h-4"/> Funções </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sessoes" className="mt-4 space-y-4">

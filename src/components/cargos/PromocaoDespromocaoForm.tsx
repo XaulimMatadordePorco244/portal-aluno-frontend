@@ -153,8 +153,8 @@ const PromocaoDespromocaoForm: React.FC<PromocaoDespromocaoFormProps> = ({
                 router.refresh();
             }, 1500);
 
-        } catch (error: any) {
-            toast.error(error.message || 'Erro ao realizar transição');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erro ao realizar transição');
         } finally {
             setLoading(false);
             setPreviewVisible(false);

@@ -220,7 +220,7 @@ export default async function PromoverAlunoPage({ params }: PageProps) {
 
                         {item.motivo && (
                           <p className="text-xs text-muted-foreground/80 italic line-clamp-2">
-                            "{item.motivo}"
+                            {item.motivo}
                           </p>
                         )}
                       </div>

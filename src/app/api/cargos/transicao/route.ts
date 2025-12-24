@@ -141,19 +141,31 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error: any) {
-    console.error('Erro na transição de cargo:', error);
-    
-    if (error.code === 'P2028') {
-      return NextResponse.json(
-        { error: 'Operação demorou muito tempo. Tente novamente.' },
-        { status: 504 }
-      );
-    }
+  } catch (error: unknown) {
+  console.error('Erro na transição de cargo:', error);
 
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2028'
+  ) {
     return NextResponse.json(
-      { error: error.message || 'Erro interno do servidor' },
+      { error: 'Operação demorou muito tempo. Tente novamente.' },
+      { status: 504 }
+    );
+  }
+
+  if (error instanceof Error) {
+    return NextResponse.json(
+      { error: error.message },
       { status: 500 }
     );
   }
+
+  return NextResponse.json(
+    { error: 'Erro interno do servidor' },
+    { status: 500 }
+  );
+}
 }

@@ -3,15 +3,36 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
+
+interface Cargo {
+  id: string;
+  nome: string;
+  abreviacao: string;
+}
+
+interface Companhia {
+  id: string;
+  nome: string;
+  abreviacao?: string;
+}
 
 interface AlunoData {
   id: string;
@@ -22,40 +43,41 @@ interface AlunoData {
     numero?: string;
     conceitoAtual?: string;
     foraDeData: boolean;
-    cargo?: { id: string; nome: string; abreviacao: string };
-    companhia?: { id: string; nome: string; abreviacao?: string };
+    cargo?: Cargo;
+    companhia?: Companhia;
     historicoCargos: Array<{ dataInicio: Date }>;
   };
 }
 
 interface AdminAlunosTableProps {
   data: AlunoData[];
-  companhias: any[];
-  cargos: any[];
+  companhias: Companhia[];
+  cargos: Cargo[];
 }
 
-export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
+export function AdminAlunosTable({ data }: AdminAlunosTableProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-
 
   const highlightWarName = (fullName: string, warName?: string) => {
     if (!warName) return fullName;
 
     const escapedWarName = warName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
     const regex = new RegExp(`(${escapedWarName})`, 'gi');
-    
     const parts = fullName.split(regex);
 
     return (
       <>
-        {parts.map((part, index) => 
+        {parts.map((part, index) =>
           part.toLowerCase() === warName.toLowerCase() ? (
-            <strong key={index} className="font-extrabold text-foreground">{part}</strong>
+            <strong key={index} className="font-extrabold text-foreground">
+              {part}
+            </strong>
           ) : (
-            <span key={index} className="text-muted-foreground/90">{part}</span>
+            <span key={index} className="text-muted-foreground/90">
+              {part}
+            </span>
           )
         )}
       </>
@@ -64,7 +86,7 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(data.map((d) => d.perfilAluno.id));
+      setSelectedIds(data.map(d => d.perfilAluno.id));
     } else {
       setSelectedIds([]);
     }
@@ -72,13 +94,15 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
 
   const handleSelectOne = (id: string, checked: boolean) => {
     if (checked) {
-      setSelectedIds((prev) => [...prev, id]);
+      setSelectedIds(prev => [...prev, id]);
     } else {
-      setSelectedIds((prev) => prev.filter((item) => item !== id));
+      setSelectedIds(prev => prev.filter(item => item !== id));
     }
   };
 
-  const handleMassAction = async (action: 'promover' | 'despromover' | 'companhia') => {
+  const handleMassAction = async (
+    action: 'promover' | 'despromover' | 'companhia'
+  ) => {
     if (selectedIds.length === 0) return;
     setIsProcessing(true);
     try {
@@ -86,8 +110,6 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
       alert(`Ação: ${action} enviada para ${selectedIds.length} alunos.`);
       router.refresh();
       setSelectedIds([]);
-    } catch (error) {
-      console.error(error);
     } finally {
       setIsProcessing(false);
     }
@@ -101,22 +123,23 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
             {selectedIds.length} selecionado(s)
           </span>
           <div className="flex gap-2">
-            <Button 
-              size="sm" variant="outline" 
-              onClick={() => handleMassAction('promover')} disabled={isProcessing}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleMassAction('promover')}
+              disabled={isProcessing}
             >
               Promover
             </Button>
-            <Button 
-              size="sm" variant="outline" 
-              onClick={() => handleMassAction('despromover')} disabled={isProcessing}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleMassAction('despromover')}
+              disabled={isProcessing}
             >
               Despromover
             </Button>
-            <Button 
-              size="sm" variant="outline"
-              disabled={isProcessing}
-            >
+            <Button size="sm" variant="outline" disabled={isProcessing}>
               Mudar Cia
             </Button>
           </div>
@@ -128,7 +151,7 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead className="w-10">
-                <Checkbox 
+                <Checkbox
                   checked={data.length > 0 && selectedIds.length === data.length}
                   onCheckedChange={handleSelectAll}
                 />
@@ -137,7 +160,7 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
               <TableHead>Cargo</TableHead>
               <TableHead>Companhia</TableHead>
               <TableHead className="w-[100px]">Conceito</TableHead>
-              <TableHead className="text-right w-[50px]"></TableHead>
+              <TableHead className="text-right w-[50px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,27 +171,32 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((aluno) => (
+              data.map(aluno => (
                 <TableRow key={aluno.perfilAluno.id}>
                   <TableCell>
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedIds.includes(aluno.perfilAluno.id)}
-                      onCheckedChange={(checked) => handleSelectOne(aluno.perfilAluno.id, checked as boolean)}
+                      onCheckedChange={checked =>
+                        handleSelectOne(aluno.perfilAluno.id, checked as boolean)
+                      }
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
-                                     <span className="text-sm">
-                        {highlightWarName(aluno.nome, aluno.perfilAluno.nomeDeGuerra)}
-                      </span>
-                      
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {aluno.perfilAluno.numero ? (
-                          <span>Nº {aluno.perfilAluno.numero}</span>
-                        ) : (
-                          <span>S/N</span>
+                      <span className="text-sm">
+                        {highlightWarName(
+                          aluno.nome,
+                          aluno.perfilAluno.nomeDeGuerra
                         )}
-                        
+                      </span>
+
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>
+                          {aluno.perfilAluno.numero
+                            ? `Nº ${aluno.perfilAluno.numero}`
+                            : 'S/N'}
+                        </span>
+
                         {aluno.perfilAluno.foraDeData && (
                           <span className="text-red-600 font-medium bg-red-50 dark:bg-red-950/30 px-1 rounded">
                             Fora de Data
@@ -206,14 +234,20 @@ export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/alunos/${aluno.perfilAluno.id}/promover-despromover`} className="cursor-pointer">
-                             Gerenciar Cargo
-                           </Link>
+                          <Link
+                            href={`/admin/alunos/${aluno.perfilAluno.id}/promover-despromover`}
+                            className="cursor-pointer"
+                          >
+                            Gerenciar Cargo
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/alunos/${aluno.perfilAluno.id}/cargos`} className="cursor-pointer">
-                             Ver Histórico
-                           </Link>
+                          <Link
+                            href={`/admin/alunos/${aluno.perfilAluno.id}/cargos`}
+                            className="cursor-pointer"
+                          >
+                            Ver Histórico
+                          </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

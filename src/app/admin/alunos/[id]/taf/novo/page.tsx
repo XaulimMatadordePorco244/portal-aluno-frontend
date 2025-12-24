@@ -38,7 +38,7 @@ export default async function NovoTafPage({ params }: PageProps) {
   
   let generoTaf: 'MASCULINO' | 'FEMININO' = 'MASCULINO' 
   
-  const sexoBanco = (aluno as any).genero || (aluno as any).sexo || 'M'
+  const sexoBanco = aluno.usuario.genero 
   
   if (String(sexoBanco).toUpperCase().startsWith('F')) {
     generoTaf = 'FEMININO'

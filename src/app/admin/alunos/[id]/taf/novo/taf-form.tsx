@@ -20,29 +20,45 @@ interface TafFormProps {
   nomeAluno: string
 }
 
+type ApoioTipo = 'BARRA' | 'FLEXAO'
+
 export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   
-  const [bimestre, setBimestre] = useState('1')
-  const [abdominal, setAbdominal] = useState('')
-  const [apoioTipo, setApoioTipo] = useState<'BARRA' | 'FLEXAO'>('BARRA')
-  const [apoioValor, setApoioValor] = useState('')
-  const [corridaMin, setCorridaMin] = useState('')
-  const [corridaSeg, setCorridaSeg] = useState('')
+  const [bimestre, setBimestre] = useState<string>('1')
+  const [abdominal, setAbdominal] = useState<string>('')
+  const [apoioTipo, setApoioTipo] = useState<ApoioTipo>('BARRA')
+  const [apoioValor, setApoioValor] = useState<string>('')
+  const [corridaMin, setCorridaMin] = useState<string>('')
+  const [corridaSeg, setCorridaSeg] = useState<string>('')
 
-  const [notas, setNotas] = useState({ abdominal: 0, apoio: 0, corrida: 0 })
+  const [notas, setNotas] = useState<{ abdominal: number; apoio: number; corrida: number }>({ 
+    abdominal: 0, 
+    apoio: 0, 
+    corrida: 0 
+  })
 
   useEffect(() => {
     const calcular = async () => {
-      const nAbd = abdominal ? await calcularNotaIndividual(genero, 'ABDOMINAL', parseInt(abdominal)) : 0
+      const nAbd = abdominal 
+        ? await calcularNotaIndividual(genero, 'ABDOMINAL', parseInt(abdominal)) 
+        : 0
       
-      const nApoio = apoioValor ? await calcularNotaIndividual(genero, apoioTipo, parseFloat(apoioValor)) : 0
+      const nApoio = apoioValor 
+        ? await calcularNotaIndividual(genero, apoioTipo, parseFloat(apoioValor)) 
+        : 0
       
       const totalSegundos = (parseInt(corridaMin || '0') * 60) + parseInt(corridaSeg || '0')
-      const nCorrida = totalSegundos > 0 ? await calcularNotaIndividual(genero, 'CORRIDA', totalSegundos) : 0
+      const nCorrida = totalSegundos > 0 
+        ? await calcularNotaIndividual(genero, 'CORRIDA', totalSegundos) 
+        : 0
 
-      setNotas({ abdominal: nAbd, apoio: nApoio, corrida: nCorrida })
+      setNotas({ 
+        abdominal: nAbd, 
+        apoio: nApoio, 
+        corrida: nCorrida 
+      })
     }
     calcular()
   }, [abdominal, apoioTipo, apoioValor, corridaMin, corridaSeg, genero])
@@ -60,15 +76,24 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
     const totalSegundos = (parseInt(corridaMin || '0') * 60) + parseInt(corridaSeg || '0')
     formData.append('corridaTempo', totalSegundos.toString())
 
-    const res = await salvarTaf(formData)
+    try {
+      const res = await salvarTaf(formData)
 
-    if (res.success) {
-      toast.success(res.message)
-      router.push(`/admin/alunos/${alunoId}`) 
-    } else {
-      toast.error(res.message)
+      if (res.success) {
+        toast.success(res.message)
+        router.push(`/admin/alunos/${alunoId}`) 
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || 'Erro ao salvar TAF')
+      } else {
+        toast.error('Erro desconhecido ao salvar TAF')
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -87,7 +112,7 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
          </div>
          <div className="space-y-2">
             <Label>Bimestre</Label>
-            <Select value={bimestre} onValueChange={setBimestre}>
+            <Select value={bimestre} onValueChange={(v: string) => setBimestre(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="1">1º Bimestre</SelectItem>
@@ -125,7 +150,10 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
             <CardTitle className="text-base flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <Dumbbell className="w-4 h-4"/>
-                    <Select value={apoioTipo} onValueChange={(v: any) => setApoioTipo(v)}>
+                    <Select 
+                      value={apoioTipo} 
+                      onValueChange={(v: ApoioTipo) => setApoioTipo(v)}
+                    >
                         <SelectTrigger className="h-8 w-32 ml-2">
                             <SelectValue />
                         </SelectTrigger>

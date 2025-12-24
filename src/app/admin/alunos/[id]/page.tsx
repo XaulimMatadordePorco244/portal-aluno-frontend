@@ -31,6 +31,13 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+interface InfoRowProps {
+  icon?: React.ElementType;
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const aluno = await prisma.perfilAluno.findUnique({
@@ -40,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: `Admin - ${aluno?.usuario.nome || 'Aluno'}` };
 }
 
-const InfoRow = ({ icon: Icon, label, value, className }: any) => (
+const InfoRow = ({ icon: Icon, label, value, className }: InfoRowProps) => (
   <div className={`flex flex-col space-y-1 ${className}`}>
     <span className="text-xs text-muted-foreground uppercase flex items-center gap-1.5 font-medium">
       {Icon && <Icon className="h-3 w-3" />} {label}

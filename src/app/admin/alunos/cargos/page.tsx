@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Search, Filter } from 'lucide-react';
 import { AdminAlunosTable } from '@/components/cargos/AdminAlunosCargosTable'; 
+import { Prisma } from '@prisma/client';
 
 export const metadata: Metadata = {
   title: 'Gerenciar Cargos',
   description: 'Administração de alunos',
 };
-
 
 export default async function AdminAlunosCargosPage({
   searchParams,
@@ -29,33 +29,72 @@ export default async function AdminAlunosCargosPage({
   const cargoId = searchParams?.cargo as string;
   const status = searchParams?.status as string;
 
-  const where: any = {
-    usuario: { role: 'ALUNO', status: 'ATIVO' }
+  const where: Prisma.PerfilAlunoWhereInput = {
+    usuario: {
+      role: 'ALUNO',
+      status: 'ATIVO'
+    }
   };
 
   if (search) {
     where.OR = [
-      { usuario: { nome: { contains: search, mode: 'insensitive' } } },
-      { numero: { contains: search, mode: 'insensitive' } },
-      { nomeDeGuerra: { contains: search, mode: 'insensitive' } },
+      { usuario: { nome: { contains: search } } },
+      { numero: { contains: search } },
+      { nomeDeGuerra: { contains: search } },
     ];
   }
 
-  if (companhiaId && companhiaId !== 'all') where.companhiaId = companhiaId;
-  if (cargoId && cargoId !== 'all' && cargoId !== 'null') where.cargoId = cargoId;
-  if (cargoId === 'null') where.cargoId = null;
+  if (companhiaId && companhiaId !== 'all') {
+    where.companhiaId = companhiaId;
+  }
+  
+  if (cargoId) {
+    if (cargoId !== 'all' && cargoId !== 'null') {
+      where.cargoId = cargoId;
+    } else if (cargoId === 'null') {
+      where.cargoId = null;
+    }
+  }
 
-  if (status === 'fora-de-data') where.foraDeData = true;
-  else if (status === 'sem-cargo') where.cargoId = null;
-  else if (status === 'com-cargo') where.cargoId = { not: null };
+  if (status === 'fora-de-data') {
+    where.foraDeData = true;
+  } else if (status === 'sem-cargo') {
+    where.cargoId = null;
+  } else if (status === 'com-cargo') {
+    where.cargoId = { not: null };
+  }
 
   const alunos = await prisma.perfilAluno.findMany({
     where,
     include: {
-      usuario: { select: { id: true, nome: true, cpf: true, status: true } },
-      cargo: { select: { id: true, nome: true, abreviacao: true } }, 
-      funcao: { select: { id: true, nome: true } },
-      companhia: { select: { id: true, nome: true, abreviacao: true } },
+      usuario: { 
+        select: { 
+          id: true, 
+          nome: true, 
+          cpf: true, 
+          status: true 
+        } 
+      },
+      cargo: { 
+        select: { 
+          id: true, 
+          nome: true, 
+          abreviacao: true 
+        } 
+      }, 
+      funcao: { 
+        select: { 
+          id: true, 
+          nome: true 
+        } 
+      },
+      companhia: { 
+        select: { 
+          id: true, 
+          nome: true, 
+          abreviacao: true 
+        } 
+      },
       historicoCargos: {
         select: { dataInicio: true },
         orderBy: { dataInicio: 'desc' },
@@ -70,34 +109,67 @@ export default async function AdminAlunosCargosPage({
     prisma.cargo.findMany({ orderBy: { precedencia: 'asc' } }),
   ]);
 
-  const alunosData = alunos.map(aluno => ({
+
+  interface AlunoData {
+    id: string;
+    nome: string;
+    perfilAluno: {
+      id: string;
+      numero?: string;
+      nomeDeGuerra?: string;
+      conceitoAtual?: string;
+      foraDeData: boolean;
+      cargo?: {
+        id: string;
+        nome: string;
+        abreviacao: string; 
+      };
+      companhia?: {
+        id: string;
+        nome: string;
+        abreviacao?: string;
+      };
+      historicoCargos: Array<{ dataInicio: Date }>;
+    };
+  }
+
+  const alunosData: AlunoData[] = alunos.map(aluno => ({
     id: aluno.usuario.id,
     nome: aluno.usuario.nome,
     perfilAluno: {
       id: aluno.id,
       numero: aluno.numero || undefined,
       nomeDeGuerra: aluno.nomeDeGuerra || undefined,
-       conceitoAtual: aluno.conceitoAtual 
-      ? Number(aluno.conceitoAtual).toFixed(2)
-      : undefined,
+      conceitoAtual: aluno.conceitoAtual 
+        ? Number(aluno.conceitoAtual).toFixed(2)
+        : undefined,
       foraDeData: aluno.foraDeData,
-      cargo: aluno.cargo || undefined,
+      cargo: aluno.cargo ? {
+        id: aluno.cargo.id,
+        nome: aluno.cargo.nome,
+        abreviacao: aluno.cargo.abreviacao || '' 
+      } : undefined,
       companhia: aluno.companhia ? {
-        ...aluno.companhia,
+        id: aluno.companhia.id,
+        nome: aluno.companhia.nome,
         abreviacao: aluno.companhia.abreviacao || undefined
       } : undefined,
       historicoCargos: aluno.historicoCargos,
     }
   }));
 
+  const companhiasFormatadas = companhias.map(companhia => ({
+    ...companhia,
+    abreviacao: companhia.abreviacao || '' 
+  }));
+
   return (
     <div className="container mx-auto py-8 space-y-6">
-     <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Cargos e Promoções</h1>
           <p className="text-muted-foreground text-sm">Gerencie o efetivo de alunos</p>
         </div>
- 
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg bg-card">
@@ -115,10 +187,9 @@ export default async function AdminAlunosCargosPage({
         </Button>
       </div>
 
-
       <AdminAlunosTable 
         data={alunosData} 
-        companhias={companhias}
+        companhias={companhiasFormatadas}
         cargos={cargos}
       />
     </div>

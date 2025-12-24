@@ -73,7 +73,7 @@ export default async function NotasEscolaresPage({
   let countMedias = 0;
 
   const dadosProcessados = alunos.map(aluno => {
-    const boletim = (aluno as any).desempenhosEscolares[0]; 
+    const boletim = aluno.desempenhosEscolares[0]; 
     
     if (boletim) {
       if (boletim.qtdNotasVermelhas > 0) totalComVermelha++;
@@ -85,8 +85,8 @@ export default async function NotasEscolaresPage({
     }
 
     return { 
-      usuario: (aluno as any).usuario, 
-      companhia: (aluno as any).companhia, 
+      usuario: aluno.usuario, 
+      companhia: aluno.companhia, 
       boletim, 
       id: aluno.id, 
       nomeDeGuerra: aluno.nomeDeGuerra 

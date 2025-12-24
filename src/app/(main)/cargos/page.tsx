@@ -1,13 +1,13 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { 
-  Star, 
-  History, 
-  TrendingUp, 
-  Trophy, 
-  CalendarDays, 
-  Users, 
+import {
+  Star,
+  History,
+  TrendingUp,
+  Trophy,
+  CalendarDays,
+  Users,
   Award,
   AlertCircle
 } from 'lucide-react';
@@ -21,22 +21,22 @@ export const metadata: Metadata = {
   description: 'Acompanhe sua trajetória e evolução na instituição',
 };
 
-function StatCard({ 
-  title, 
-  value, 
-  icon: Icon, 
-  suffix, 
-  trend 
-}: { 
-  title: string; 
-  value: string | number; 
-  icon: React.ElementType; 
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  suffix,
+  trend
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
   suffix?: React.ReactNode;
   trend?: 'positive' | 'neutral' | 'negative';
 }) {
-  const trendColor = trend === 'positive' ? 'text-green-600 dark:text-green-500' : 
-                     trend === 'negative' ? 'text-red-600 dark:text-red-500' : 
-                     'text-foreground';
+  const trendColor = trend === 'positive' ? 'text-green-600 dark:text-green-500' :
+    trend === 'negative' ? 'text-red-600 dark:text-red-500' :
+      'text-foreground';
 
   return (
     <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
@@ -104,15 +104,15 @@ export default async function AlunoCargosPage() {
   const anotacoesPositivas = historico.reduce((total, periodo) =>
     total + periodo.anotacoes.filter(a => a.pontos > 0).length, 0
   );
-  
+
   const evolucaoConceitoRaw = cargoAtual && primeiroCargo
     ? ((cargoAtual.conceitoAtual - primeiroCargo.conceitoInicial) / primeiroCargo.conceitoInicial) * 100
     : 0;
-  
+
   const evolucaoConceito = evolucaoConceitoRaw.toFixed(1);
 
 
-  const conceitoRaw = user.perfilAluno.conceitoAtual; 
+  const conceitoRaw = user.perfilAluno.conceitoAtual;
   const conceitoAtual = conceitoRaw ? parseFloat(conceitoRaw.toString()) : 7.0;
 
   return (
@@ -130,7 +130,7 @@ export default async function AlunoCargosPage() {
                   {user.nome}
                   {user.perfilAluno.nomeDeGuerra && (
                     <span className="text-xl font-normal text-muted-foreground">
-                      "{user.perfilAluno.nomeDeGuerra}"
+                      &quot;{user.perfilAluno.nomeDeGuerra}&quot;
                     </span>
                   )}
                 </h1>
@@ -155,28 +155,28 @@ export default async function AlunoCargosPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <StatCard 
-                title="Cargo Atual" 
-                value={user.perfilAluno.cargo?.nome || 'Não definido'} 
-                icon={Star} 
+              <StatCard
+                title="Cargo Atual"
+                value={user.perfilAluno.cargo?.nome || 'Não definido'}
+                icon={Star}
               />
-              <StatCard 
-                title="Conceito" 
-                value={conceitoAtual.toFixed(1)} 
-                icon={Trophy} 
+              <StatCard
+                title="Conceito"
+                value={conceitoAtual.toFixed(1)}
+                icon={Trophy}
                 trend={conceitoAtual >= 7.0 ? 'positive' : 'negative'}
               />
-              <StatCard 
-                title="Dias no Cargo" 
-                value={tempoNoCargoAtual} 
-                icon={CalendarDays} 
+              <StatCard
+                title="Dias no Cargo"
+                value={tempoNoCargoAtual}
+                icon={CalendarDays}
                 suffix="dias"
               />
-              <StatCard 
-                title="Evolução" 
-                value={evolucaoConceito} 
-                icon={TrendingUp} 
-                suffix="%" 
+              <StatCard
+                title="Evolução"
+                value={evolucaoConceito}
+                icon={TrendingUp}
+                suffix="%"
                 trend={evolucaoConceitoRaw > 0 ? 'positive' : evolucaoConceitoRaw < 0 ? 'negative' : 'neutral'}
               />
             </div>
@@ -185,12 +185,12 @@ export default async function AlunoCargosPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard 
+        <StatCard
           title="Total de Cargos"
           value={historico.filter(h => h.status !== 'REVERTIDO').length}
           icon={History}
         />
-        <StatCard 
+        <StatCard
           title="Anotações Recebidas"
           value={totalAnotacoes}
           icon={Award}
@@ -200,7 +200,7 @@ export default async function AlunoCargosPage() {
             </span>
           }
         />
-        <StatCard 
+        <StatCard
           title="Período Ativo"
           value={historico.length > 0
             ? Math.floor((new Date().getTime() - new Date(historico[historico.length - 1].dataInicio).getTime()) / (1000 * 60 * 60 * 24 * 30.44))

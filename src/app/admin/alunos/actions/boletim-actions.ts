@@ -26,9 +26,16 @@ const BoletimSchema = z.object({
   observacoes: z.string().optional(),
 })
 
-export async function salvarBoletim(formData: FormData) {
+interface RawFormData {
+  [key: string]: string | null;
+}
 
-  const rawData: any = Object.fromEntries(formData.entries())
+export async function salvarBoletim(formData: FormData) {
+  const rawData: RawFormData = {}
+  
+  for (const [key, value] of formData.entries()) {
+    rawData[key] = value.toString()
+  }
   
   const camposDeNota = ['mediaB1', 'mediaB2', 'mediaB3', 'mediaB4']
   
@@ -47,7 +54,6 @@ export async function salvarBoletim(formData: FormData) {
 
   const data = result.data
 
-  
   const totalFaltas = data.faltasB1 + data.faltasB2 + data.faltasB3 + data.faltasB4
 
   let mediaFinal: number | null = null
@@ -107,7 +113,6 @@ export async function salvarBoletim(formData: FormData) {
       }
     })
 
-
     if (data.escola || data.serie) {
       await prisma.perfilAluno.update({
         where: { id: data.alunoId },
@@ -125,6 +130,11 @@ export async function salvarBoletim(formData: FormData) {
     
   } catch (error) {
     console.error("Erro ao salvar boletim:", error)
-    return { success: false, message: 'Erro interno ao salvar no banco de dados.' }
+    return { 
+      success: false, 
+      message: error instanceof Error 
+        ? `Erro ao salvar no banco de dados: ${error.message}`
+        : 'Erro interno ao salvar no banco de dados.' 
+    }
   }
 }
