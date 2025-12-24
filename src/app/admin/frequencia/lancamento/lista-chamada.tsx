@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { PerfilAluno, StatusFrequencia } from '@prisma/client'
 import { toast } from 'sonner'
 import { CalendarIcon, CheckCheck, Save, Search, MessageSquare } from 'lucide-react'
@@ -20,11 +20,12 @@ interface ListaChamadaProps {
 
 export function ListaChamada({ alunos }: ListaChamadaProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const dataUrl = searchParams.get('data')
   const tipoUrl = searchParams.get('tipo')
 
-  const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
+const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
 
   const [data, setData] = useState<Date>(dataInicial)
   const [tipo, setTipo] = useState<string>(tipoUrl || 'GERAL')
@@ -90,8 +91,10 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
     }
 
     const res = await salvarListaFrequencia(data, tipo, registros)
-    if (res.success) toast.success(res.message)
-    else toast.error(res.message)
+    if (res.success) {
+      toast.success(res.message)
+      router.push('/admin/frequencia')
+    } else toast.error(res.message)
 
     setLoading(false)
   }
@@ -164,19 +167,19 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
         </div>
 
         <div className="flex gap-3">
-          <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 border border-emerald-200">
-            <span className="text-[10px] font-bold text-emerald-600">
+          <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50">
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
               PRESENTES
             </span>
-            <span className="text-xl font-bold text-emerald-700">
+            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
               {presentes}
             </span>
           </div>
-          <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 border border-red-200">
-            <span className="text-[10px] font-bold text-red-600">
+          <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800/50">
+            <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
               FALTAS
             </span>
-            <span className="text-xl font-bold text-red-700">
+            <span className="text-xl font-bold text-red-700 dark:text-red-300">
               {faltas}
             </span>
           </div>
@@ -200,7 +203,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
             onClick={marcarTodosPresentes}
             className="flex-1 md:flex-none"
           >
-            <CheckCheck className="mr-2 h-4 w-4 text-emerald-600" />
+            <CheckCheck className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             Todos Presentes
           </Button>
           <Button
@@ -221,13 +224,15 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
             <div
               key={aluno.id}
               className={cn(
-                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm',
-                status === 'FALTA'
-                  ? 'bg-red-50 border-red-200'
+                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm transition-colors',
+                !status
+                  ? 'bg-muted/30 border-border'
+                  : status === 'FALTA'
+                  ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
                   : status === 'JUSTIFICADA'
-                  ? 'bg-amber-50 border-amber-200'
+                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
                   : status === 'PRESENTE'
-                  ? 'bg-emerald-50 border-emerald-200'
+                  ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50'
                   : 'bg-card'
               )}
             >
@@ -244,10 +249,10 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                 <button
                   onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
                   className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'PRESENTE'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-muted-foreground'
+                      ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+                      : 'text-muted-foreground hover:bg-muted'
                   )}
                 >
                   P
@@ -255,10 +260,10 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                 <button
                   onClick={() => toggleStatus(aluno.id, 'FALTA')}
                   className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'FALTA'
-                      ? 'bg-red-600 text-white'
-                      : 'text-muted-foreground'
+                      ? 'bg-red-600 text-white dark:bg-red-500'
+                      : 'text-muted-foreground hover:bg-muted'
                   )}
                 >
                   F
@@ -266,10 +271,10 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                 <button
                   onClick={() => toggleStatus(aluno.id, 'JUSTIFICADA')}
                   className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs',
+                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'JUSTIFICADA'
-                      ? 'bg-amber-500 text-white'
-                      : 'text-muted-foreground'
+                      ? 'bg-amber-500 text-white dark:bg-amber-400'
+                      : 'text-muted-foreground hover:bg-muted'
                   )}
                 >
                   J
@@ -279,10 +284,10 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                   <PopoverTrigger asChild>
                     <button
                       className={cn(
-                        'h-8 w-8 rounded flex items-center justify-center',
+                        'h-8 w-8 rounded flex items-center justify-center transition-colors',
                         observacoes[aluno.id]
-                          ? 'bg-blue-100 text-blue-600 border border-blue-200'
-                          : 'text-gray-400 hover:bg-gray-100'
+                          ? 'bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/50'
+                          : 'text-gray-400 hover:bg-muted dark:text-gray-500'
                       )}
                     >
                       <MessageSquare className="w-4 h-4" />
