@@ -38,17 +38,21 @@ const menuGroups = [
     title: "Meus Dados",
     links: [
       { href: "/profile", label: "Minha Ficha", icon: User },
-      { href: "/frequency", label: "Frequência", icon: ClipboardCheck },
-      { href: "/evaluations", label: "Anotações", icon: FileWarning },
-      { href: "/my-reports", label: "Minhas Partes", icon: ClipboardList },
+      { href: "/frequencia", label: "Frequência", icon: ClipboardCheck },
+      { href: "/anotacoes", label: "Anotações", icon: FileWarning },
+      { href: "/partes", label: "Minhas Partes", icon: ClipboardList },
+      { href: "/minhas-tarefas", label: "Minhas Tarefas", icon: ClipboardList },
     ]
   },
   {
     title: "Institucional",
     links: [
-      { href: "/regulations", label: "Regulamento", icon: FileText },
-      { href: "#", label: "Calendário de Eventos", icon: Calendar },
-      { href: "/quadro", label: "QOGM e QPGM", icon: TableProperties  },
+      { href: "/qes", label: "Quadro de Estudo Semanal", icon: TableProperties },
+      { href: "/classification", label: "Classificação Geral", icon: Calendar },
+      { href: "/regulations", label: "Regulamentos", icon: FileText },
+      { href: "/quadros", label: "QOGM e QPGM", icon: TableProperties },
+      { href: "/escalas", label: "Escalas", icon: TableProperties },
+      { href: "/sessoes-funcoes", label: "Sessões e Funções", icon: TableProperties },
     ]
   }
 ];
@@ -76,11 +80,14 @@ export function Header({ user }: { user: User | null }) {
             </DropdownMenuTrigger>
             
             <DropdownMenuContent>
-              <DropdownMenuItem asChild><Link href="/profile" className="flex items-center w-full cursor-pointer"><User className="mr-2 h-4 w-4" /><span>Minha Ficha</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/frequencia" className="flex items-center w-full cursor-pointer"><ClipboardCheck className="mr-2 h-4 w-4" /><span>Frequência</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/anotacoes" className="flex items-center w-full cursor-pointer"><FileWarning className="mr-2 h-4 w-4" /><span>Anotações</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/partes" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Partes</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/minhas-tarefas" className="flex items-center w-full cursor-pointer"><ClipboardList className="mr-2 h-4 w-4" /><span>Minhas Tarefas</span></Link></DropdownMenuItem>
+              {menuGroups[0].links.map(link => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link href={link.href} className="flex items-center w-full cursor-pointer">
+                    <link.icon className="mr-2 h-4 w-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -88,13 +95,14 @@ export function Header({ user }: { user: User | null }) {
               Institucional <ChevronDown className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem asChild><Link href="/qes" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Quadro de Estudo Semanal</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/classification" className="flex items-center w-full cursor-pointer"><Calendar className="mr-2 h-4 w-4" /><span>Classificação Geral</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/regulations" className="flex items-center w-full cursor-pointer"><FileText className="mr-2 h-4 w-4" /><span>Regulamentos</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
-               <DropdownMenuItem asChild><Link href="/escalas" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Escalas</span></Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/quadros" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>QOGM e QPGM</span></Link></DropdownMenuItem>
-               <DropdownMenuItem asChild><Link href="/sessoes-funcoes" className="flex items-center w-full cursor-pointer"><TableProperties className="mr-2 h-4 w-4" /><span>Sessões e Funções</span></Link></DropdownMenuItem>
+              {menuGroups[1].links.map(link => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link href={link.href} className="flex items-center w-full cursor-pointer">
+                    <link.icon className="mr-2 h-4 w-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
