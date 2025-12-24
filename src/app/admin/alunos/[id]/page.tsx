@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { 
   ArrowLeft, Shield, User as UserIcon, Mail, 
-  History, TrendingUp, MapPin, Phone, HeartPulse, 
+   TrendingUp, MapPin, Phone, HeartPulse, 
   Users, Briefcase, FileText, 
-  GraduationCap, Settings, AlertTriangle, CheckCircle2, AlertCircle
+  GraduationCap, Settings, AlertCircle
 } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';

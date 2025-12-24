@@ -18,7 +18,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -307,7 +306,6 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
         throw new Error(error.message || 'Erro ao salvar cargo');
       }
 
-      const result = await response.json();
 
       toast.success(isEdit ? 'Cargo atualizado!' : 'Cargo criado!', {
         description: (

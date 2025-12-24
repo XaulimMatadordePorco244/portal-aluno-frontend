@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';

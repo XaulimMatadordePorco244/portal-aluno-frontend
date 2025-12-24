@@ -6,10 +6,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Settings, Eye, FileSpreadsheet, PlusCircle } from 'lucide-react'
+import { Settings, Eye, PlusCircle } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Gestão de TAF',

@@ -55,7 +55,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     try {
       await head(`divisas/${pathname}`);
-    } catch (error: any) {
+    } catch {
       return NextResponse.json(
         { error: 'Divisa não encontrada' },
         { status: 404 }

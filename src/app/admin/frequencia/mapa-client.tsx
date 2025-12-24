@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { StatusFrequencia } from '@prisma/client'
+
 import { alternarFrequencia } from './actions'
 import { Check, X, ShieldAlert, Edit2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,7 +27,7 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
     try {
         await alternarFrequencia(alunoId, dataIso, tipo, statusAtual)
         toast.success("Atualizado")
-    } catch (e) {
+    } catch {
         toast.error("Erro ao atualizar")
     }
   }
@@ -43,7 +42,7 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
           </th>
           
           {datas.map(d => {
-             const [ano, mes, dia] = d.split('-')
+             const [mes, dia] = d.split('-')
              const urlEdicao = `/admin/frequencia/lancamento?data=${d}&tipo=${tipo}`
 
              return (

@@ -34,7 +34,7 @@ interface AdminAlunosTableProps {
   cargos: any[];
 }
 
-export function AdminAlunosTable({ data, companhias, cargos }: AdminAlunosTableProps) {
+export function AdminAlunosTable({ data}: AdminAlunosTableProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);

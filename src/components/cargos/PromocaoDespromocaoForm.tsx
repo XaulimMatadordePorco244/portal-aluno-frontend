@@ -80,7 +80,6 @@ interface PromocaoDespromocaoFormProps {
 const PromocaoDespromocaoForm: React.FC<PromocaoDespromocaoFormProps> = ({
     aluno,
     cargos,
-    adminId,
     adminNome
 }) => {
     const router = useRouter();

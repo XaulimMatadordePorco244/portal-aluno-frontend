@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Plus, Trophy, Timer, Dumbbell, Activity } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,

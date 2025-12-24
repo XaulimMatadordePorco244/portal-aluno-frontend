@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const cargoNome = formData.get('cargoNome') as string;
     const cargoAbreviacao = formData.get('cargoAbreviacao') as string;
 
     if (!file) {
