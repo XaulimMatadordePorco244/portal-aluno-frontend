@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { 
   ChevronDown, Home, FileText, Calendar, User, ClipboardCheck, 
-  FileWarning, TableProperties,ClipboardList, Menu
+  FileWarning, TableProperties,ClipboardList, Menu, MessageSquare, Shield, Activity
 } from "lucide-react";
 import { UserNav } from "@/components/UserNav";
 import Image from 'next/image';
@@ -42,6 +42,7 @@ const menuGroups = [
       { href: "/anotacoes", label: "Anotações", icon: FileWarning },
       { href: "/partes", label: "Minhas Partes", icon: ClipboardList },
       { href: "/minhas-tarefas", label: "Minhas Tarefas", icon: ClipboardList },
+      { href: "/cargos", label: "Cargos e Funções", icon: Shield },
     ]
   },
   {
@@ -50,6 +51,9 @@ const menuGroups = [
       { href: "/qes", label: "Quadro de Estudo Semanal", icon: TableProperties },
       { href: "/classification", label: "Classificação Geral", icon: Calendar },
       { href: "/regulations", label: "Regulamentos", icon: FileText },
+      { href: "/informativos", label: "Informativos", icon: FileText },
+      { href: "/comunicacoes-internas", label: "Comunicações Internas", icon: MessageSquare },
+      { href: "/taf", label: "Teste de Aptidão Física", icon: Activity },
       { href: "/quadros", label: "QOGM e QPGM", icon: TableProperties },
       { href: "/escalas", label: "Escalas", icon: TableProperties },
       { href: "/sessoes-funcoes", label: "Sessões e Funções", icon: TableProperties },
