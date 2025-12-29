@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { AlertCircle, CheckCircle2, Clock, CalendarDays, XCircle, Info } from 'lucide-react'
-import { format, isSameDay } from 'date-fns'
+import { isSameDay } from 'date-fns'
 
 interface ItemCalendario {
     tipoOrigem: 'FREQUENCIA' | 'INSTITUCIONAL'

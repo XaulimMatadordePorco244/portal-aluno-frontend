@@ -79,8 +79,9 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
       });
       mutate();
       toast.success('Transição revertida com sucesso!');
-    } catch (error: any) {
-      toast.error(error.message || 'Não foi possível reverter a transição');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível reverter a transição';
+      toast.error(message);
     } finally {
       setReverterDialogOpen(false);
       setBlocoParaReverter(null);
@@ -98,8 +99,9 @@ const CargoHistoryContainer: React.FC<CargoHistoryContainerProps> = ({
       await inicializarHistorico(alunoId);
       mutate();
       toast.success('Histórico inicializado com sucesso!');
-    } catch (error: any) {
-      toast.error(error.message || 'Não foi possível inicializar o histórico');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível inicializar o histórico';
+      toast.error(message);
     } finally {
       setIsInicializando(false);
     }

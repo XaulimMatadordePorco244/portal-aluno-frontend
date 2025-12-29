@@ -3,6 +3,11 @@ import { fetcher } from '@/lib/fetcher';
 
 const API_BASE = '/api/cargos';
 
+interface Metadata {
+  title: string;
+  description?: string;
+}
+
 export interface CargoHistoryItem {
   id: string;
   cargoNomeSnapshot: string;
@@ -36,7 +41,7 @@ export interface CargoHistoryItem {
     id: string;
     tipo: 'PROMOCAO' | 'DESPROMOCAO' | 'REVERSAO';
     motivo?: string;
-    metadata: any;
+    metadata: Metadata;
     createdAt: string;
     admin: {
       id: string;

@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const cargoNome = formData.get('cargoNome') as string;
     const cargoAbreviacao = formData.get('cargoAbreviacao') as string;
 
     if (!file) {
@@ -83,27 +82,42 @@ export async function POST(request: NextRequest) {
       message: 'Divisa enviada com sucesso para o Vercel Blob Storage'
     });
 
-  } catch (error: any) {
-    console.error('Erro no upload da divisa:', error);
-    
+} catch (error: unknown) {
+  console.error('Erro no upload da divisa:', error);
 
-    if (error.name === 'BlobError') {
-      return NextResponse.json(
-        { 
-          error: 'Erro no Blob Storage',
-          details: error.message,
-          code: error.code 
-        },
-        { status: 500 }
-      );
-    }
-
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    error.name === 'BlobError'
+  ) {
     return NextResponse.json(
-      { 
-        error: error.message || 'Erro interno do servidor',
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      {
+        error: 'Erro no Blob Storage',
+        details: 'message' in error ? String(error.message) : undefined,
+        code: 'code' in error ? error.code : undefined
       },
       { status: 500 }
     );
   }
+
+  if (error instanceof Error) {
+    return NextResponse.json(
+      {
+        error: error.message || 'Erro interno do servidor',
+        stack:
+          process.env.NODE_ENV === 'development'
+            ? error.stack
+            : undefined
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: 'Erro interno do servidor' },
+    { status: 500 }
+  );
+}
+
 }

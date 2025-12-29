@@ -12,8 +12,7 @@ import {
   AlertCircle, 
   Home, 
   User, 
-  ArrowLeft, 
-  Users
+  ArrowLeft
 } from 'lucide-react';
 
 export default function PromoverNotFound() {

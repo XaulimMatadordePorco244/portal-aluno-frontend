@@ -84,21 +84,18 @@ const TransicaoCargoModal: React.FC<TransicaoCargoModalProps> = ({
         }`
       );
 
-      // Resetar form
       setNovoCargoId('');
       setMotivo('');
 
-      // Notificar sucesso
       onSuccess();
 
-      // Fechar modal
       onOpenChange(false);
-    } catch (error: any) {
-      if (error.message.includes('Acesso negado') || error.message.includes('Não autorizado')) {
+    } catch (error) {
+      if (error instanceof Error && (error.message.includes('Acesso negado') || error.message.includes('Não autorizado'))) {
         setErroPermissao(error.message);
         toast.error('Você não tem permissão para realizar esta ação');
       } else {
-        toast.error(error.message || 'Erro ao realizar transição');
+        toast.error(error instanceof Error ? error.message : 'Erro ao realizar transição');
       }
     } finally {
       setLoading(false);

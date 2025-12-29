@@ -18,7 +18,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -197,9 +196,9 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
 
       return data.url;
 
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro no upload', {
-        description: error.message || 'Não foi possível fazer upload da divisa',
+        description: error instanceof Error ? error.message : 'Não foi possível fazer upload da divisa',
       });
       return null;
     } finally {
@@ -307,7 +306,6 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
         throw new Error(error.message || 'Erro ao salvar cargo');
       }
 
-      const result = await response.json();
 
       toast.success(isEdit ? 'Cargo atualizado!' : 'Cargo criado!', {
         description: (
@@ -328,9 +326,9 @@ export default function CargoForm({ cargo, cargosExistentes, trigger }: CargoFor
       form.reset();
       router.refresh();
 
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro', {
-        description: error.message || 'Não foi possível salvar o cargo',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar o cargo',
       });
     } finally {
       setLoading(false);

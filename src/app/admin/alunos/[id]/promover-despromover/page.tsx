@@ -5,12 +5,10 @@ import Link from 'next/link'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/Button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import PromocaoDespromocaoForm from '@/components/cargos/PromocaoDespromocaoForm'
@@ -222,7 +220,7 @@ export default async function PromoverAlunoPage({ params }: PageProps) {
 
                         {item.motivo && (
                           <p className="text-xs text-muted-foreground/80 italic line-clamp-2">
-                            "{item.motivo}"
+                            {item.motivo}
                           </p>
                         )}
                       </div>

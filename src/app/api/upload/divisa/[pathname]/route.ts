@@ -28,8 +28,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       contentType: blobInfo.contentType,
     });
 
-  } catch (error: any) {
-    if (error.message.includes('Blob not found')) {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Blob not found')) {
       return NextResponse.json(
         { exists: false, error: 'Divisa não encontrada' },
         { status: 404 }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     console.error('Erro ao buscar divisa:', error);
     return NextResponse.json(
-      { error: error.message || 'Erro interno do servidor' },
+      { error: error instanceof Error ? error.message : 'Erro interno do servidor' },
       { status: 500 }
     );
   }
@@ -55,7 +55,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     try {
       await head(`divisas/${pathname}`);
-    } catch (error: any) {
+    } catch {
       return NextResponse.json(
         { error: 'Divisa não encontrada' },
         { status: 404 }
@@ -70,10 +70,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       deletedPathname: pathname,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao remover divisa:', error);
     return NextResponse.json(
-      { error: error.message || 'Erro interno do servidor' },
+      { error: error instanceof Error ? error.message : 'Erro interno do servidor' },
       { status: 500 }
     );
   }

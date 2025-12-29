@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Building2, UserCog } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
 export const metadata: Metadata = { title: 'Sessões e Funções' }

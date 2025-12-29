@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
-  BookOpen,
   Eye,
   AlertCircle,
   BarChart3

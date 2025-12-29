@@ -13,7 +13,20 @@ import { toast } from 'sonner'
 
 interface BoletimFormProps {
   alunoId: string
-  dadosIniciais?: any
+  dadosIniciais?: {
+    mediaB1?: number | null
+    mediaB2?: number | null
+    mediaB3?: number | null
+    mediaB4?: number | null
+    faltasB1?: number | null
+    faltasB2?: number | null
+    faltasB3?: number | null
+    faltasB4?: number | null
+    escola?: string | null
+    serie?: string | null
+    observacoes?: string | null
+    anoLetivo: number
+  }
   anoAtual: number
 }
 
@@ -129,11 +142,19 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label>Escola</Label>
-            <Input name="escola" defaultValue={dadosIniciais?.escola} placeholder="Nome da Escola" />
+            <Input 
+              name="escola" 
+              defaultValue={dadosIniciais?.escola || ''} 
+              placeholder="Nome da Escola" 
+            />
         </div>
         <div className="space-y-2">
             <Label>Série Escolar</Label>
-            <Input name="serie" defaultValue={dadosIniciais?.serie} placeholder="Ex: 9º Ano" />
+            <Input 
+              name="serie" 
+              defaultValue={dadosIniciais?.serie || ''} 
+              placeholder="Ex: 9º Ano" 
+            />
         </div>
       </div>
 
@@ -192,7 +213,7 @@ export default function BoletimForm({ alunoId, dadosIniciais, anoAtual }: Boleti
               <Label>Observações Escolares</Label>
               <Textarea 
                 name="observacoes" 
-                defaultValue={dadosIniciais?.observacoes} 
+                defaultValue={dadosIniciais?.observacoes || ''} 
                 className="h-32 resize-none"
                 placeholder="Ex: Aluno com dificuldade em matemática; Apresentou atestado médico no B2..." 
               />

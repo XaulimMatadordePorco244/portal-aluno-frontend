@@ -37,7 +37,7 @@ export async function atualizarRegra(formData: FormData) {
 
     revalidatePath('/admin/taf/tabela')
     return { success: true, message: 'Regra atualizada!' }
-  } catch (error) {
+  } catch  {
     return { success: false, message: 'Erro ao atualizar no banco.' }
   }
 }

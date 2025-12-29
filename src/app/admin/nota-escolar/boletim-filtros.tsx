@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Input } from '@/components/ui/Input' 
 import { Search } from 'lucide-react'
-import { useDebouncedCallback } from 'use-debounce' 
 
 
 interface FilterProps {
