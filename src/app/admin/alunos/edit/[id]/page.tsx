@@ -3,14 +3,15 @@ import { notFound } from "next/navigation";
 import EditAlunoForm from "./edit-aluno-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function EditAlunoPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
-}) {
-  const { id } = await params;
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditAlunoPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   
-  const [aluno, cargos, companhias] = await Promise.all([
+  const [aluno, cargosData, companhiasData] = await Promise.all([
     prisma.usuario.findUnique({
       where: { id },
       include: { 
@@ -36,7 +37,7 @@ export default async function EditAlunoPage({
 
   return (
     <div className="container mx-auto py-10">
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Editar Aluno</CardTitle>
           <CardDescription>
@@ -46,8 +47,8 @@ export default async function EditAlunoPage({
         <CardContent>
           <EditAlunoForm 
             aluno={aluno} 
-            cargosDisponiveis={cargos}
-            companhiasDisponiveis={companhias}
+            cargos={cargosData} 
+            companhias={companhiasData} 
           />
         </CardContent>
       </Card>

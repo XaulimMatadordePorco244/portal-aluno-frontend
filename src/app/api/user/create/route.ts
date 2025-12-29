@@ -1,41 +1,55 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
+import { 
+  Role, 
+  StatusUsuario, 
+  GeneroUsuario, 
+  tipagemSanguinea, 
+  AptidaoFisicaStatus, 
+  CargoHistoryStatus 
+} from '@prisma/client';
+
+interface PerfilAlunoCreateData {
+  numero: string;
+  nomeDeGuerra: string;
+  companhiaId: string;
+  cargoId: string;
+  conceitoInicial?: string;
+  anoIngresso?: number;
+  foraDeData?: boolean;
+  
+  
+  tipagemSanguinea?: tipagemSanguinea;
+  aptidaoFisicaStatus?: AptidaoFisicaStatus;
+  aptidaoFisicaLaudo?: boolean;
+  aptidaoFisicaObs?: string;
+  
+  escola?: string;
+  serieEscolar?: string;
+  endereco?: string;
+  
+  termoResponsabilidadeAssinado?: boolean;
+  fazCursoExterno?: boolean;
+  cursoExternoDescricao?: string;
+  funcaoId?: string;
+}
 
 interface UsuarioCreateData {
   nome: string;
   cpf: string;
   password: string;
-  role: 'ALUNO' | 'ADMIN' | 'RESPONSAVEL';
-  status?: 'ATIVO' | 'INATIVO' | 'SUSPENSO';
+  role: Role;
+  status?: StatusUsuario;
   email?: string;
   fotoUrl?: string;
   rg?: string;
   rgEstadoEmissor?: string;
-  dataNascimento?: string;
+  dataNascimento?: string; 
   telefone?: string;
-  genero?: 'MASCULINO' | 'FEMININO';
+  genero?: GeneroUsuario;
+  
   perfilAluno?: PerfilAlunoCreateData;
-}
-
-interface PerfilAlunoCreateData {
-  numero?: string;
-  conceito?: string;
-  anoIngresso?: number;
-  nomeDeGuerra?: string;
-  tipagemSanguinea?: 'A_POSITIVO' | 'A_NEGATIVO' | 'B_POSITIVO' | 'B_NEGATIVO' | 'AB_POSITIVO' | 'AB_NEGATIVO' | 'O_POSITIVO' | 'O_NEGATIVO';
-  aptidaoFisicaStatus?: 'LIBERADO' | 'LIBERADO_COM_RESTRICOES' | 'VETADO';
-  aptidaoFisicaLaudo?: boolean;
-  aptidaoFisicaObs?: string;
-  escola?: string;
-  serieEscolar?: string;
-  endereco?: string;
-  termoResponsabilidadeAssinado?: boolean;
-  fazCursoExterno?: boolean;
-  cursoExternoDescricao?: string;
-  cargoId?: string;
-  funcaoId?: string;
-  companhiaId?: string;
 }
 
 interface RelacaoResponsabilidade {
@@ -44,32 +58,6 @@ interface RelacaoResponsabilidade {
   tipoParentesco: string;
 }
 
-interface PrismaUsuarioCreateData {
-  nome: string;
-  cpf: string;
-  password: string;
-  role: 'ALUNO' | 'ADMIN' | 'RESPONSAVEL';
-  status: 'ATIVO' | 'INATIVO' | 'SUSPENSO';
-  email?: string | null;
-  fotoUrl?: string | null;
-  rg?: string | null;
-  rgEstadoEmissor?: string | null;
-  dataNascimento?: string | null;
-  telefone?: string | null;
-  genero?: 'MASCULINO' | 'FEMININO' | null;
-  perfilAluno?: {
-    create: Omit<PerfilAlunoCreateData, 'cargoId' | 'funcaoId' | 'companhiaId'> & {
-      cargoId?: string;
-      funcaoId?: string;
-      companhiaId?: string;
-      termoResponsabilidadeAssinado: boolean;
-      aptidaoFisicaLaudo: boolean;
-      fazCursoExterno: boolean;
-      conceito: string;
-      anoIngresso: number;
-    };
-  };
-}
 
 export async function POST(req: Request) {
   if (req.method !== 'POST') {
@@ -97,14 +85,14 @@ export async function POST(req: Request) {
     );
 
   } catch (error) {
-    console.error("Erro na criação:", error);
-    
+    console.error("Erro na rota API:", error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
 }
+
 
 async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   const users = Array.isArray(data) ? data : [data];
@@ -115,20 +103,12 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   for (const user of users) {
     try {
       if (!user.nome || !user.cpf || !user.password || !user.role) {
-        errors.push({
-          cpf: user.cpf,
-          nome: user.nome,
-          error: 'Dados obrigatórios faltando'
-        });
+        errors.push({ cpf: user.cpf, nome: user.nome, error: 'Dados obrigatórios faltando' });
         continue;
       }
 
       if (user.cpf.length !== 11 || !/^\d+$/.test(user.cpf)) {
-        errors.push({
-          cpf: user.cpf,
-          nome: user.nome,
-          error: 'CPF inválido - deve ter 11 dígitos numéricos'
-        });
+        errors.push({ cpf: user.cpf, nome: user.nome, error: 'CPF inválido - deve ter 11 dígitos numéricos' });
         continue;
       }
 
@@ -137,74 +117,92 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
       });
 
       if (usuarioExistente) {
-        duplicatas.push({
-          cpf: user.cpf,
-          nome: user.nome,
-          status: 'já existe'
-        });
+        duplicatas.push({ cpf: user.cpf, nome: user.nome, status: 'CPF já existe' });
         continue;
       }
 
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      const { perfilAluno, ...userData } = user;
-
-      const usuarioData: PrismaUsuarioCreateData = {
-        ...userData,
-        password: hashedPassword,
-        status: user.status || 'ATIVO',
-        email: user.email?.trim() || null,
-        fotoUrl: user.fotoUrl || null,
-        rg: user.rg || null,
-        rgEstadoEmissor: user.rgEstadoEmissor || null,
-        dataNascimento: user.dataNascimento || null,
-        telefone: user.telefone || null,
-        genero: user.genero || null,
-      };
-
-      if (user.role === 'ALUNO' && perfilAluno) {
-        if (perfilAluno.numero) {
-          const numeroExistente = await prisma.perfilAluno.findUnique({
-            where: { numero: perfilAluno.numero }
-          });
-
-          if (numeroExistente) {
-            errors.push({
-              cpf: user.cpf,
-              nome: user.nome,
-              error: `Número ${perfilAluno.numero} já está em uso`
-            });
-            continue;
-          }
+      if (user.role === 'ALUNO' && user.perfilAluno?.numero) {
+        const numeroExistente = await prisma.perfilAluno.findUnique({
+          where: { numero: user.perfilAluno.numero }
+        });
+        if (numeroExistente) {
+          errors.push({ cpf: user.cpf, nome: user.nome, error: `Número ${user.perfilAluno.numero} já está em uso` });
+          continue;
         }
-
-        usuarioData.perfilAluno = {
-          create: {
-            numero: perfilAluno.numero,
-            conceito: perfilAluno.conceito || '7.0',
-            anoIngresso: perfilAluno.anoIngresso || new Date().getFullYear(),
-            nomeDeGuerra: perfilAluno.nomeDeGuerra,
-            tipagemSanguinea: perfilAluno.tipagemSanguinea,
-            aptidaoFisicaStatus: perfilAluno.aptidaoFisicaStatus,
-            aptidaoFisicaLaudo: perfilAluno.aptidaoFisicaLaudo || false,
-            aptidaoFisicaObs: perfilAluno.aptidaoFisicaObs,
-            escola: perfilAluno.escola,
-            serieEscolar: perfilAluno.serieEscolar,
-            endereco: perfilAluno.endereco,
-            termoResponsabilidadeAssinado: perfilAluno.termoResponsabilidadeAssinado || false,
-            fazCursoExterno: perfilAluno.fazCursoExterno || false,
-            cursoExternoDescricao: perfilAluno.cursoExternoDescricao,
-            cargoId: perfilAluno.cargoId,
-            funcaoId: perfilAluno.funcaoId,
-            companhiaId: perfilAluno.companhiaId,
-          }
-        };
       }
 
-      const result = await prisma.usuario.create({
-        data: usuarioData,
-        include: {
-          perfilAluno: user.role === 'ALUNO'
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const novoUsuario = await tx.usuario.create({
+          data: {
+            nome: user.nome,
+            cpf: user.cpf,
+            email: user.email?.trim() || null,
+            password: hashedPassword,
+            role: user.role,
+            status: user.status || StatusUsuario.ATIVO,
+            fotoUrl: user.fotoUrl || null,
+            rg: user.rg || null,
+            rgEstadoEmissor: user.rgEstadoEmissor || null,
+            dataNascimento: user.dataNascimento ? new Date(user.dataNascimento) : null,
+            telefone: user.telefone || null,
+            genero: user.genero || null,
+          }
+        });
+
+        if (user.role === Role.ALUNO && user.perfilAluno) {
+          const perfilData = user.perfilAluno;
+          const conceito = perfilData.conceitoInicial || "7.0";
+
+          const novoPerfil = await tx.perfilAluno.create({
+            data: {
+              usuarioId: novoUsuario.id,
+              numero: perfilData.numero,
+              nomeDeGuerra: perfilData.nomeDeGuerra,
+              companhiaId: perfilData.companhiaId,
+              cargoId: perfilData.cargoId,
+              funcaoId: perfilData.funcaoId,
+              
+              conceitoInicial: conceito,
+              conceitoAtual: conceito,
+              anoIngresso: perfilData.anoIngresso || new Date().getFullYear(),
+              foraDeData: !!perfilData.foraDeData,
+
+              tipagemSanguinea: perfilData.tipagemSanguinea,
+              aptidaoFisicaStatus: perfilData.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
+              aptidaoFisicaLaudo: !!perfilData.aptidaoFisicaLaudo,
+              aptidaoFisicaObs: perfilData.aptidaoFisicaObs,
+              
+              escola: perfilData.escola,
+              serieEscolar: perfilData.serieEscolar,
+              endereco: perfilData.endereco,
+              
+              termoResponsabilidadeAssinado: !!perfilData.termoResponsabilidadeAssinado,
+              fazCursoExterno: !!perfilData.fazCursoExterno,
+              cursoExternoDescricao: perfilData.cursoExternoDescricao,
+            }
+          });
+
+          if (perfilData.cargoId) {
+            const cargo = await tx.cargo.findUnique({ where: { id: perfilData.cargoId } });
+            if (cargo) {
+              await tx.cargoHistory.create({
+                data: {
+                  alunoId: novoPerfil.id,
+                  cargoId: cargo.id,
+                  cargoNomeSnapshot: cargo.nome,
+                  conceitoInicial: parseFloat(conceito),
+                  conceitoAtual: parseFloat(conceito),
+                  status: CargoHistoryStatus.ATIVO,
+                  motivo: "Criação via API/Importação"
+                }
+              });
+            }
+          }
         }
+
+        return novoUsuario;
       });
 
       results.push({
@@ -226,7 +224,7 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   }
 
   return NextResponse.json({
-    message: `${results.length} usuários criados com sucesso`,
+    message: `Processamento concluído. ${results.length} criados.`,
     criados: results,
     duplicatas: duplicatas,
     erros: errors,
@@ -241,68 +239,34 @@ async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
   for (const relacao of relacoes) {
     try {
       if (!relacao.alunoCpf || !relacao.responsavelCpf || !relacao.tipoParentesco) {
-        errors.push({
-          alunoCpf: relacao.alunoCpf,
-          responsavelCpf: relacao.responsavelCpf,
-          error: 'Dados da relação incompletos'
-        });
+        errors.push({ alunoCpf: relacao.alunoCpf, error: 'Dados incompletos' });
         continue;
       }
 
-      const [aluno, responsavel] = await Promise.all([
-        prisma.usuario.findUnique({ 
-          where: { cpf: relacao.alunoCpf } 
-        }),
-        prisma.usuario.findUnique({ 
-          where: { cpf: relacao.responsavelCpf } 
-        })
-      ]);
+      const aluno = await prisma.usuario.findUnique({ where: { cpf: relacao.alunoCpf } });
+      const responsavel = await prisma.usuario.findUnique({ where: { cpf: relacao.responsavelCpf } });
 
-      if (!aluno) {
-        errors.push({ 
-          alunoCpf: relacao.alunoCpf, 
-          error: 'Aluno não encontrado' 
-        });
+      if (!aluno || aluno.role !== Role.ALUNO) {
+        errors.push({ alunoCpf: relacao.alunoCpf, error: 'Aluno não encontrado ou inválido' });
         continue;
       }
 
-      if (!responsavel) {
-        errors.push({ 
-          responsavelCpf: relacao.responsavelCpf, 
-          error: 'Responsável não encontrado' 
-        });
+      if (!responsavel || responsavel.role !== Role.RESPONSAVEL) {
+        errors.push({ responsavelCpf: relacao.responsavelCpf, error: 'Responsável não encontrado ou inválido' });
         continue;
       }
 
-      if (aluno.role !== 'ALUNO') {
-        errors.push({
-          alunoCpf: relacao.alunoCpf,
-          error: 'Usuário não é um aluno'
-        });
-        continue;
-      }
-
-      if (responsavel.role !== 'RESPONSAVEL') {
-        errors.push({
-          responsavelCpf: relacao.responsavelCpf,
-          error: 'Usuário não é um responsável'
-        });
-        continue;
-      }
-
-      const relacaoExistente = await prisma.responsabilidade.findFirst({
+      const existe = await prisma.responsabilidade.findUnique({
         where: {
-          alunoId: aluno.id,
-          responsavelId: responsavel.id
+          responsavelId_alunoId: {
+            alunoId: aluno.id,
+            responsavelId: responsavel.id
+          }
         }
       });
 
-      if (relacaoExistente) {
-        errors.push({
-          alunoCpf: relacao.alunoCpf,
-          responsavelCpf: relacao.responsavelCpf,
-          error: 'Relação já existe'
-        });
+      if (existe) {
+        errors.push({ alunoCpf: relacao.alunoCpf, responsavelCpf: relacao.responsavelCpf, error: 'Relação já existe' });
         continue;
       }
 
@@ -316,28 +280,23 @@ async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
 
       results.push({
         id: result.id,
-        alunoId: aluno.id,
-        responsavelId: responsavel.id,
         alunoNome: aluno.nome,
         responsavelNome: responsavel.nome,
-        tipoParentesco: relacao.tipoParentesco,
-        status: 'criado'
+        tipo: relacao.tipoParentesco
       });
 
     } catch (error) {
       console.error(`Erro ao criar responsabilidade:`, error);
       errors.push({ 
         alunoCpf: relacao.alunoCpf, 
-        responsavelCpf: relacao.responsavelCpf, 
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: error instanceof Error ? error.message : 'Erro desconhecido' 
       });
     }
   }
 
   return NextResponse.json({
-    message: `${results.length} responsabilidades criadas com sucesso`,
+    message: `${results.length} responsabilidades criadas.`,
     criadas: results,
-    erros: errors,
-    totalProcessadas: relacoes.length
+    erros: errors
   });
 }
