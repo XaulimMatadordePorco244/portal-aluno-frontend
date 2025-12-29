@@ -9,19 +9,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit, MoreHorizontal, Trash2, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { deleteAluno } from "./actions";
+import { toast } from "sonner"; 
 
 export function AlunoActions({ aluno }: { aluno: Usuario }) {
-  const handleDelete = () => {
-    if (confirm(`Tem certeza que deseja apagar o aluno "${aluno.nome}"? Esta ação não pode ser desfeita.`)) {
-      const formData = new FormData();
-      formData.append('id', aluno.id);
-      if (aluno.fotoUrl) {
-        formData.append('fotoUrl', aluno.fotoUrl);
+  
+  const handleDelete = async () => {
+    if (confirm(`Tem certeza que deseja apagar o aluno "${aluno.nome}"? Esta ação não pode ser desfeita e apagará todo o histórico dele.`)) {
+      
+      const resultado = await deleteAluno(aluno.id);
+
+      if (resultado.success) {
+        toast.success(resultado.message);
+      } else {
+        toast.error(resultado.message);
       }
-      deleteAluno(formData);
     }
   };
 
@@ -40,17 +44,19 @@ export function AlunoActions({ aluno }: { aluno: Usuario }) {
             <span>Editar</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-          <Trash2 className="mr-2 h-4 w-4" />
-          <span>Apagar</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        
         <DropdownMenuItem asChild>
           <Link href={`/admin/alunos/${aluno.id}`}>
-            <Edit className="mr-2 h-4 w-4" />
+            <UserCircle className="mr-2 h-4 w-4" />
             <span>Ver Perfil Completo</span>
           </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer">
+          <Trash2 className="mr-2 h-4 w-4" />
+          <span>Apagar</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

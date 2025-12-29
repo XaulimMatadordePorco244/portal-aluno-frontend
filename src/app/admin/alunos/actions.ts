@@ -6,294 +6,217 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
-import { put, del } from "@vercel/blob";
-import { Prisma } from "@prisma/client";
+import { 
+  AptidaoFisicaStatus, 
+  GeneroUsuario, 
+  tipagemSanguinea, 
+  Role, 
+  StatusUsuario,
+  CargoHistoryStatus 
+} from "@prisma/client";
+
+const alunoSchema = z.object({
+  nome: z.string().min(3, "Nome obrigatório"),
+  cpf: z.string().length(11, "CPF deve ter 11 dígitos"),
+  email: z.string().email().optional().or(z.literal("")),
+  password: z.string().optional().or(z.literal("")),
+  rg: z.string().optional(),
+  rgEstadoEmissor: z.string().optional(),
+  dataNascimento: z.string().optional(),
+  genero: z.nativeEnum(GeneroUsuario).optional(),
+  telefone: z.string().optional(),
+
+  numero: z.string().min(1, "Número obrigatório"),
+  nomeDeGuerra: z.string().min(1, "Nome de guerra obrigatório"),
+  companhiaId: z.string().min(1, "Companhia obrigatória"),
+  cargoId: z.string().min(1, "Cargo obrigatório"),
+  ingressoForaDeData: z.string().optional(),
+
+  tipagemSanguinea: z.nativeEnum(tipagemSanguinea).optional(),
+  aptidaoFisicaStatus: z.nativeEnum(AptidaoFisicaStatus).optional(),
+  aptidaoFisicaObs: z.string().optional(),
+  aptidaoFisicaLaudo: z.string().optional(), 
+
+  escola: z.string().optional(),
+  serieEscolar: z.string().optional(),
+  endereco: z.string().optional(),
+
+  
+  termoResponsabilidadeAssinado: z.string().optional(), 
+  fazCursoExterno: z.string().optional(), 
+  cursoExternoDescricao: z.string().optional(),
+});
 
 export type AlunoState = {
-  errors?: {
-    nome?: string[];
-    cpf?: string[];
-    email?: string[];
-    password?: string[];
-    numero?: string[];
-    nomeDeGuerra?: string[];
-    companhiaId?: string[];
-    cargoNome?: string[];
-    cargoOutro?: string[];
-    fotoUrl?: string[];
-  };
+  errors?: { [key: string]: string[] };
   message?: string;
 } | undefined;
 
-const baseAlunoSchema = z.object({
-  nome: z.string().min(3, "O nome completo é obrigatório."),
-  cpf: z.string().length(11, "O CPF deve ter 11 dígitos."),
-  email: z.string().email("Formato de e-mail inválido.").optional().or(z.literal('')),
-  numero: z.string().min(1, "O número do aluno é obrigatório."),
-  nomeDeGuerra: z.string().min(1, "O nome de guerra é obrigatório."),
-  companhiaId: z.string().min(1, "A companhia é obrigatória."),
-  cargoNome: z.string().min(1, "O cargo é obrigatório."),
-  cargoOutro: z.string().optional(),
-  ingressoForaDeData: z.string().optional(),
-  fotoUrl: z.any()
-    .refine((file) => !file || file.size === 0 || (file instanceof File && file.type.startsWith("image/")),
-      "O arquivo precisa ser uma imagem.")
-    .optional(),
-}).refine(data => {
-  if (data.cargoNome === 'OUTRO') {
-    return !!data.cargoOutro && data.cargoOutro.length > 0;
-  }
-  return true;
-}, {
-  message: "O campo 'Outro Cargo' é obrigatório quando 'Outro' é selecionado.",
-  path: ["cargoOutro"],
-});
-
-const UpdateAlunoSchema = baseAlunoSchema.safeExtend({
-  id: z.string(),
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres.").optional().or(z.literal('')),
-});
-
-const CreateAlunoSchema = baseAlunoSchema.safeExtend({
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres."),
-});
-
-export async function createAluno(prevState: AlunoState, formData: FormData) {
+export async function createAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
-    return { message: "Acesso negado." };
+  if (!user || user.role !== 'ADMIN') return { message: "Acesso negado." };
+
+  const rawData = Object.fromEntries(formData.entries());
+  
+  if (!rawData.email) delete rawData.email;
+  if (!rawData.password) delete rawData.password;
+  
+  const validated = alunoSchema.safeParse(rawData);
+
+  if (!validated.success) {
+    return {
+      errors: validated.error.flatten().fieldErrors,
+      message: "Erro de validação nos campos.",
+    };
   }
 
-  const validatedFields = CreateAlunoSchema.safeParse({
-    nome: formData.get('nome'),
-    cpf: formData.get('cpf'),
-    email: formData.get('email'),
-    numero: formData.get('numero'),
-    nomeDeGuerra: formData.get('nomeDeGuerra'),
-    companhiaId: formData.get('companhiaId'),
-    cargoNome: formData.get('cargoNome'),
-    cargoOutro: formData.get('cargoOutro'),
-    ingressoForaDeData: formData.get('ingressoForaDeData'),
-    fotoUrl: formData.get('fotoUrl'),
-    password: formData.get('password'),
-  });
-
-  if (!validatedFields.success) {
-    return { errors: validatedFields.error.flatten().fieldErrors };
-  }
-
-  const { 
-    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId, ingressoForaDeData,
-    fotoUrl, password, nome, cpf, email
-  } = validatedFields.data;
-
-  const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
-  const conceitoInicial = ingressoForaDeData === 'on' ? '6.0' : '7.0';
+  const data = validated.data;
+  const hashedPassword = await bcrypt.hash(data.password || "mudar123", 10);
+  const conceitoInicial = data.ingressoForaDeData ? "6.0" : "7.0";
 
   try {
-   
-    const usuarioExistente = await prisma.usuario.findUnique({
-      where: { cpf }
-    });
-
-    if (usuarioExistente) {
-      return { message: 'Já existe um usuário com este CPF.' };
-    }
-
-   
-    const numeroExistente = await prisma.perfilAluno.findUnique({
-      where: { numero }
-    });
-
-    if (numeroExistente) {
-      return { message: 'Já existe um aluno com este número.' };
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    let uploadedFotoUrl: string | null = null;
-
-    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
-      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
-      uploadedFotoUrl = blob.url;
-    }
-
-  
-    let cargo = await prisma.cargo.findUnique({
-      where: { nome: finalCargoNome }
-    });
-
-    if (!cargo) {
-    
-      cargo = await prisma.cargo.create({
+    await prisma.$transaction(async (tx) => {
+      const novoUsuario = await tx.usuario.create({
         data: {
-          nome: finalCargoNome,
-          abreviacao: finalCargoNome.substring(0, 10).toUpperCase(),
-          categoria: 'QUADRO',
-          tipo: 'POSTO',
-          precedencia: await getNextPrecedencia(),
+          nome: data.nome,
+          cpf: data.cpf,
+          email: data.email || null,
+          password: hashedPassword,
+          role: Role.ALUNO,
+          status: StatusUsuario.ATIVO,
+          rg: data.rg,
+          rgEstadoEmissor: data.rgEstadoEmissor,
+          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+          telefone: data.telefone,
+          genero: data.genero,
         }
       });
-    }
 
-    await prisma.usuario.create({
-      data: {
-        nome,
-        cpf,
-        email: email || null,
-        password: hashedPassword,
-        fotoUrl: uploadedFotoUrl,
-        status: "ATIVO",
-        role: "ALUNO",
-        perfilAluno: {
-          create: {
-            numero,
-            nomeDeGuerra,
-            conceitoInicial: conceitoInicial,
-            companhia: {
-              connect: { id: companhiaId }
-            },
-            cargo: {
-              connect: { id: cargo.id }
-            },
-            termoResponsabilidadeAssinado: false,
-            aptidaoFisicaLaudo: false,
-            fazCursoExterno: false
-          }
+      const novoPerfil = await tx.perfilAluno.create({
+        data: {
+          usuarioId: novoUsuario.id,
+          numero: data.numero,
+          nomeDeGuerra: data.nomeDeGuerra,
+          companhiaId: data.companhiaId,
+          cargoId: data.cargoId,
+          conceitoInicial: conceitoInicial,
+          conceitoAtual: conceitoInicial,
+          anoIngresso: new Date().getFullYear(),
+          foraDeData: !!data.ingressoForaDeData,
+          
+          tipagemSanguinea: data.tipagemSanguinea,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
+          aptidaoFisicaObs: data.aptidaoFisicaObs,
+          aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
+          
+          escola: data.escola,
+          serieEscolar: data.serieEscolar,
+          endereco: data.endereco,
+          
+          termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
+          fazCursoExterno: !!data.fazCursoExterno,
+          cursoExternoDescricao: data.cursoExternoDescricao,
         }
-      },
+      });
+
+      if (data.cargoId) {
+        const cargo = await tx.cargo.findUnique({ where: { id: data.cargoId } });
+        if (cargo) {
+            await tx.cargoHistory.create({
+                data: {
+                    alunoId: novoPerfil.id,
+                    cargoId: data.cargoId,
+                    cargoNomeSnapshot: cargo.nome,
+                    conceitoInicial: parseFloat(conceitoInicial),
+                    conceitoAtual: parseFloat(conceitoInicial),
+                    status: CargoHistoryStatus.ATIVO,
+                    motivo: "Ingresso na instituição"
+                }
+            });
+        }
+      }
     });
 
-  } catch (error: unknown) {
-    console.error("Erro ao criar aluno:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { message: 'Já existe um usuário com este CPF ou número.' };
+  } catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2002') {
+        if (error.meta?.target?.includes('cpf')) return { message: 'CPF já cadastrado.' };
+        if (error.meta?.target?.includes('numero')) return { message: 'Número já em uso.' };
     }
-    return { message: "Ocorreu um erro ao criar o aluno." };
+    return { message: "Erro ao salvar no banco de dados." };
   }
 
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
 
-
-async function getNextPrecedencia(): Promise<number> {
-  const maxCargo = await prisma.cargo.findFirst({
-    orderBy: { precedencia: 'desc' },
-    select: { precedencia: true }
-  });
+export async function updateAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
+  const id = formData.get("id") as string;
+  if (!id) return { message: "ID não fornecido" };
   
-  return (maxCargo?.precedencia || 0) + 1;
-}
+  const rawData = Object.fromEntries(formData.entries());
+  
+  const updateSchema = alunoSchema.partial().extend({ id: z.string() });
+  
+  const validated = updateSchema.safeParse({ ...rawData, id });
 
-
-export async function updateAluno(prevState: AlunoState, formData: FormData) {
-  const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
-    return { message: "Acesso negado." };
-  }
-
-  const validatedFields = UpdateAlunoSchema.safeParse({
-    id: formData.get('id'),
-    nome: formData.get('nome'),
-    cpf: formData.get('cpf'),
-    email: formData.get('email'),
-    numero: formData.get('numero'),
-    nomeDeGuerra: formData.get('nomeDeGuerra'),
-    companhiaId: formData.get('companhiaId'),
-    cargoNome: formData.get('cargoNome'),
-    cargoOutro: formData.get('cargoOutro'),
-    ingressoForaDeData: formData.get('ingressoForaDeData'),
-    fotoUrl: formData.get('fotoUrl'),
-    password: formData.get('password'),
-  });
-
-  if (!validatedFields.success) {
-    return { errors: validatedFields.error.flatten().fieldErrors };
-  }
-
-  const { 
-    id, password, fotoUrl, 
-    cargoNome, cargoOutro, numero, nomeDeGuerra, companhiaId,
-    ...userData 
-  } = validatedFields.data;
+  if (!validated.success) return { errors: validated.error.flatten().fieldErrors, message: "Erro de validação" };
+  
+  const data = validated.data;
 
   try {
-    const alunoAtual = await prisma.usuario.findUnique({ 
-      where: { id }, 
-      include: { 
-        perfilAluno: {
-          include: { cargo: true }
-        } 
-      } 
-    });
+     await prisma.$transaction(async (tx) => {
+        await tx.usuario.update({
+            where: { id },
+            data: {
+                nome: data.nome,
+                email: data.email || undefined,
+                rg: data.rg,
+                rgEstadoEmissor: data.rgEstadoEmissor,
+                dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : undefined,
+                telefone: data.telefone,
+                genero: data.genero,
+                ...(data.password ? { password: await bcrypt.hash(data.password, 10) } : {})
+            }
+        });
 
-    if (!alunoAtual || !alunoAtual.perfilAluno) {
-      return { message: "Aluno ou perfil não encontrado." };
-    }
+        await tx.perfilAluno.update({
+            where: { usuarioId: id },
+            data: {
+                numero: data.numero,
+                nomeDeGuerra: data.nomeDeGuerra,
+                companhiaId: data.companhiaId,
+                cargoId: data.cargoId, 
+                
+                tipagemSanguinea: data.tipagemSanguinea,
+                aptidaoFisicaStatus: data.aptidaoFisicaStatus,
+                aptidaoFisicaObs: data.aptidaoFisicaObs,
+                aptidaoFisicaLaudo: data.aptidaoFisicaLaudo !== undefined ? !!data.aptidaoFisicaLaudo : undefined,
 
-    const dataUsuarioUpdate: Prisma.UsuarioUpdateInput = {
-      ...userData,
-    };
+                escola: data.escola,
+                serieEscolar: data.serieEscolar,
+                endereco: data.endereco,
 
-    if (password) {
-      dataUsuarioUpdate.password = await bcrypt.hash(password, 10);
-    }
-
-    if (fotoUrl && fotoUrl instanceof File && fotoUrl.size > 0) {
-      if (alunoAtual.fotoUrl) {
-        await del(alunoAtual.fotoUrl);
-      }
-      const blob = await put(`ALUNOS/${fotoUrl.name}`, fotoUrl, { access: 'public', addRandomSuffix: true });
-      dataUsuarioUpdate.fotoUrl = blob.url;
-    }
-
-    const finalCargoNome = cargoNome === 'OUTRO' ? cargoOutro! : cargoNome;
-    
-    const dataPerfilUpdate: Prisma.PerfilAlunoUpdateInput = {
-       numero,
-       nomeDeGuerra,
-       companhia: { connect: { id: companhiaId } } 
-    };
-    
-    if (alunoAtual.perfilAluno.cargo?.nome !== finalCargoNome) {
-      dataPerfilUpdate.cargo = {
-        connect: { nome: finalCargoNome },
-      };
-      dataPerfilUpdate.conceitoInicial = '7.0';
-
-      await prisma.anotacao.deleteMany({ where: { alunoId: alunoAtual.perfilAluno.id } });
-    }
-
-    await prisma.usuario.update({
-      where: { id },
-      data: {
-        ...dataUsuarioUpdate,
-        perfilAluno: {
-          update: dataPerfilUpdate
-        }
-      },
-    });
-
-  } catch (error: unknown) {
-    console.error("Erro ao atualizar o aluno:", error);
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
-      return { message: 'Já existe um usuário com este CPF ou Número.' };
-    }
-    return { message: "Ocorreu um erro ao atualizar o aluno." };
+                termoResponsabilidadeAssinado: data.termoResponsabilidadeAssinado !== undefined ? !!data.termoResponsabilidadeAssinado : undefined,
+                fazCursoExterno: data.fazCursoExterno !== undefined ? !!data.fazCursoExterno : undefined,
+                cursoExternoDescricao: data.cursoExternoDescricao,
+            }
+        });
+     });
+  } catch(error) {
+      console.error(error);
+      return { message: "Erro ao atualizar dados." };
   }
 
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
 
-export async function deleteAluno(formData: FormData) {
+export async function deleteAluno(id: string) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     throw new Error("Acesso negado.");
   }
-
-  const id = formData.get('id') as string; 
-  const fotoUrl = formData.get('fotoUrl') as string | null;
 
   if (!id) {
     throw new Error("ID do aluno não fornecido.");
@@ -305,20 +228,36 @@ export async function deleteAluno(formData: FormData) {
         include: { perfilAluno: true }
     });
 
-    if (usuarioAlvo?.perfilAluno) {
-         await prisma.anotacao.deleteMany({ where: { alunoId: usuarioAlvo.perfilAluno.id } });
+    if (!usuarioAlvo) {
+        throw new Error("Aluno não encontrado.");
     }
 
-    if (fotoUrl) {
-      await del(fotoUrl);
-    }
-    
-    await prisma.usuario.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+        if (usuarioAlvo.perfilAluno) {
+            const perfilId = usuarioAlvo.perfilAluno.id;
+
+            await tx.anotacao.deleteMany({ where: { alunoId: perfilId } });
+
+            await tx.escalaItem.deleteMany({ where: { alunoId: perfilId } });
+
+            await tx.feedback.deleteMany({ where: { alunoId: perfilId } });
+            
+        
+        }
+
+        await tx.usuario.delete({
+            where: { id }
+        });
+    });
 
     revalidatePath("/admin/alunos");
-    return { success: true };
-  } catch (error) {
+    return { success: true, message: "Aluno excluído com sucesso." };
+
+  } catch (error: any) {
     console.error("Erro ao deletar aluno:", error);
-    return { success: false, message: "Erro ao deletar o aluno." };
+    if (error.code === 'P2003') {
+        return { success: false, message: "Não é possível excluir: O aluno possui registros vinculados (ex: Responsável, CIs, etc)." };
+    }
+    return { success: false, message: "Erro ao excluir o aluno." };
   }
 }
