@@ -84,6 +84,7 @@ export function AdminSidebar() {
         { href: "/admin/qes", label: "QES", icon: FileQuestion },
         { href: "/admin/taf", label: "TAF", icon: FileQuestion },
         { href: "/admin/qpe", label: "QPE", icon: GanttChartSquare},
+        { href: "/admin/feedback", label: "Feedback", icon: GanttChartSquare},
     ];
 
     return (

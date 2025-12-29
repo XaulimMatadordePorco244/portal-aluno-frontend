@@ -43,6 +43,7 @@ const menuGroups = [
       { href: "/partes", label: "Minhas Partes", icon: ClipboardList },
       { href: "/minhas-tarefas", label: "Minhas Tarefas", icon: ClipboardList },
       { href: "/cargos", label: "Cargos e Funções", icon: Shield },
+      { href: "/feedback", label: "Enviar Feedback", icon: MessageSquare }
     ]
   },
   {

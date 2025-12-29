@@ -302,6 +302,7 @@ model PerfilAluno {
   desempenhosEscolares DesempenhoEscolar[]
   tafs TafDesempenho[]
   frequencias Frequencia[]
+  feedbacks Feedback[] 
 
 
   createdAt DateTime @default(now())
@@ -681,4 +682,17 @@ model GmFuncao {
   updatedAt   DateTime @updatedAt
 
   @@map("gm_funcoes")
+}
+model Feedback {
+  id           String   @id @default(cuid())
+  assunto      String
+  mensagem     String   @db.Text
+  destinatario String  
+  lida         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  
+  alunoId      String
+  aluno        PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+
+  @@index([alunoId])
 }
