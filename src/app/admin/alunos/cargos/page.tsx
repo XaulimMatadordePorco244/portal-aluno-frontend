@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function AdminAlunosCargosPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const user = await getCurrentUserWithRelations();
   
@@ -24,10 +24,13 @@ export default async function AdminAlunosCargosPage({
     redirect('/dashboard');
   }
 
-  const search = searchParams?.search as string || '';
-  const companhiaId = searchParams?.companhia as string;
-  const cargoId = searchParams?.cargo as string;
-  const status = searchParams?.status as string;
+  // Await the searchParams promise
+  const params = await searchParams;
+  
+  const search = params.search as string || '';
+  const companhiaId = params.companhia as string;
+  const cargoId = params.cargo as string;
+  const status = params.status as string;
 
   const where: Prisma.PerfilAlunoWhereInput = {
     usuario: {
@@ -108,7 +111,6 @@ export default async function AdminAlunosCargosPage({
     prisma.companhia.findMany({ orderBy: { nome: 'asc' } }),
     prisma.cargo.findMany({ orderBy: { precedencia: 'asc' } }),
   ]);
-
 
   interface AlunoData {
     id: string;
