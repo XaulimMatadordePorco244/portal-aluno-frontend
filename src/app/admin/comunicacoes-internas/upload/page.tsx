@@ -33,7 +33,7 @@ export default async function UploadCIPage() {
         </p>
       </div>
 
-      <CIForm autorId={user.id} />
+      <CIForm  />
     </div>
   )
 }
