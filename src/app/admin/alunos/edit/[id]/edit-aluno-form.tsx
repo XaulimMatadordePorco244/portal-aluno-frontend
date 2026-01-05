@@ -62,7 +62,7 @@ function SubmitButton() {
 
 function ErrorMsg({ error }: { error?: string[] }) {
   if (!error || error.length === 0) return null;
-  return <p className="text-xs text-red-500 mt-1">{error[0]}</p>;
+  return <p className="text-xs text-destructive mt-1">{error[0]}</p>;
 }
 
 export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFormProps) {
@@ -75,11 +75,14 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
     : '';
 
   return (
-    <form action={formAction} className="space-y-8 bg-white p-6 rounded-lg shadow-sm border max-w-4xl mx-auto">
+    <form action={formAction} className="space-y-8 bg-card text-card-foreground">
       <input type="hidden" name="id" value={aluno.id} />
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold border-b pb-2 text-gray-800">1. Dados Pessoais</h3>
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+          <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
+          Dados Pessoais
+        </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -89,7 +92,14 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
           </div>
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
-            <Input id="cpf" name="cpf" defaultValue={aluno.cpf} readOnly className="bg-gray-100 cursor-not-allowed" title="CPF não pode ser alterado" />
+            <Input 
+                id="cpf" 
+                name="cpf" 
+                defaultValue={aluno.cpf} 
+                readOnly 
+                className="bg-muted text-muted-foreground cursor-not-allowed opacity-70" 
+                title="CPF não pode ser alterado" 
+            />
           </div>
         </div>
 
@@ -137,13 +147,16 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
              name="endereco" 
              defaultValue={aluno.perfilAluno?.endereco || ''} 
              placeholder="Rua, Número, Bairro, CEP..." 
-             className="h-20" 
+             className="h-20 resize-none" 
            />
         </div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold border-b pb-2 text-gray-800">2. Dados Institucionais</h3>
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
+            Dados Institucionais
+        </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div className="space-y-2">
@@ -182,18 +195,21 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
            </div>
         </div>
 
-        <div className="flex items-center space-x-2 border p-3 rounded bg-gray-50">
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
            <Checkbox 
              id="ingressoForaDeData" 
              name="ingressoForaDeData" 
              defaultChecked={aluno.perfilAluno?.foraDeData} 
            />
-           <Label htmlFor="ingressoForaDeData" className="font-normal">Ingresso fora de data</Label>
+           <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Ingresso fora de data (Matrícula tardia)</Label>
         </div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold border-b pb-2 text-gray-800">3. Saúde e Aptidão</h3>
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span>
+            Saúde e Aptidão
+        </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            <div className="space-y-2">
@@ -225,13 +241,13 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
            </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
            <Checkbox 
              id="aptidaoFisicaLaudo" 
              name="aptidaoFisicaLaudo" 
              defaultChecked={aluno.perfilAluno?.aptidaoFisicaLaudo} 
            />
-           <Label htmlFor="aptidaoFisicaLaudo">Possui laudo médico entregue?</Label>
+           <Label htmlFor="aptidaoFisicaLaudo" className="font-medium cursor-pointer">Possui laudo médico entregue?</Label>
         </div>
 
         <div className="space-y-2">
@@ -241,13 +257,16 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
              name="aptidaoFisicaObs" 
              defaultValue={aluno.perfilAluno?.aptidaoFisicaObs || ''} 
              placeholder="Ex: Alergia a picada de insetos..." 
-             className="h-20" 
+             className="h-20 resize-none" 
            />
         </div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold border-b pb-2 text-gray-800">4. Dados Escolares e Extras</h3>
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">4</span>
+            Dados Escolares e Extras
+        </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            <div className="space-y-2">
@@ -260,7 +279,7 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
            </div>
         </div>
 
-        <div className="space-y-2 border p-3 rounded bg-gray-50">
+        <div className="space-y-2 border border-border p-4 rounded-md bg-muted/10 transition-colors hover:bg-muted/20">
            <div className="flex items-center space-x-2 mb-2">
               <Checkbox 
                 id="fazCursoExterno" 
@@ -268,31 +287,31 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
                 defaultChecked={aluno.perfilAluno?.fazCursoExterno}
                 onCheckedChange={(checked) => setTemCurso(checked === true)} 
               />
-              <Label htmlFor="fazCursoExterno">Faz algum curso externo?</Label>
+              <Label htmlFor="fazCursoExterno" className="font-medium cursor-pointer">Faz algum curso externo?</Label>
            </div>
            
            {temCurso && (
              <Input 
-                name="cursoExternoDescricao" 
-                defaultValue={aluno.perfilAluno?.cursoExternoDescricao || ''} 
-                placeholder="Qual curso e onde?" 
-                className="mt-2" 
+               name="cursoExternoDescricao" 
+               defaultValue={aluno.perfilAluno?.cursoExternoDescricao || ''} 
+               placeholder="Descreva qual curso e onde..." 
+               className="mt-2 bg-background" 
              />
            )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
            <Checkbox 
              id="termoResponsabilidadeAssinado" 
              name="termoResponsabilidadeAssinado" 
              defaultChecked={aluno.perfilAluno?.termoResponsabilidadeAssinado}
            />
-           <Label htmlFor="termoResponsabilidadeAssinado">Termo de Responsabilidade Assinado?</Label>
+           <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
         </div>
       </section>
 
       {state?.message && (
-        <div className="bg-red-50 text-red-600 p-3 rounded text-sm font-medium border border-red-200">
+        <div className="bg-destructive/10 text-destructive p-3 rounded text-sm font-medium border border-destructive/20">
           {state.message}
         </div>
       )}
