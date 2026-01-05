@@ -1,14 +1,14 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState } from "react" 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { Loader2, UploadCloud } from "lucide-react"
+import { toast } from "sonner"
 
-
-import { Button } from "@/components/ui/Button"
+import { Button } from "@/components/ui/Button" 
 import { Input } from "@/components/ui/Input"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -20,46 +20,24 @@ import {
     FormMessage,
     FormDescription
 } from "@/components/ui/form"
-import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 
 
-import { createComunicacaoInterna } from "../actions"
-
-
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = ["application/pdf"];
 
 const formSchema = z.object({
-    titulo: z
-        .string()
-        .min(3, "O título deve ter pelo menos 3 caracteres")
-        .max(100, "O título deve ter no máximo 100 caracteres"),
-    assunto: z
-        .string()
-        .min(2, "O assunto é obrigatório (ex: RH, Operacional)"),
-    resumo: z
-        .string()
-        .max(255, "O resumo não pode passar de 255 caracteres")
-        .optional(),
-    file: z
-        .custom<FileList>()
-        .refine((files) => files instanceof FileList && files.length > 0, "O arquivo PDF é obrigatório.")
-        .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, "O arquivo deve ter no máximo 10MB.")
-        .refine(
-            (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-            "Apenas arquivos no formato .pdf são permitidos."
-        ),
+    titulo: z.string().min(3, "Mínimo 3 caracteres").max(100),
+    assunto: z.string().min(2, "Assunto obrigatório"),
+    resumo: z.string().optional(),
+    file: z.custom<FileList>()
+        .refine((files) => files?.length === 1, "Arquivo obrigatório.")
+        .refine((files) => files?.[0]?.type === "application/pdf", "Apenas PDF.")
+        .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, "Máx 10MB."),
 })
 
-interface CIFormProps {
-    autorId: string
-}
-
-export function CIForm({ autorId }: CIFormProps) {
+export function CIForm() {
     const router = useRouter()
-    const [isPending, startTransition] = useTransition()
-
+    const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -70,90 +48,83 @@ export function CIForm({ autorId }: CIFormProps) {
         },
     })
 
-
     const fileRef = form.register("file")
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        startTransition(async () => {
+ async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true)
+        
+        try {
+            const formData = new FormData()
+            formData.append("titulo", values.titulo)
+            formData.append("assunto", values.assunto)
+            formData.append("resumo", values.resumo || "")
+            formData.append("file", values.file[0])
+
+            const response = await fetch("/api/comunicacoes-internas", {
+                method: "POST",
+                body: formData,
+            })
+
+            let result;
             try {
-                const formData = new FormData()
-                formData.append("titulo", values.titulo)
-                formData.append("assunto", values.assunto)
-                formData.append("resumo", values.resumo || "")
-                formData.append("file", values.file[0])
-
-
-                const result = await createComunicacaoInterna(formData, autorId)
-
-                if (result.error) {
-                    toast.error("Erro ao publicar", {
-                        description: result.error,
-                    })
-
-                    return
+                result = await response.json()
+            } catch (err) {
+                if (response.status === 413) {
+                     throw new Error("O arquivo é muito grande. O limite máximo é 10MB.")
                 }
-
-
-                toast.success("Sucesso!", {
-                    description: "Comunicação Interna criada e arquivo salvo.",
-                })
-
-
-                form.reset()
-
-                const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
-                if (fileInput) fileInput.value = ""
-
-
-                router.refresh()
-
-            } catch {
-                toast.error("Erro inesperado", {
-                    description: "Ocorreu um erro ao tentar enviar o formulário.",
-                })
-
+                throw new Error(`Erro inesperado do servidor (${response.status})`)
             }
-        })
+
+            if (!response.ok) {
+                throw new Error(result.error || "Erro ao criar comunicação")
+            }
+
+            toast.success("Comunicação publicada com sucesso!")
+            
+            router.refresh()
+            router.push("/admin/comunicacoes-internas") 
+
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
-        <Card className="w-full max-w-2xl mx-auto">
-            <CardContent className="p-6">
+        <Card className="max-w-4xl mx-auto">
+            <CardContent className="pt-6">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        
+                        <FormField
+                            control={form.control}
+                            name="titulo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Título da CI</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Ex: Novo procedimento de acesso" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                            <FormField
-                                control={form.control}
-                                name="titulo"
-                                render={({ field }) => (
-                                    <FormItem className="col-span-2 md:col-span-1">
-                                        <FormLabel>Título da CI <span className="text-red-500">*</span></FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Ex: Escala de Carnaval" {...field} disabled={isPending} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-
-                            <FormField
-                                control={form.control}
-                                name="assunto"
-                                render={({ field }) => (
-                                    <FormItem className="col-span-2 md:col-span-1">
-                                        <FormLabel>Assunto <span className="text-red-500">*</span></FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Ex: RH, Operacional..." {...field} disabled={isPending} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
+                        <FormField
+                            control={form.control}
+                            name="assunto"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Assunto / Departamento</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Ex: RH, Segurança do Trabalho..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}
@@ -162,53 +133,44 @@ export function CIForm({ autorId }: CIFormProps) {
                                 <FormItem>
                                     <FormLabel>Resumo (Opcional)</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Breve descrição para aparecer no dashboard..."
-                                            className="resize-none h-20"
-                                            {...field}
-                                            disabled={isPending}
+                                        <Textarea 
+                                            placeholder="Uma breve descrição sobre o conteúdo do documento..." 
+                                            className="resize-none h-24"
+                                            {...field} 
                                         />
                                     </FormControl>
-                                    <FormDescription>
-                                        Texto curto exibido no card de visualização rápida.
-                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
 
                         <FormField
                             control={form.control}
                             name="file"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Arquivo PDF <span className="text-red-500">*</span></FormLabel>
+                                    <FormLabel>Arquivo PDF</FormLabel>
                                     <FormControl>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="grid w-full items-center gap-1.5">
                                             <Input
                                                 type="file"
                                                 accept=".pdf"
-                                                disabled={isPending}
                                                 {...fileRef}
-                                                onChange={(event) => {
-                                                    field.onChange(event.target.files ?? undefined);
-                                                }}
+                                                onChange={(e) => field.onChange(e.target.files)}
                                                 className="cursor-pointer file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-2 file:text-sm hover:file:bg-primary/90"
                                             />
                                         </div>
                                     </FormControl>
                                     <FormDescription className="text-xs">
-                                        Máximo 10MB. O nome do arquivo será gerado automaticamente pelo sistema.
+                                        Máximo 10MB. O nome do arquivo será gerado automaticamente.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-
-                        <Button type="submit" className="w-full" disabled={isPending}>
-                            {isPending ? (
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Processando Upload...
@@ -220,7 +182,6 @@ export function CIForm({ autorId }: CIFormProps) {
                                 </>
                             )}
                         </Button>
-
                     </form>
                 </Form>
             </CardContent>

@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { 
-    LayoutDashboard, 
-    FileSearch, 
+import {
+    LayoutDashboard,
+    FileSearch,
     Shield,
     BookOpen,
     ClipboardList,
@@ -36,14 +36,14 @@ const NavLink = ({ link, pathname, isCollapsed }: NavLinkProps) => (
         href={link.disabled ? "#" : link.href}
         className={cn(
             "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            
+
             pathname.startsWith(link.href) && link.href !== "/admin" || pathname === link.href
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted",
             link.disabled && "cursor-not-allowed hover:bg-transparent opacity-50",
             isCollapsed && "justify-center"
         )}
-        title={link.label} 
+        title={link.label}
     >
         <link.icon className="h-5 w-5 shrink-0" />
         <span className={cn("whitespace-nowrap", isCollapsed && "hidden")}>{link.label}</span>
@@ -64,38 +64,39 @@ export function AdminSidebar() {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-  
+
     const operationalLinks = [
         { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
         { href: "/admin/partes", label: "Analisar Processos", icon: FileSearch },
-       ];
-    
-    
+    ];
+
+
     const managementLinks = [
-        { href: "/admin/alunos", label: "Alunos", icon: UserCog},
-        { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Shield},
-        { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen},
-        { href: "/admin/alunos/cargos", label: "Promoções/Despromoções", icon: Shield},
-        { href: "/admin/frequencia", label: "Frequência dos Alunos", icon: Shield},
-        { href: "/admin/nota-escolar", label: "Nota Escolar", icon: Shield},
+        { href: "/admin/alunos", label: "Alunos", icon: UserCog },
+        { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Shield },
+        { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen },
+        { href: "/admin/alunos/cargos", label: "Promoções/Despromoções", icon: Shield },
+        { href: "/admin/comunicacoes-internas", label: "Comunicações Internas", icon: GanttChartSquare },
+        { href: "/admin/frequencia", label: "Frequência dos Alunos", icon: Shield },
+        { href: "/admin/nota-escolar", label: "Nota Escolar", icon: Shield },
         { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
-        { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: GanttChartSquare},
-        { href: "/admin/calendario", label: "Calendário Institucional", icon: GanttChartSquare},
+        { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: GanttChartSquare },
+        { href: "/admin/calendario", label: "Calendário Institucional", icon: GanttChartSquare },
         { href: "/admin/qes", label: "QES", icon: FileQuestion },
         { href: "/admin/taf", label: "TAF", icon: FileQuestion },
-        { href: "/admin/qpe", label: "QPE", icon: GanttChartSquare},
-        { href: "/admin/feedback", label: "Feedback", icon: GanttChartSquare},
+        { href: "/admin/qpe", label: "QPE", icon: GanttChartSquare },
+        { href: "/admin/feedback", label: "Feedback", icon: GanttChartSquare },
     ];
 
     return (
-        <aside 
+        <aside
             className={cn(
                 "relative shrink-0 border-r bg-background p-2 hidden md:flex flex-col transition-all duration-300",
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
             <div className="grow">
-               
+
                 <div className={cn(
                     "flex items-center gap-2 p-2 mb-4",
                     isCollapsed && "justify-center"
@@ -109,15 +110,15 @@ export function AdminSidebar() {
                     />
                     <span className={cn("font-bold", isCollapsed && "hidden")}>Administração</span>
                 </div>
-                
+
                 <nav className="flex flex-col gap-1">
-               
+
                     <NavSectionTitle title="" isCollapsed={isCollapsed} />
                     {operationalLinks.map((link) => (
                         <NavLink key={link.href} link={link} pathname={pathname} isCollapsed={isCollapsed} />
                     ))}
-                    
-                  
+
+
                     <NavSectionTitle title="Gerenciamento" isCollapsed={isCollapsed} />
                     {managementLinks.map((link) => (
                         <NavLink key={link.href} link={link} pathname={pathname} isCollapsed={isCollapsed} />
@@ -125,12 +126,12 @@ export function AdminSidebar() {
                 </nav>
             </div>
 
-           
+
             <div className={cn("mt-auto flex", isCollapsed ? "justify-center" : "justify-end")}>
-                 <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setIsCollapsed(!isCollapsed)} 
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 </Button>
