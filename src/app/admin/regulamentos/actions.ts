@@ -6,7 +6,8 @@ import { revalidatePath } from "next/cache"
 
 export async function getRegulamentos(query: string = "") {
   try {
-    const where: any = {}
+    const where: { titulo?: { contains: string; mode: 'insensitive' } } = {}
+    
     if (query) {
       where.titulo = { contains: query, mode: 'insensitive' }
     }
@@ -17,7 +18,7 @@ export async function getRegulamentos(query: string = "") {
     })
 
     return { data }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao buscar Regulamentos:", error)
     return { data: [] }
   }
@@ -33,8 +34,14 @@ export async function deleteRegulamento(id: string, fileUrl: string) {
 
     revalidatePath("/admin/regulamentos")
     return { success: true }
-  } catch (error) {
-    console.error("Erro ao deletar:", error)
-    return { error: "Erro ao excluir regulamento." }
+  } catch (error: unknown) {
+    console.error("Erro ao deletar regulamento:", error)
+    
+    let errorMessage = "Erro ao excluir regulamento."
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+    
+    return { error: errorMessage }
   }
 }

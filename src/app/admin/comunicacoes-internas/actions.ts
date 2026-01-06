@@ -1,9 +1,54 @@
 'use server'
 
-import  prisma  from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import { put, del } from "@vercel/blob"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+
+interface AutorMinimo {
+  id: string  
+  nome: string
+}
+
+interface ComunicacaoInternaComAutor {
+  id: string
+  titulo: string
+  assunto: string
+  resumo?: string | null
+  arquivoUrl: string
+  nomeArquivoGerado: string
+  anoReferencia: number
+  numeroSequencial: number
+  createdAt: Date
+  autor?: AutorMinimo  
+  autorId: string
+}
+
+interface GetComunicacoesResponse {
+  data: ComunicacaoInternaComAutor[]
+  total: number
+  totalPages: number
+}
+
+interface CreateSuccessResponse {
+  success: true
+}
+
+interface CreateErrorResponse {
+  error: string
+}
+
+type CreateResponse = CreateSuccessResponse | CreateErrorResponse
+
+interface DeleteSuccessResponse {
+  success: true
+}
+
+interface DeleteErrorResponse {
+  error: string
+}
+
+type DeleteResponse = DeleteSuccessResponse | DeleteErrorResponse
 
 const formSchema = z.object({
   titulo: z.string().min(3, "O título deve ter pelo menos 3 letras"),
@@ -11,24 +56,43 @@ const formSchema = z.object({
   resumo: z.string().optional(),
 })
 
-export async function createComunicacaoInterna(formData: FormData, autorId: string) {
-  const file = formData.get("file") as File
-  const titulo = formData.get("titulo") as string
-  const assunto = formData.get("assunto") as string
-  const resumo = formData.get("resumo") as string
+export async function createComunicacaoInterna(
+  formData: FormData, 
+  autorId: string
+): Promise<CreateResponse> {
+  const file = formData.get("file")
+  const titulo = formData.get("titulo")
+  const assunto = formData.get("assunto")
+  const resumo = formData.get("resumo")
 
-  if (!file || file.size === 0) {
+  if (!(file instanceof File)) {
     return { error: "Nenhum arquivo enviado." }
+  }
+
+  if (file.size === 0) {
+    return { error: "O arquivo está vazio." }
   }
   
   if (file.type !== "application/pdf") {
     return { error: "O arquivo deve ser um PDF." }
   }
 
-  const validatedFields = formSchema.safeParse({ titulo, assunto, resumo })
-  if (!validatedFields.success) {
-    return { error: "Dados inválidos. Verifique o título e assunto." }
+  if (typeof titulo !== 'string' || typeof assunto !== 'string') {
+    return { error: "Título e assunto são obrigatórios." }
   }
+
+  const validatedFields = formSchema.safeParse({ 
+    titulo, 
+    assunto, 
+    resumo: typeof resumo === 'string' ? resumo : undefined 
+  })
+
+  if (!validatedFields.success) {
+  const errorMessages = validatedFields.error.issues
+    .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+    .join(', ')
+  return { error: `Dados inválidos: ${errorMessages}` }
+}
 
   try {
     const anoAtual = new Date().getFullYear()
@@ -59,7 +123,7 @@ export async function createComunicacaoInterna(formData: FormData, autorId: stri
       data: {
         titulo,
         assunto,
-        resumo,
+        resumo: validatedFields.data.resumo || null,
         arquivoUrl: blob.url,
         nomeArquivoGerado: nomeArquivoFinal,
         anoReferencia: anoAtual,
@@ -73,38 +137,58 @@ export async function createComunicacaoInterna(formData: FormData, autorId: stri
 
     return { success: true }
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao criar CI:", error)
-    return { error: "Erro interno ao salvar a comunicação." }
+    
+    let errorMessage = "Erro interno ao salvar a comunicação."
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+    
+    return { error: errorMessage }
   }
 }
-
-
 
 export async function getComunicacoes(
   query: string = "", 
   dateFrom?: string, 
   dateTo?: string,
   page: number = 1
-) {
+): Promise<GetComunicacoesResponse> {
   const ITEMS_PER_PAGE = 10
   const skip = (page - 1) * ITEMS_PER_PAGE
 
-  const where: any = {}
+  type WhereCondition = {
+    OR?: Array<
+      { titulo: { contains: string; mode: 'insensitive' } } |
+      { assunto: { contains: string; mode: 'insensitive' } } |
+      { numeroSequencial: { equals: number | undefined } }
+    >
+    createdAt?: {
+      gte?: Date
+      lte?: Date
+    }
+  }
+
+  const where: WhereCondition = {}
 
   if (query) {
+    const parsedNumber = parseInt(query)
     where.OR = [
       { titulo: { contains: query, mode: 'insensitive' } },
       { assunto: { contains: query, mode: 'insensitive' } },
-      // Tenta converter para número, se falhar ignora (undefined)
-      { numeroSequencial: { equals: parseInt(query) || undefined } }
+      { numeroSequencial: { equals: isNaN(parsedNumber) ? undefined : parsedNumber } }
     ]
   }
 
   if (dateFrom || dateTo) {
     where.createdAt = {}
-    if (dateFrom) where.createdAt.gte = new Date(dateFrom)
-    if (dateTo) where.createdAt.lte = new Date(dateTo)
+    if (dateFrom) {
+      where.createdAt.gte = new Date(dateFrom)
+    }
+    if (dateTo) {
+      where.createdAt.lte = new Date(dateTo)
+    }
   }
 
   try {
@@ -114,32 +198,43 @@ export async function getComunicacoes(
         orderBy: { numeroSequencial: 'desc' },
         take: ITEMS_PER_PAGE,
         skip,
-        include: { autor: { select: { nome: true } } }
+        include: { autor: { select: {id: true, nome: true } } }
       }),
       prisma.comunicacaoInterna.count({ where })
     ])
 
-    return { data, total, totalPages: Math.ceil(total / ITEMS_PER_PAGE) }
-  } catch (error) {
+    return { 
+      data: data as ComunicacaoInternaComAutor[], 
+      total, 
+      totalPages: Math.ceil(total / ITEMS_PER_PAGE) 
+    }
+  } catch (error: unknown) {
     console.error("Erro ao buscar CIs:", error)
     return { data: [], total: 0, totalPages: 0 }
   }
 }
 
-export async function deleteComunicacao(id: string, fileUrl: string) {
+export async function deleteComunicacao(
+  id: string, 
+  fileUrl: string
+): Promise<DeleteResponse> {
   try {
-    // 1. Deletar do Blob Storage
     if (fileUrl) {
         await del(fileUrl)
     }
 
-    // 2. Deletar do Banco
     await prisma.comunicacaoInterna.delete({ where: { id } })
 
     revalidatePath("/admin/comunicacoes-internas")
     return { success: true }
-  } catch (error) {
-    console.error("Erro ao deletar:", error)
-    return { error: "Erro ao deletar comunicação." }
+  } catch (error: unknown) {
+    console.error("Erro ao deletar comunicação:", error)
+    
+    let errorMessage = "Erro ao deletar comunicação."
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+    
+    return { error: errorMessage }
   }
 }

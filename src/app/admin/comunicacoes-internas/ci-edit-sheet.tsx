@@ -33,17 +33,29 @@ const editSchema = z.object({
         .refine((files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE, "O arquivo deve ter no máximo 10MB."),
 })
 
+interface CI {
+    id: string
+    titulo: string
+    assunto: string
+    resumo?: string
+    numeroSequencial: number
+    anoReferencia: number
+
+}
+
 interface CIEditSheetProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    data: any
+    data: CI
 }
+
+type FormValues = z.infer<typeof editSchema>
 
 export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
-    const form = useForm<z.infer<typeof editSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(editSchema),
         defaultValues: {
             titulo: data.titulo,
@@ -54,7 +66,7 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
 
     const fileRef = form.register("file")
 
-    async function onSubmit(values: z.infer<typeof editSchema>) {
+    async function onSubmit(values: FormValues) {
         setIsLoading(true)
 
         try {
@@ -72,9 +84,8 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                 body: formData,
             })
 
-            const result = await response.json()
-
             if (!response.ok) {
+                const result = await response.json()
                 throw new Error(result.error || "Erro ao atualizar")
             }
 
@@ -83,12 +94,22 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
             router.refresh()
             onOpenChange(false)
 
-        } catch (error: any) {
-            toast.error(error.message)
+        } catch (error: unknown) {
+            let errorMessage = "Ocorreu um erro desconhecido"
+            
+            if (error instanceof Error) {
+                errorMessage = error.message
+            } else if (typeof error === 'string') {
+                errorMessage = error
+            }
+            
+            toast.error(errorMessage)
         } finally {
             setIsLoading(false)
         }
     }
+
+    const numeroFormatado = String(data.numeroSequencial).padStart(3, '0')
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -96,7 +117,9 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                 <SheetHeader className="mb-4">
                     <SheetTitle className="text-xl">Editar Comunicação</SheetTitle>
                     <SheetDescription>
-                        Editando CI <span className="font-mono font-medium text-primary px-1 py-0.5 bg-primary/10 rounded">{String(data.numeroSequencial).padStart(3, '0')}/{data.anoReferencia}</span>
+                        Editando CI <span className="font-mono font-medium text-primary px-1 py-0.5 bg-primary/10 rounded">
+                            {numeroFormatado}/{data.anoReferencia}
+                        </span>
                     </SheetDescription>
                 </SheetHeader>
 
@@ -111,7 +134,9 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                                     render={({ field }) => (
                                         <FormItem className="sm:col-span-2">
                                             <FormLabel>Título</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -123,7 +148,9 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                                     render={({ field }) => (
                                         <FormItem className="sm:col-span-2">
                                             <FormLabel>Assunto</FormLabel>
-                                            <FormControl><Input {...field} placeholder="Ex: RH, Financeiro..." /></FormControl>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Ex: RH, Financeiro..." />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -135,7 +162,9 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                                 name="resumo"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Resumo <span className="text-muted-foreground text-xs font-normal">(Opcional)</span></FormLabel>
+                                        <FormLabel>
+                                            Resumo <span className="text-muted-foreground text-xs font-normal">(Opcional)</span>
+                                        </FormLabel>
                                         <FormControl>
                                             <Textarea 
                                                 {...field} 
@@ -152,34 +181,38 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                                 <FormField
                                     control={form.control}
                                     name="file"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-3">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full text-amber-600 dark:text-amber-500 shrink-0 mt-0.5">
-                                                    <FileWarning className="w-5 h-5" />
+                                    render={({ field }) => {
+                                        const { onChange } = field
+                                        return (
+                                            <FormItem className="space-y-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full text-amber-600 dark:text-amber-500 shrink-0 mt-0.5">
+                                                        <FileWarning className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <FormLabel className="text-base font-medium text-amber-900 dark:text-amber-400">
+                                                            Substituir Arquivo PDF
+                                                        </FormLabel>
+                                                        <p className="text-sm text-muted-foreground leading-snug">
+                                                            Selecione um arquivo <strong>apenas se desejar substituir</strong> o atual. 
+                                                            O arquivo antigo será excluído permanentemente.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <FormLabel className="text-base font-medium text-amber-900 dark:text-amber-400">
-                                                        Substituir Arquivo PDF
-                                                    </FormLabel>
-                                                    <p className="text-sm text-muted-foreground leading-snug">
-                                                        Selecione um arquivo <strong>apenas se desejar substituir</strong> o atual. O arquivo antigo será excluído permanentemente.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            
-                                            <FormControl>
-                                                <Input 
-                                                    type="file" 
-                                                    accept=".pdf" 
-                                                    className="bg-background mt-2"
-                                                    {...fileRef}
-                                                    onChange={(e) => field.onChange(e.target.files)}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                                
+                                                <FormControl>
+                                                    <Input 
+                                                        type="file" 
+                                                        accept=".pdf" 
+                                                        className="bg-background mt-2"
+                                                        {...fileRef}
+                                                        onChange={(e) => onChange(e.target.files)}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )
+                                    }}
                                 />
                             </div>
                         </form>
@@ -187,11 +220,24 @@ export function CIEditSheet({ open, onOpenChange, data }: CIEditSheetProps) {
                 </div>
 
                 <SheetFooter className="pt-4 border-t mt-auto sm:justify-between sm:space-x-0">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} type="button">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => onOpenChange(false)} 
+                        type="button"
+                        disabled={isLoading}
+                    >
                         Cancelar
                     </Button>
-                    <Button type="submit" form="edit-ci-form" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4"/>}
+                    <Button 
+                        type="submit" 
+                        form="edit-ci-form" 
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                        ) : (
+                            <Save className="mr-2 h-4 w-4"/>
+                        )}
                         Salvar Alterações
                     </Button>
                 </SheetFooter>

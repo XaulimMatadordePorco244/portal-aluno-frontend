@@ -7,14 +7,11 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { updateAluno } from '../../actions'; 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { AvatarUpload } from '@/components/admin/avatar-upload'; 
 
 interface AlunoCompleto {
   id: string;
@@ -24,6 +21,7 @@ interface AlunoCompleto {
   telefone?: string | null;
   rg?: string | null;
   rgEstadoEmissor?: string | null;
+  fotoUrl?: string | null; 
   dataNascimento?: Date | string | null;
   genero?: 'MASCULINO' | 'FEMININO' | null;
   perfilAluno?: {
@@ -42,6 +40,7 @@ interface AlunoCompleto {
     fazCursoExterno: boolean;
     cursoExternoDescricao?: string | null;
     termoResponsabilidadeAssinado: boolean;
+    fotoUrl?: string | null; 
   } | null;
 }
 
@@ -67,23 +66,40 @@ function ErrorMsg({ error }: { error?: string[] }) {
 
 export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFormProps) {
   const [state, formAction] = useActionState(updateAluno, undefined);
-  
   const [temCurso, setTemCurso] = useState(!!aluno.perfilAluno?.fazCursoExterno);
+  
+  const [profilePic, setProfilePic] = useState<File | null>(null);
 
   const dataNascValue = aluno.dataNascimento 
     ? new Date(aluno.dataNascimento).toISOString().split('T')[0] 
     : '';
 
+  const currentPhoto = aluno.perfilAluno?.fotoUrl || aluno.fotoUrl || null;
+
+  const handleSubmit = (formData: FormData) => {
+    if (profilePic) {
+        formData.append("fotoPerfil", profilePic);
+    }
+    formAction(formData);
+  };
+
   return (
-    <form action={formAction} className="space-y-8 bg-card text-card-foreground">
+    <form action={handleSubmit} className="space-y-8 bg-card text-card-foreground">
       <input type="hidden" name="id" value={aluno.id} />
 
-      <section className="space-y-4">
+      <section className="space-y-6">
         <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
           <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
           Dados Pessoais
         </h3>
         
+        <div className="flex justify-center pb-4">
+            <AvatarUpload 
+                currentImageUrl={currentPhoto} 
+                onFileSelect={setProfilePic} 
+            />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="nome">Nome Completo</Label>
@@ -311,7 +327,7 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
       </section>
 
       {state?.message && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded text-sm font-medium border border-destructive/20">
+        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20">
           {state.message}
         </div>
       )}

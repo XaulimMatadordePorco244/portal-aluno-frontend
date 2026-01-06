@@ -54,8 +54,8 @@ export function RegForm() {
             if(fileInput) fileInput.value = ""
             
             router.refresh()
-        } catch (error: any) {
-            toast.error(error.message)
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Erro desconhecido")
         } finally {
             setIsLoading(false)
         }
