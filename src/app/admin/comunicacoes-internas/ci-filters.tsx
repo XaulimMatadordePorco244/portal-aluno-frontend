@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useDebouncedCallback } from "use-debounce"
 import { Input } from "@/components/ui/Input"
-import { Search, Calendar } from "lucide-react"
+import { Search } from "lucide-react"
 
 export function CIFilters() {
     const searchParams = useSearchParams()

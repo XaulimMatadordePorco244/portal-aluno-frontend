@@ -9,14 +9,13 @@ export async function listarFeedbacksDoAluno(alunoId: string) {
       where: { alunoId },
       orderBy: { createdAt: 'desc' }
     })
-  } catch (error) {
+  } catch {
     return []
   }
 }
 
 export async function excluirFeedback(id: string, alunoId: string) {
   try {
-    // Só permite deletar se pertencer ao aluno E não tiver sido lida
     const feedback = await prisma.feedback.findUnique({
       where: { id }
     })
@@ -34,7 +33,7 @@ export async function excluirFeedback(id: string, alunoId: string) {
     revalidatePath('/aluno/feedback')
     revalidatePath('/admin/feedback')
     return { success: true, message: 'Mensagem apagada com sucesso.' }
-  } catch (error) {
+  } catch  {
     return { success: false, message: 'Erro ao apagar mensagem.' }
   }
 }
@@ -58,7 +57,7 @@ export async function editarFeedback(id: string, alunoId: string, dados: FormDat
     revalidatePath('/aluno/feedback')
     revalidatePath('/admin/feedback')
     return { success: true, message: 'Mensagem atualizada!' }
-  } catch (error) {
+  } catch  {
     return { success: false, message: 'Erro ao atualizar.' }
   }
 }

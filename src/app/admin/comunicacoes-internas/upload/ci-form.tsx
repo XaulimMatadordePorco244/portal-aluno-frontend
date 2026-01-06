@@ -68,7 +68,7 @@ export function CIForm() {
             let result;
             try {
                 result = await response.json()
-            } catch (err) {
+            } catch {
                 if (response.status === 413) {
                      throw new Error("O arquivo é muito grande. O limite máximo é 10MB.")
                 }
@@ -84,9 +84,9 @@ export function CIForm() {
             router.refresh()
             router.push("/admin/comunicacoes-internas") 
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message)
+            toast.error(error instanceof Error ? error.message : "Erro desconhecido")
         } finally {
             setIsLoading(false)
         }

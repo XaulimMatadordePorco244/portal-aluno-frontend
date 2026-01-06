@@ -6,24 +6,51 @@ import { toast } from "sonner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/Button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Opcional, para UX melhor
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { deleteRegulamento } from "./actions"
 import { RegEditSheet } from "./reg-edit-sheet"
 
-export function RegListTable({ data }: { data: any[] }) {
+interface Regulamento {
+    id: string
+    titulo: string
+    arquivoUrl: string
+    // Adicione outras propriedades se necessário
+}
+
+interface RegListTableProps {
+    data: Regulamento[]
+}
+
+export function RegListTable({ data }: RegListTableProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [selectedReg, setSelectedReg] = useState<any>(null)
+    const [selectedReg, setSelectedReg] = useState<Regulamento | null>(null)
     const [isEditOpen, setIsEditOpen] = useState(false)
 
     const handleDelete = async () => {
         if (!selectedReg) return
+        
         const result = await deleteRegulamento(selectedReg.id, selectedReg.arquivoUrl)
+        
         if (result.success) {
             toast.success("Regulamento removido com sucesso")
             setIsDeleteDialogOpen(false)
         } else {
             toast.error("Erro ao remover regulamento")
         }
+    }
+
+    const handleDownload = (url: string) => {
+        window.open(url, '_blank', 'noopener,noreferrer')
+    }
+
+    const handleEditClick = (reg: Regulamento) => {
+        setSelectedReg(reg)
+        setIsEditOpen(true)
+    }
+
+    const handleDeleteClick = (reg: Regulamento) => {
+        setSelectedReg(reg)
+        setIsDeleteDialogOpen(true)
     }
 
     return (
@@ -66,7 +93,7 @@ export function RegListTable({ data }: { data: any[] }) {
                                                             variant="ghost" 
                                                             size="icon" 
                                                             className="h-8 w-8 hover:bg-muted hover:text-foreground"
-                                                            onClick={() => window.open(reg.arquivoUrl, '_blank')}
+                                                            onClick={() => handleDownload(reg.arquivoUrl)}
                                                         >
                                                             <Download className="h-4 w-4" />
                                                             <span className="sr-only">Baixar</span>
@@ -76,25 +103,39 @@ export function RegListTable({ data }: { data: any[] }) {
                                                 </Tooltip>
                                             </TooltipProvider>
 
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="h-8 w-8 hover:bg-muted hover:text-foreground"
-                                                onClick={() => { setSelectedReg(reg); setIsEditOpen(true) }}
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                                <span className="sr-only">Editar</span>
-                                            </Button>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 hover:bg-muted hover:text-foreground"
+                                                            onClick={() => handleEditClick(reg)}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                            <span className="sr-only">Editar</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Editar regulamento</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
 
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
-                                                onClick={() => { setSelectedReg(reg); setIsDeleteDialogOpen(true) }}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="sr-only">Excluir</span>
-                                            </Button>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
+                                                            onClick={() => handleDeleteClick(reg)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                            <span className="sr-only">Excluir</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Excluir regulamento</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                         </div>
                                     </TableCell>
                                 </TableRow>

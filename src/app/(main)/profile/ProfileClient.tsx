@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
-import { UserCircle, Save } from 'lucide-react'; 
+import { UserCircle} from 'lucide-react'; 
 import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
 import Image from 'next/image';
 
@@ -27,7 +27,7 @@ const InfoRow = ({ label, value, className = "" }: { label: string, value: React
 
 export default function ProfileClient({ user }: { user: UserWithRelations }) {
   const [email, setEmail] = useState(user.email || '');
-  const [isLoading, setIsLoading] = useState(false);
+  const [,setIsLoading] = useState(false);
 
   const perfil = user.perfilAluno;
 

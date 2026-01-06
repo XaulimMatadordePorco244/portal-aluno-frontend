@@ -17,16 +17,29 @@ const editSchema = z.object({
     arquivo: z.custom<FileList>().optional(),
 })
 
-export function RegEditSheet({ open, onOpenChange, data }: { open: boolean, onOpenChange: any, data: any }) {
+type FormData = z.infer<typeof editSchema>
+
+interface Regulamento {
+    id: string
+    titulo: string
+}
+
+interface RegEditSheetProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    data: Regulamento
+}
+
+export function RegEditSheet({ open, onOpenChange, data }: RegEditSheetProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
-    const form = useForm({
+    const form = useForm<FormData>({
         resolver: zodResolver(editSchema),
         defaultValues: { titulo: data.titulo },
     })
 
-    async function onSubmit(values: any) {
+    async function onSubmit(values: FormData) {
         setIsLoading(true)
         try {
             const formData = new FormData()
@@ -40,13 +53,14 @@ export function RegEditSheet({ open, onOpenChange, data }: { open: boolean, onOp
                 body: formData,
             })
 
-            if (!response.ok) throw new Error("Erro")
+            if (!response.ok) throw new Error("Erro ao atualizar regulamento")
 
-            toast.success("Atualizado!")
+            toast.success("Regulamento atualizado com sucesso!")
             router.refresh()
             onOpenChange(false)
-        } catch {
-            toast.error("Erro ao atualizar")
+        } catch (error) {
+            console.error("Erro ao atualizar:", error)
+            toast.error("Erro ao atualizar regulamento")
         } finally {
             setIsLoading(false)
         }
@@ -76,14 +90,23 @@ export function RegEditSheet({ open, onOpenChange, data }: { open: boolean, onOp
                                 <FormItem>
                                     <FormLabel>Substituir Arquivo (Opcional)</FormLabel>
                                     <FormControl>
-                                        <Input type="file" accept=".pdf" onChange={(e) => field.onChange(e.target.files)} />
+                                        <Input 
+                                            type="file" 
+                                            accept=".pdf" 
+                                            onChange={(e) => field.onChange(e.target.files)}
+                                        />
                                     </FormControl>
                                 </FormItem>
                             )}
                         />
                         <SheetFooter>
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Salvar
+                                {isLoading ? (
+                                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                                ) : (
+                                    <Save className="mr-2 h-4 w-4" />
+                                )}
+                                Salvar
                             </Button>
                         </SheetFooter>
                     </form>
