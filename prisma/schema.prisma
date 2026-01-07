@@ -338,6 +338,7 @@ model ComunicacaoInterna {
   @@unique([anoReferencia, numeroSequencial])
   @@index([dataPublicacao])
   @@index([assunto])
+  
   @@map("comunicacoes_internas")
 }
 
