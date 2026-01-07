@@ -46,7 +46,8 @@ export function CIFilters({ assuntosDisponiveis }: CIFiltersProps) {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-white p-4 rounded-lg border shadow-sm">
+    <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-card text-card-foreground p-4 rounded-lg border shadow-sm">
+      
       <div className="flex flex-col gap-2 w-full sm:w-[300px]">
         <span className="text-sm font-medium text-muted-foreground">Filtrar por Assunto</span>
         <Popover open={open} onOpenChange={setOpen}>
@@ -70,6 +71,7 @@ export function CIFilters({ assuntosDisponiveis }: CIFiltersProps) {
                 <CommandEmpty>Nenhum assunto encontrado.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
+                    value="todos" 
                     onSelect={() => {
                       updateFilter("assunto", null)
                       setOpen(false)
@@ -88,8 +90,8 @@ export function CIFilters({ assuntosDisponiveis }: CIFiltersProps) {
                     <CommandItem
                       key={assunto}
                       value={assunto}
-                      onSelect={(currentValue) => {
-                        const newValue = currentValue === currentSubject ? null : currentValue
+                      onSelect={() => {
+                        const newValue = assunto === currentSubject ? null : assunto
                         updateFilter("assunto", newValue)
                         setOpen(false)
                       }}
@@ -113,9 +115,10 @@ export function CIFilters({ assuntosDisponiveis }: CIFiltersProps) {
       <div className="flex flex-col gap-2 w-full sm:w-auto">
         <span className="text-sm font-medium text-muted-foreground">Mês de Referência</span>
         <div className="flex gap-2">
+     
           <Input
             type="month"
-            className="w-[200px]"
+            className="w-[200px] bg-background" 
             value={currentDate || ""}
             onChange={(e) => updateFilter("data", e.target.value)}
           />
@@ -126,6 +129,7 @@ export function CIFilters({ assuntosDisponiveis }: CIFiltersProps) {
               size="icon" 
               onClick={() => router.push(pathname)}
               title="Limpar filtros"
+              className="hover:bg-destructive/10 hover:text-destructive" 
             >
               <X className="h-4 w-4" />
             </Button>
