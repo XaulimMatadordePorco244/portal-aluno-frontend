@@ -7,22 +7,21 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   FileSearch,
-  Shield,
   BookOpen,
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Users, // Novo: Alunos
-  TrendingUp, // Novo: Promoções
-  Megaphone, // Novo: Comunicações
-  CalendarCheck, // Novo: Frequência
-  GraduationCap, // Novo: Notas
-  Briefcase, // Novo: Sessões
-  Calendar, // Novo: Calendário
-  FileSpreadsheet, // Novo: QES/QPE
-  Activity, // Novo: TAF
-  MessageSquare, // Novo: Feedback
-  Medal, // Novo: Cargos
+  Users, 
+  TrendingUp, 
+  Megaphone,
+  CalendarCheck, 
+  GraduationCap, 
+  Briefcase, 
+  Calendar, 
+  FileSpreadsheet, 
+  Activity,
+  MessageSquare,
+  Medal, 
   ScrollText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -103,7 +102,6 @@ export function AdminSidebar() {
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Botão de Toggle Flutuante na Lateral */}
       <Button
         variant="outline"
         size="icon"
@@ -113,10 +111,8 @@ export function AdminSidebar() {
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </Button>
 
-      {/* Conteúdo com Scroll Interno */}
       <div className="flex flex-col h-full overflow-y-auto py-4 px-2 scrollbar-hide">
         
-        {/* Header / Logo */}
         <div className={cn(
           "flex items-center gap-2 px-2 mb-6 transition-all",
           isCollapsed ? "justify-center" : ""
@@ -135,23 +131,19 @@ export function AdminSidebar() {
         </div>
 
         <nav className="flex flex-col gap-1">
-          {/* Operacional */}
           <NavSectionTitle title="Operacional" isCollapsed={isCollapsed} />
           {operationalLinks.map((link) => (
             <NavLink key={link.href} link={link} pathname={pathname} isCollapsed={isCollapsed} />
           ))}
 
-          {/* Separator visual se estiver colapsado para dividir seções */}
           {isCollapsed && <div className="my-2 border-t mx-2" />}
 
-          {/* Gerenciamento */}
           <NavSectionTitle title="Gerenciamento" isCollapsed={isCollapsed} />
           {managementLinks.map((link) => (
             <NavLink key={link.href} link={link} pathname={pathname} isCollapsed={isCollapsed} />
           ))}
         </nav>
         
-        {/* Espaço extra no final para garantir que o último item não fique colado na borda se houver scroll */}
         <div className="h-8 shrink-0" />
       </div>
     </aside>
