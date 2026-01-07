@@ -421,6 +421,7 @@ model TipoDeAnotacao {
   descricao         String     @db.Text
   pontos            Float?
   abertoCoordenacao Boolean    @default(false)
+  categoriaAberto   String?
   registros         Anotacao[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
