@@ -6,12 +6,14 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react"; 
 
 const cleanCpf = (value: string) => value.replace(/\D/g, '');
 
 export default function LoginPage() {
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -56,67 +58,108 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md border">
-        <Image
-          src="/img/logo.png"
-          alt="Logo da Guarda Mirim"
-          width={120}
-          height={120}
-          className="mx-auto"
-          priority
-        />
-
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Mural do Aluno</h1>
-          <p className="text-muted-foreground">Acesse sua conta</p>
+    <div className="flex items-center justify-center min-h-screen bg-muted/20 px-4">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-xl shadow-lg border">
+        
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="rounded-full bg-primary/5 p-3 mb-2">
+            <Image
+                src="/img/logo.png"
+                alt="Logo da Guarda Mirim"
+                width={80}
+                height={80}
+                className="object-contain"
+                priority
+            />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Mural do Aluno</h1>
+          <p className="text-sm text-muted-foreground">
+            Entre com suas credenciais para acessar
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
-            <Input
-              id="cpf"
-              type="text"
-              placeholder="Digite seu CPF"
-              required
-              value={cpf}
-              onChange={handleCpfChange}
-              disabled={isLoading}
-              maxLength={14}
-            />
+            <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                id="cpf"
+                type="text"
+                placeholder="000.000.000-00"
+                required
+                value={cpf}
+                onChange={handleCpfChange}
+                disabled={isLoading}
+                maxLength={14}
+                className="pl-9" 
+                />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Digite sua senha"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="flex items-center justify-between">
+                <Label htmlFor="password">Senha</Label>
+            </div>
+            <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    className="pl-9 pr-10" 
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1} 
+                >
+                    {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                        {showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    </span>
+                </Button>
+            </div>
+            <div className="flex justify-end">
+                <Link 
+                    href="/forgot-password" 
+                    className="text-xs font-medium text-primary hover:underline"
+                >
+                    Esqueceu a senha?
+                </Link>
+            </div>
           </div>
 
           {error && (
-            <div className="p-3 text-sm text-center text-destructive-foreground bg-destructive rounded-md">
-              {error}
+            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <p>{error}</p>
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Carregando..." : "Entrar"}
+          <Button type="submit" className="w-full font-bold" disabled={isLoading} size="lg">
+            {isLoading ? "Autenticando..." : "Entrar no Portal"}
           </Button>
         </form>
-
-        <div className="text-center">
-          <a href="/forgot-password" className="text-sm text-primary hover:underline">
-            Esqueceu a Senha?
-          </a>
+        
+        <div className="text-center text-xs text-muted-foreground mt-4">
+            &copy; {new Date().getFullYear()} Guarda Mirim de Naviraí-MS
         </div>
       </div>
     </div>
   );
 }
+
+import Link from "next/link";

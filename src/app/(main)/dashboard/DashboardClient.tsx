@@ -20,22 +20,59 @@ type RankingDataItem = {
   cargo: { nome: string | null; abreviacao: string | null; } | null | undefined;
 }
 
-const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (<Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-accent"><div className="flex justify-between items-center"><div><p className="font-semibold text-foreground text-sm truncate">{title}</p><p className="text-xs text-muted-foreground">{date}</p></div><ExternalLink className="h-4 w-4 text-muted-foreground" /></div></Link>);
-const AnnotationListItem = ({ title, date }: { title: string; date: string }) => (<div className="border-b last:border-b-0 p-3 hover:bg-accent flex justify-between items-center"><div><p className="font-semibold text-foreground text-sm">{title}</p><p className="text-xs text-muted-foreground">{date}</p></div><Button variant="ghost" size="sm" disabled>Ver detalhes</Button></div>);
-const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (<div className="bg-card rounded-lg shadow-lg border grow flex-col"><h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg">{title}</h2><div className="grow flex-col"><div className="grow">{children}</div><Link href={linkHref} className="p-3 text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg">{linkText} <ArrowRight className="ml-2 h-4 w-4" /></Link></div></div>);
+const UniversalListItem = ({ title, date, url }: { title: string; date: string, url: string }) => (
+  <Link href={url} target="_blank" rel="noopener noreferrer" className="block border-b last:border-b-0 p-3 hover:bg-accent transition-colors">
+    <div className="flex justify-between items-center gap-2">
+      <div className="overflow-hidden">
+        <p className="font-semibold text-foreground text-sm truncate">{title}</p>
+        <p className="text-xs text-muted-foreground">{date}</p>
+      </div>
+      <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+    </div>
+  </Link>
+);
+
+const AnnotationListItem = ({ title, date }: { title: string; date: string }) => (
+  <div className="border-b last:border-b-0 p-3 hover:bg-accent flex justify-between items-center gap-2">
+    <div className="overflow-hidden">
+      <p className="font-semibold text-foreground text-sm truncate">{title}</p>
+      <p className="text-xs text-muted-foreground">{date}</p>
+    </div>
+    <Button variant="ghost" size="sm" className="shrink-0" disabled>Ver detalhes</Button>
+  </div>
+);
+
+const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: string; children: React.ReactNode; linkText: string; linkHref?: string; }) => (
+  <div className="bg-card rounded-lg shadow-lg border flex flex-col h-full">
+    <h2 className="text-lg font-bold text-center text-primary-foreground bg-primary p-3 rounded-t-lg shrink-0">
+      {title}
+    </h2>
+    <div className="flex flex-col flex-1 min-h-[150px]">
+      <div className="flex-1 w-full">
+        {children}
+      </div>
+      <Link 
+        href={linkHref} 
+        className="p-3 mt-auto text-sm font-semibold text-primary hover:bg-accent text-center flex items-center justify-center rounded-b-lg border-t shrink-0 transition-colors"
+      >
+        {linkText} <ArrowRight className="ml-2 h-4 w-4" />
+      </Link>
+    </div>
+  </div>
+);
 
 const RankingListItem = ({ rank, nome, conceito, numero, cargo, isCurrentUser }: { rank: number; nome: React.ReactNode; conceito: string | null | undefined; numero: string | null | undefined; cargo: string | null | undefined; isCurrentUser?: boolean }) => (
-  <div className={`border-b last:border-b-0 p-3 ${isCurrentUser ? 'bg-primary/10' : 'hover:bg-accent'}`}>
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span className={`font-bold text-lg w-8 text-center ${isCurrentUser ? 'text-primary' : 'text-muted-foreground'}`}>{rank}º</span>
-        <div>
-          <p className={`font-semibold ${isCurrentUser ? 'text-primary' : 'text-foreground'}`}>{cargo} {nome}</p>
+  <div className={`border-b last:border-b-0 p-3 ${isCurrentUser ? 'bg-primary/10' : 'hover:bg-accent transition-colors'}`}>
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <span className={`font-bold text-lg w-8 text-center shrink-0 ${isCurrentUser ? 'text-primary' : 'text-muted-foreground'}`}>{rank}º</span>
+        <div className="overflow-hidden">
+          <p className={`font-semibold truncate ${isCurrentUser ? 'text-primary' : 'text-foreground'}`}>{cargo} {nome}</p>
           <p className="text-xs text-muted-foreground">Nº {numero || 'N/A'}</p>
         </div>
       </div>
       {isCurrentUser && (
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <p className="font-bold text-primary">{conceito}</p>
           <p className="text-xs text-muted-foreground">Conceito</p>
         </div>
@@ -66,11 +103,12 @@ export default function DashboardClient({
   const nomeExibicao = perfil?.nomeDeGuerra || user.nome;
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold text-foreground mb-6">
+    <div className="container mx-auto py-6 px-4 sm:px-6">
+      <h1 className="text-xl md:text-3xl font-bold text-foreground mb-6 wrap-break-words">
         Mural do Aluno - Bem-vindo, {cargoAbreviacao} {nomeExibicao}!
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
 
         <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="/classification">
           {rankingData.length > 0 ? (
@@ -86,14 +124,29 @@ export default function DashboardClient({
               />
             ))
           ) : (
-            <p className="text-center text-sm text-muted-foreground p-4">Não há dados de classificação para seu cargo.</p>
+            <div className="flex items-center justify-center h-full p-4 min-h-[100px]">
+                <p className="text-center text-sm text-muted-foreground">Não há dados de classificação para seu cargo.</p>
+            </div>
           )}
         </DashboardCard>
 
         <DashboardCard title="QES - Quadro de Estudo Semanal" linkText="Ver todos os QES" linkHref="/qes">
           {qesItems.length > 0 ? (
-            <div>{qesItems.map(qes => (<UniversalListItem key={qes.id} title={qes.titulo} date={`Publicado em: ${new Date(qes.createdAt).toLocaleDateString('pt-BR')}`} url={qes.arquivoUrl} />))}</div>
-          ) : (<p className="text-center text-sm text-muted-foreground p-4">Nenhum QES publicado.</p>)}
+            <div>
+              {qesItems.map(qes => (
+                <UniversalListItem 
+                  key={qes.id} 
+                  title={qes.titulo} 
+                  date={`Publicado em: ${new Date(qes.createdAt).toLocaleDateString('pt-BR')}`} 
+                  url={qes.arquivoUrl} 
+                />
+              ))}
+            </div>
+          ) : (
+             <div className="flex items-center justify-center h-full p-4 min-h-[100px]">
+                <p className="text-center text-sm text-muted-foreground">Nenhum QES publicado.</p>
+             </div>
+          )}
         </DashboardCard>
 
         <DashboardCard title="Últimas Anotações" linkText="Ver todas as anotações" linkHref="/anotacoes">
@@ -108,7 +161,9 @@ export default function DashboardClient({
               ))}
             </div>
           ) : (
-            <p className="text-center text-sm text-muted-foreground p-4">Nenhuma anotação recente.</p>
+             <div className="flex items-center justify-center h-full p-4 min-h-[100px]">
+                <p className="text-center text-sm text-muted-foreground">Nenhuma anotação recente.</p>
+             </div>
           )}
         </DashboardCard>
 
@@ -129,11 +184,12 @@ export default function DashboardClient({
               ))}
             </div>
           ) : (
-            <p className="text-center text-sm text-muted-foreground p-4 py-8">
-              Nenhum informativo recente.
-            </p>
+             <div className="flex items-center justify-center h-full p-4 min-h-[100px]">
+                <p className="text-center text-sm text-muted-foreground">Nenhum informativo recente.</p>
+             </div>
           )}
         </DashboardCard>
+
         <DashboardCard
           title="Minhas Escalas"
           linkText="Ver todas as escalas"
@@ -144,23 +200,25 @@ export default function DashboardClient({
               {minhasEscalas.map((escala) => (
                 <UniversalListItem
                   key={escala.id}
-
                   title={`Escala: ${escala.tipo}`}
-
                   date={`Data: ${new Date(escala.dataEscala).toLocaleDateString('pt-BR')}`}
                   url={escala.pdfUrl || "#"}
                 />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center min-h-[100px]">
               <p className="text-sm text-muted-foreground">
                 Você não está escalado em nenhuma escala recente.
               </p>
             </div>
           )}
         </DashboardCard>
-        <DashboardCard title="Comunicações Internas" linkText="Ver todas as comunicações" linkHref="/comunicacoes-internas"
+
+        <DashboardCard 
+          title="Comunicações Internas" 
+          linkText="Ver todas as comunicações" 
+          linkHref="/comunicacoes-internas"
         >
           {latestCIs.length > 0 ? (
             <div>
@@ -174,12 +232,13 @@ export default function DashboardClient({
               ))}
             </div>
           ) : (
-            <div className="grow flex-col items-center justify-center py-8 text-center px-4">
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center min-h-[100px]">
               <FileText className="h-8 w-8 text-muted-foreground/50 mb-2" />
               <p className="text-sm text-muted-foreground">Nenhuma comunicação publicada este ano.</p>
             </div>
           )}
         </DashboardCard>
+
       </div>
     </div>
   );
