@@ -6,15 +6,14 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react"; // Ícones adicionados
-import { Alert, AlertDescription } from "@/components/ui/alert"; // Se tiver esse componente, senão mantenha a div
+import { Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react"; 
 
 const cleanCpf = (value: string) => value.replace(/\D/g, '');
 
 export default function LoginPage() {
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Novo estado
+  const [showPassword, setShowPassword] = useState(false); 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -38,7 +37,6 @@ export default function LoginPage() {
       }
 
       router.push('/dashboard');
-      // router.refresh(); // Opcional: Garante que os server components atualizem com o novo cookie
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
@@ -60,11 +58,9 @@ export default function LoginPage() {
   };
 
   return (
-    // Adicionado um bg-muted/20 para diferenciar o fundo do card
     <div className="flex items-center justify-center min-h-screen bg-muted/20 px-4">
       <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-xl shadow-lg border">
         
-        {/* Cabeçalho do Card */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="rounded-full bg-primary/5 p-3 mb-2">
             <Image
@@ -84,7 +80,6 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Input CPF com ícone */}
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
             <div className="relative">
@@ -98,12 +93,11 @@ export default function LoginPage() {
                 onChange={handleCpfChange}
                 disabled={isLoading}
                 maxLength={14}
-                className="pl-9" // Padding para não sobrepor o ícone
+                className="pl-9" 
                 />
             </div>
           </div>
 
-          {/* Input Senha com Toggle e ícone */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
@@ -118,7 +112,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
-                    className="pl-9 pr-10" // Padding para ícones
+                    className="pl-9 pr-10" 
                 />
                 <Button
                     type="button"
@@ -126,7 +120,7 @@ export default function LoginPage() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1} // Evita foco ao dar tab, foca direto no submit
+                    tabIndex={-1} 
                 >
                     {showPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -148,7 +142,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Tratamento de Erro Visualmente Melhorado */}
           {error && (
             <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -161,7 +154,6 @@ export default function LoginPage() {
           </Button>
         </form>
         
-        {/* Rodapé opcional */}
         <div className="text-center text-xs text-muted-foreground mt-4">
             &copy; {new Date().getFullYear()} Guarda Mirim de Naviraí-MS
         </div>
@@ -170,5 +162,4 @@ export default function LoginPage() {
   );
 }
 
-// Necessário importar Link do Next
 import Link from "next/link";
