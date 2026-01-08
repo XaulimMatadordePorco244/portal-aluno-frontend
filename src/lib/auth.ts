@@ -7,6 +7,7 @@ interface UserPayload {
   userId: string;
   nome: string;
   role: string;
+  tokenVersion: number; 
   iat?: number;
   exp?: number;
 }
@@ -25,6 +26,7 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
       return null;
     }
     
+  
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as UserPayload;
     return decoded;
   } catch {
@@ -60,6 +62,14 @@ export async function getCurrentUserWithRelations(): Promise<UserWithRelations |
       },
       include: userWithRelationsQuery.include, 
     });
+
+    if (!user) return null;
+
+
+    if (user.tokenVersion !== sessionUser.tokenVersion) {
+   
+        return null; 
+    }
 
     return user;
   } catch (error) {
