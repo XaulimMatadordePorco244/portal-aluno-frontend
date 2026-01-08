@@ -224,6 +224,16 @@ model TafDesempenho {
   @@map("taf_desempenho")
 }
 
+model PasswordResetAttempt {
+  id        String   @id @default(cuid())
+  ip        String   
+  identifier String 
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([identifier, createdAt])
+}
+
 model Usuario {
   id                   String        @id @default(cuid())
   cpf                  String        @unique @db.VarChar(11)
@@ -238,6 +248,7 @@ model Usuario {
   passwordResetExpires DateTime?
   status               StatusUsuario @default(ATIVO)
   role                 Role
+  tokenVersion          Int       @default(1)
 
   rg              String?
   rgEstadoEmissor String?
