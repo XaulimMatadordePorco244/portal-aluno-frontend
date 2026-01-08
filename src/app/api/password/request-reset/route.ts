@@ -7,8 +7,16 @@ import { headers } from 'next/headers';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; 
 const MAX_ATTEMPTS = 3; 
+
+const maskEmail = (email: string) => {
+    const [local, domain] = email.split('@');
+    if (!local || !domain) return 'email***@***';
+    const visibleLength = local.length > 3 ? 3 : 1;
+    const visiblePart = local.substring(0, visibleLength);
+    return `${visiblePart}******@${domain}`;
+};
 
 export async function POST(req: Request) {
   try {
@@ -37,7 +45,7 @@ export async function POST(req: Request) {
 
     if (attempts >= MAX_ATTEMPTS) {
       return NextResponse.json(
-        { error: 'Muitas tentativas. Por favor, aguarde 15 minutos antes de tentar novamente.' }, 
+        { error: 'Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.' }, 
         { status: 429 } 
       );
     }
@@ -53,11 +61,13 @@ export async function POST(req: Request) {
       where: { cpf: cleanCpf } 
     });
 
-    const genericMessage = 'Se o CPF estiver cadastrado, você receberá um link no e-mail associado.';
-
     if (!user || !user.email) {
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 200));
-      return NextResponse.json({ message: genericMessage });
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+      
+      return NextResponse.json(
+        { error: 'E-mail de recuperação não cadastrado, entre em contato com a coordenação.' }, 
+        { status: 404 } 
+      );
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -87,16 +97,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Erro ao enviar e-mail.' }, { status: 500 });
     }
 
-    const maskEmail = (email: string) => {
-        const [local, domain] = email.split('@');
-        if (!local || !domain) return 'email***@***';
-        const visible = local.length > 2 ? local.substring(0, 2) : local.substring(0, 1);
-        return `${visible}***@${domain}`;
-    };
-
     return NextResponse.json({ 
-      message: genericMessage,
-      detail: `E-mail enviado para: ${maskEmail(user.email)}`
+      maskedEmail: maskEmail(user.email) 
     });
 
   } catch (error) {
