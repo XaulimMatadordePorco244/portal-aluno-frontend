@@ -14,16 +14,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'CPF é obrigatório.' }, { status: 400 });
     }
 
-    const user = await prisma.usuario.findUnique({ where: { cpf } });
+    const cleanCpf = cpf.replace(/\D/g, '');
 
+    const user = await prisma.usuario.findUnique({ 
+      where: { cpf: cleanCpf } 
+    });
+
+    const genericMessage = 'Se o CPF estiver cadastrado, você receberá um link no e-mail associado.';
 
     if (!user || !user.email) {
-      return NextResponse.json({ message: 'Se o CPF estiver em nosso sistema, um link será enviado para o e-mail associado.' });
+      delay(1000); 
+      return NextResponse.json({ message: genericMessage });
     }
-
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
     const passwordResetExpires = new Date(Date.now() + 3600 * 1000); 
 
     await prisma.usuario.update({
@@ -34,29 +40,39 @@ export async function POST(req: Request) {
       },
     });
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${resetToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
-    await resend.emails.send({
-      from: 'Guarda Mirim Naviraí – Sistema <no-reply@gmnaviraims.com.br>', 
+    const { error } = await resend.emails.send({
+      from: 'Guarda Mirim De Naviraí <no-reply@gmnaviraims.com.br>', 
       to: user.email,
-      subject: 'Recuperação de Senha - Portal do Aluno',
+      subject: 'Redefinição de Senha',
       react: ResetPasswordEmail({ resetLink: resetUrl }),
     });
-    
- 
+
+    if (error) {
+      console.error('Erro Resend:', error);
+      return NextResponse.json({ error: 'Erro ao enviar e-mail.' }, { status: 500 });
+    }
+
     const maskEmail = (email: string) => {
-        const [localPart, domain] = email.split('@');
-        if (localPart.length <= 2) {
-            return `${localPart.slice(0, 1)}***@${domain}`;
-        }
-        return `${localPart.slice(0, 2)}***@${domain}`;
+        const [local, domain] = email.split('@');
+        if (!local || !domain) return 'email***@***';
+        const visible = local.length > 2 ? local.substring(0, 2) : local.substring(0, 1);
+        return `${visible}***@${domain}`;
     };
 
-
-    return NextResponse.json({ message: `Um link foi enviado para o e-mail: ${maskEmail(user.email)}` });
+    return NextResponse.json({ 
+      message: genericMessage, 
+      detail: `E-mail enviado para: ${maskEmail(user.email)}` 
+    });
 
   } catch (error) {
-    console.error("Erro na rota request-reset:", error);
-    return NextResponse.json({ error: 'Ocorreu um erro interno no servidor.' }, { status: 500 });
+    console.error("Erro rota request-reset:", error);
+    return NextResponse.json({ error: 'Erro interno no servidor.' }, { status: 500 });
   }
+}
+
+function delay(arg0: number) {
+  throw new Error('Function not implemented.');
 }
