@@ -15,8 +15,10 @@ export async function POST(req: Request) {
 
     const result = resetSchema.safeParse(body);
     if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      const firstError = Object.values(errors)[0]?.[0] || 'Erro na validação';
       return NextResponse.json(
-        { error: result.error.errors[0].message },
+        { error: firstError },
         { status: 400 }
       );
     }
