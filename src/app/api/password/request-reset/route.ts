@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${resetToken}`;
 
     await resend.emails.send({
-      from: 'Portal do Aluno <onboarding@resend.dev>', 
+      from: 'Guarda Mirim Naviraí – Sistema <no-reply@gmnaviraims.com.br>', 
       to: user.email,
       subject: 'Recuperação de Senha - Portal do Aluno',
       react: ResetPasswordEmail({ resetLink: resetUrl }),
