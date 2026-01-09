@@ -7,20 +7,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/Button';
 import { Filter, Edit, Trash2, Settings, XCircle } from 'lucide-react';
 import { deleteTipoDeAnotacao } from './actions';
-import { cn } from '@/lib/utils'; // Certifique-se de ter essa função utilitária do shadcn/ui
+import { cn } from '@/lib/utils';
 
 type FilterType = 'all' | 'elogios' | 'punicoes' | 'fo_positivo' | 'fo_negativo' | 'elogio_aberto' | 'punicao_aberta';
 
-const formatarPontosHeader = (pontos: number | null) => {
+const formatarPontosHeader = (pontos: number | null, abertoCoordenacao: boolean, categoriaAberto: string | null) => {
+  if (abertoCoordenacao && categoriaAberto) {
+    return ` Aberto p/ Coordenação (${categoriaAberto === 'ELOGIO' ? 'Elogio' : 'Punição'}) `;
+  }
   if (pontos === null) return ' Aberto p/ Coordenação ';
   const pontosFormatados = Math.abs(pontos).toFixed(1);
   const texto = `${pontos > 0 ? '+' : ''}${pontosFormatados} Ponto${Math.abs(pontos) !== 1 ? 's' : ''}`;
   return ` ${texto} `;
 };
 
-// Função auxiliar para definir as cores
-const getGroupStyles = (pontos: number | null, abertoCoordenacao: boolean) => {
+const getGroupStyles = (pontos: number | null, abertoCoordenacao: boolean, categoriaAberto: string | null) => {
   if (abertoCoordenacao) {
+    if (categoriaAberto === 'ELOGIO') {
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
+    }
+    if (categoriaAberto === 'PUNICAO') {
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
+    }
     return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
   }
   if (pontos === null) {
@@ -32,7 +40,6 @@ const getGroupStyles = (pontos: number | null, abertoCoordenacao: boolean) => {
   if (pontos < 0) {
     return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
   }
-  // Caso seja exatamente 0 e não aberto
   return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300";
 };
 
@@ -52,9 +59,9 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
         case 'fo_negativo':
           return item.pontos !== null && item.pontos === -0.3;
         case 'elogio_aberto':
-          return item.abertoCoordenacao && item.pontos === 0;
+          return item.abertoCoordenacao && item.categoriaAberto === 'ELOGIO';
         case 'punicao_aberta':
-          return item.abertoCoordenacao && item.pontos === 0;
+          return item.abertoCoordenacao && item.categoriaAberto === 'PUNICAO';
         case 'all':
         default:
           return true;
@@ -64,18 +71,41 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
 
   const itensAgrupados = useMemo(() => {
     return itensFiltrados.reduce((acc, item) => {
-      const key = item.pontos?.toString() ?? 'manual';
+      let key: string;
+      
+      if (item.abertoCoordenacao) {
+        // Para itens abertos à coordenação, agrupa pela categoria
+        key = `aberto_${item.categoriaAberto}`;
+      } else if (item.pontos !== null) {
+        // Para itens com pontos fixos, agrupa pelo valor
+        key = item.pontos.toString();
+      } else {
+        // Para outros casos (null)
+        key = 'manual';
+      }
+      
       if (!acc[key]) { acc[key] = []; }
       acc[key].push(item);
       return acc;
     }, {} as Record<string, TipoDeAnotacao[]>);
   }, [itensFiltrados]);
 
-  // Ordena para que os positivos fiquem em cima, negativos em baixo
   const sortedGroupKeys = Object.keys(itensAgrupados).sort((a, b) => {
-      if (a === 'manual') return -1; // Manual primeiro (ou ajuste conforme preferência)
-      if (b === 'manual') return 1;
-      return parseFloat(b) - parseFloat(a);
+    if (a.startsWith('aberto_')) return -1; // Itens abertos primeiro
+    if (b.startsWith('aberto_')) return 1;
+    if (a === 'manual') return 1; // Manual no final
+    if (b === 'manual') return -1;
+    
+    const numA = parseFloat(a);
+    const numB = parseFloat(b);
+    
+    // Ordena do maior para o menor (elogios primeiro)
+    if (numA > 0 && numB > 0) return numB - numA;
+    if (numA < 0 && numB < 0) return numA - numB; // Punições: da menos negativa para a mais negativa
+    if (numA > 0 && numB < 0) return -1; // Elogios antes de punições
+    if (numA < 0 && numB > 0) return 1;
+    
+    return 0;
   });
 
   return (
@@ -84,14 +114,13 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Filtrar por:</span>
         <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant={filtro === 'all' ? 'default' : 'outline'} onClick={() => setFiltro('all')}>Todos</Button>
-            <Button size="sm" className="text-green-600 border-green-200 hover:bg-green-50" variant={filtro === 'elogios' ? 'secondary' : 'outline'} onClick={() => setFiltro('elogios')}>Elogios</Button>
-            <Button size="sm" className="text-red-600 border-red-200 hover:bg-red-50" variant={filtro === 'punicoes' ? 'secondary' : 'outline'} onClick={() => setFiltro('punicoes')}>Punições</Button>
-            <Button size="sm" variant={filtro === 'fo_positivo' ? 'default' : 'outline'} onClick={() => setFiltro('fo_positivo')}>FO+</Button>
-            <Button size="sm" variant={filtro === 'fo_negativo' ? 'default' : 'outline'} onClick={() => setFiltro('fo_negativo')}>FO-</Button>
-             {/* Botões de coordenação simplificados para caber melhor */}
-            <Button size="sm" className="text-yellow-600 border-yellow-200" variant={filtro === 'elogio_aberto' ? 'secondary' : 'outline'} onClick={() => setFiltro('elogio_aberto')}>Coord. (E)</Button>
-            <Button size="sm" className="text-yellow-600 border-yellow-200" variant={filtro === 'punicao_aberta' ? 'secondary' : 'outline'} onClick={() => setFiltro('punicao_aberta')}>Coord. (P)</Button>
+          <Button size="sm" variant={filtro === 'all' ? 'default' : 'outline'} onClick={() => setFiltro('all')}>Todos</Button>
+          <Button size="sm" className="text-green-600 border-green-200 hover:bg-green-50" variant={filtro === 'elogios' ? 'secondary' : 'outline'} onClick={() => setFiltro('elogios')}>Elogios</Button>
+          <Button size="sm" className="text-red-600 border-red-200 hover:bg-red-50" variant={filtro === 'punicoes' ? 'secondary' : 'outline'} onClick={() => setFiltro('punicoes')}>Punições</Button>
+          <Button size="sm" variant={filtro === 'fo_positivo' ? 'default' : 'outline'} onClick={() => setFiltro('fo_positivo')}>FO+</Button>
+          <Button size="sm" variant={filtro === 'fo_negativo' ? 'default' : 'outline'} onClick={() => setFiltro('fo_negativo')}>FO-</Button>
+          <Button size="sm" className="text-green-600 border-green-200 hover:bg-green-50" variant={filtro === 'elogio_aberto' ? 'secondary' : 'outline'} onClick={() => setFiltro('elogio_aberto')}>Coord. (Elogio)</Button>
+          <Button size="sm" className="text-red-600 border-red-200 hover:bg-red-50" variant={filtro === 'punicao_aberta' ? 'secondary' : 'outline'} onClick={() => setFiltro('punicao_aberta')}>Coord. (Punição)</Button>
         </div>
       </div>
 
@@ -103,26 +132,31 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
             const pontos = itemExemplo.pontos;
             const isManaging = managingGroupKey === key;
             
-            // Usa a nova função de estilos
-            const groupStyles = getGroupStyles(pontos, itemExemplo.abertoCoordenacao);
+            const groupStyles = getGroupStyles(
+              pontos, 
+              itemExemplo.abertoCoordenacao, 
+              itemExemplo.categoriaAberto
+            );
             
             return (
               <div key={key} className="shadow-sm rounded-lg overflow-hidden border">
-                
-                {/* Cabeçalho do Grupo */}
                 <div className={cn("flex items-center p-3 border-b transition-colors", groupStyles)}>
                   <div className="w-1/3 text-xs opacity-75 font-semibold uppercase tracking-wider">
                     {groupItens.length} item(s)
                   </div> 
                   <h3 className="w-1/3 text-center font-bold text-lg">
-                    {formatarPontosHeader(pontos)}
+                    {formatarPontosHeader(
+                      pontos, 
+                      itemExemplo.abertoCoordenacao, 
+                      itemExemplo.categoriaAberto
+                    )}
                   </h3>
                   <div className="w-1/3 flex justify-end"> 
                     <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setManagingGroupKey(isManaging ? null : key)}
-                        className="hover:bg-black/10 dark:hover:bg-white/10"
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setManagingGroupKey(isManaging ? null : key)}
+                      className="hover:bg-black/10 dark:hover:bg-white/10"
                     >
                       {isManaging ? <XCircle className="mr-2 h-4 w-4" /> : <Settings className="mr-2 h-4 w-4" />}
                       {isManaging ? 'Fechar' : 'Gerenciar'}
@@ -154,10 +188,10 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
                               <form action={deleteTipoDeAnotacao}>
                                 <input type="hidden" name="id" value={item.id} />
                                 <Button 
-                                    variant="destructive" 
-                                    size="icon" 
-                                    className="h-8 w-8" 
-                                    onClick={(e) => !window.confirm(`Tem certeza que deseja excluir "${item.titulo}"?`) && e.preventDefault()}
+                                  variant="destructive" 
+                                  size="icon" 
+                                  className="h-8 w-8" 
+                                  onClick={(e) => !window.confirm(`Tem certeza que deseja excluir "${item.titulo}"?`) && e.preventDefault()}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -170,16 +204,16 @@ export default function QPEList({ itens }: { itens: TipoDeAnotacao[] }) {
                   </TableBody>
                 </Table>
               </div>
-            )
+            );
           })
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg border-dashed">
             <Filter className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
             <p className="text-lg font-medium text-muted-foreground">
-                Nenhum item corresponde ao filtro selecionado.
+              Nenhum item corresponde ao filtro selecionado.
             </p>
             <Button variant="link" onClick={() => setFiltro('all')} className="mt-2">
-                Limpar filtros
+              Limpar filtros
             </Button>
           </div>
         )}
