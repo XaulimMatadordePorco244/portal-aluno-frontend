@@ -58,15 +58,23 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
 
     const tipoAnotacao = await prisma.tipoDeAnotacao.findUnique({
       where: { id: tipoId },
-      select: { pontos: true, abertoCoordenacao: true }
+      select: { pontos: true, abertoCoordenacao: true, categoriaAberto: true }
     });
-
+    let pontosFinais = pontosFormulario;
     if (!tipoAnotacao) {
       return { message: "O tipo de anotação selecionado não existe ou foi removido." };
     }
+    if (tipoAnotacao.abertoCoordenacao) {
+      if (tipoAnotacao.categoriaAberto === 'ELOGIO' && pontosFinais <= 0) {
+        return { message: "Para elogios abertos, a pontuação deve ser positiva." };
+      }
+      if (tipoAnotacao.categoriaAberto === 'PUNICAO' && pontosFinais >= 0) {
+        return { message: "Para punições abertas, a pontuação deve ser negativa." };
+      }
+    }
 
 
-    let pontosFinais = pontosFormulario;
+
 
     if (!tipoAnotacao.abertoCoordenacao) {
 

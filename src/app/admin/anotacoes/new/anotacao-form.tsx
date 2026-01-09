@@ -36,7 +36,7 @@ function SubmitButton() {
 
 const initialState: FormState = {};
 
-export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: AlunoComCompanhia[], tiposDeAnotacao: TipoDeAnotacao[] }) {
+export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: AlunoComCompanhia[], tiposDeAnotacao: TipoDeAnotacao[] }) {
 
   const [state, formAction] = useActionState<FormState, FormData>(createAnotacao, initialState);
 
@@ -46,20 +46,31 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
   const [selectedTipo, setSelectedTipo] = useState<TipoDeAnotacao | null>(null);
   const [pontos, setPontos] = useState<number | string>('');
   const [isTipoComboboxOpen, setIsTipoComboboxOpen] = useState(false);
-
   useEffect(() => {
-    if (selectedTipo) setPontos(selectedTipo.pontos ?? 0);
-    else setPontos('');
+    if (selectedTipo) {
+      if (selectedTipo.abertoCoordenacao) {
+        if (pontos === '' || pontos === selectedTipo.pontos) {
+          setPontos('');
+        }
+      } else {
+        setPontos(selectedTipo.pontos ?? 0);
+      }
+    } else {
+      setPontos('');
+    }
   }, [selectedTipo]);
 
   const companhias = useMemo(() => [...new Set(alunos.map(a => a.perfilAluno?.companhia?.nome).filter(Boolean))], [alunos]) as string[];
 
-  const { positivas, negativas } = useMemo(() => {
-    const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0);
-    const negativas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos < 0);
-    return { positivas, negativas };
-  }, [tiposDeAnotacao]);
+  const { positivas, negativas, abertasElogio, abertasPunicao } = useMemo(() => {
+    const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0 && !t.abertoCoordenacao);
+    const negativas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos < 0 && !t.abertoCoordenacao);
 
+    const abertasElogio = tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'ELOGIO');
+    const abertasPunicao = tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'PUNICAO');
+
+    return { positivas, negativas, abertasElogio, abertasPunicao };
+  }, [tiposDeAnotacao]);
   const handleCompanhiaChange = (companhia: string) => {
     const alunosDaCompanhia = alunos.filter(a => a.perfilAluno?.companhia?.nome === companhia);
     setSelectedAlunos(alunosDaCompanhia);
@@ -194,6 +205,50 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                <CommandSeparator />
+                {abertasElogio.length > 0 && (
+                  <>
+                    <CommandGroup heading="Elogios (Aberto para Coordenação)">
+                      {abertasElogio.map((tipo) => (
+                        <CommandItem
+                          key={tipo.id}
+                          value={`${tipo.titulo} ${tipo.descricao}`}
+                          onSelect={() => { setSelectedTipo(tipo); setIsTipoComboboxOpen(false); }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", selectedTipo?.id === tipo.id ? "opacity-100" : "opacity-0")} />
+                          <div className="flex flex-col">
+                            <span>{tipo.titulo}</span>
+                            <span className="text-xs text-muted-foreground">{tipo.descricao}</span>
+                            <span className="text-xs text-green-600 mt-0.5">Personalizável (positivo)</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandSeparator />
+                  </>
+                )}
+
+                {abertasPunicao.length > 0 && (
+                  <>
+                    <CommandGroup heading="Punições (Aberto para Coordenação)">
+                      {abertasPunicao.map((tipo) => (
+                        <CommandItem
+                          key={tipo.id}
+                          value={`${tipo.titulo} ${tipo.descricao}`}
+                          onSelect={() => { setSelectedTipo(tipo); setIsTipoComboboxOpen(false); }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", selectedTipo?.id === tipo.id ? "opacity-100" : "opacity-0")} />
+                          <div className="flex flex-col">
+                            <span>{tipo.titulo}</span>
+                            <span className="text-xs text-muted-foreground">{tipo.descricao}</span>
+                            <span className="text-xs text-red-600 mt-0.5">Personalizável (negativo)</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandSeparator />
+                  </>
+                )}
               </CommandList>
             </Command>
           </PopoverContent>
@@ -211,6 +266,14 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
         <div className="space-y-2">
           <Label htmlFor="pontos">Pontos</Label>
           <div className="relative">
+            {pontosValue !== 0 && selectedTipo?.abertoCoordenacao && (
+              <span className={cn(
+                "absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-medium",
+                selectedTipo?.categoriaAberto === 'ELOGIO' ? "text-green-600" : "text-red-600"
+              )}>
+                {selectedTipo?.categoriaAberto === 'ELOGIO' ? '+' : '-'}
+              </span>
+            )}
             {pontosValue !== 0 && (
               <span className={cn(
                 "absolute left-2.5 top-1/2 -translate-y-1/2 text-sm font-medium",
@@ -218,6 +281,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
               )}>
                 {pontosValue > 0 ? '+' : ''}
               </span>
+
             )}
             <Input
               id="pontos"
@@ -227,8 +291,12 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
               required
               value={pontos}
               onChange={(e) => setPontos(e.target.value)}
-              readOnly={!selectedTipo || !selectedTipo.abertoCoordenacao}
-              className="pl-7"
+              readOnly={!selectedTipo?.abertoCoordenacao}
+              className={cn(
+                "pl-7",
+                selectedTipo?.abertoCoordenacao && selectedTipo?.categoriaAberto === 'PUNICAO' && "text-red-600",
+                selectedTipo?.abertoCoordenacao && selectedTipo?.categoriaAberto === 'ELOGIO' && "text-green-600"
+              )}
             />
           </div>
           {selectedTipo && !selectedTipo.abertoCoordenacao && (<p className="text-xs text-muted-foreground pt-1">Pontuação padrão aplicada.</p>)}
@@ -243,7 +311,7 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao,  }: { alunos: Al
       </div>
 
       {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-     
+
 
       <div className="flex gap-2 pt-4">
         <SubmitButton />

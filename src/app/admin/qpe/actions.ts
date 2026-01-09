@@ -32,7 +32,14 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     descricao: string;
     pontos: number | null;
     abertoCoordenacao: boolean;
-  } = { titulo, descricao, pontos: null, abertoCoordenacao: false };
+    categoriaAberto: string | null;
+  } = { 
+    titulo, 
+    descricao, 
+    pontos: null, 
+    abertoCoordenacao: false,
+    categoriaAberto: null 
+  };
 
   switch (selectionType) {
     case 'FO_POSITIVO':
@@ -43,11 +50,11 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
       break;
     case 'ELOGIO_COORDENACAO':
       data.abertoCoordenacao = true;
-      data.pontos = null;
+      data.categoriaAberto = 'ELOGIO';
       break;
     case 'PUNICAO_COORDENACAO':
       data.abertoCoordenacao = true;
-      data.pontos = null;
+      data.categoriaAberto = 'PUNICAO';
       break;
     case 'ELOGIO_CUSTOM':
       if (!customPontos || parseFloat(customPontos) <= 0) {
@@ -60,7 +67,6 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
         return { message: 'Para Punição Manual, os pontos devem ser um número positivo.', type: 'error' };
       }
       data.pontos = -parseFloat(customPontos);
-
       break;
   }
 
@@ -69,7 +75,6 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     revalidatePath('/admin/qpe');
     return { message: `"${titulo}" foi adicionado com sucesso!`, type: 'success' };
   } catch (error: unknown) {
-
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002') {
       return { message: 'Já existe um item com este título.', type: 'error' };
     }
@@ -83,6 +88,8 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
     titulo: z.string().min(3, 'O título é obrigatório.'),
     descricao: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
     pontos: z.string().optional().transform(val => (val !== '' && val !== undefined) ? parseFloat(val) : null),
+    abertoCoordenacao: z.string().transform(val => val === 'true'),
+    categoriaAberto: z.string().nullable().optional(),
   });
 
   const validatedFields = UpdateSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -92,7 +99,7 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
     return { message: firstError || "Erro de validação.", type: 'error' };
   }
 
-  const { id, titulo, descricao, pontos } = validatedFields.data;
+  const { id, titulo, descricao, pontos, abertoCoordenacao, categoriaAberto } = validatedFields.data;
 
   try {
     await prisma.tipoDeAnotacao.update({
@@ -101,6 +108,8 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
         titulo,
         descricao,
         pontos,
+        abertoCoordenacao,
+        categoriaAberto,
       },
     });
   } catch {
