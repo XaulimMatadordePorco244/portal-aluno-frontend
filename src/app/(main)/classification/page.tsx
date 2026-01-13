@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import FormattedName from "@/components/FormattedName";
 
-
 type AlunoComRank = Awaited<ReturnType<typeof getAlunos>>[0] & {
   rank: number;
 };
@@ -38,9 +37,16 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
           <TableBody>
             {students.map((aluno) => {
               const isCurrentUser = aluno.id === loggedInUserId;
-
-
               const perfil = aluno.perfilAluno;
+              
+              let conceitoFormatado = '—';
+              
+              if (perfil?.conceitoAtual) {
+                const valorNumerico = parseFloat(String(perfil.conceitoAtual));
+                if (!isNaN(valorNumerico)) {
+                    conceitoFormatado = valorNumerico.toFixed(2).replace('.', ',');
+                }
+              }
 
               return (
                 <TableRow
@@ -49,11 +55,13 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
                 >
                   <TableCell className="font-bold text-lg text-center border-r">{aluno.rank}º</TableCell>
                   <TableCell className="font-medium border-r">
-
                     <FormattedName fullName={aluno.nome} warName={perfil?.nomeDeGuerra} />
                   </TableCell>
                   <TableCell className="font-mono border-r">{perfil?.numero || 'N/A'}</TableCell>
-                  <TableCell>{isCurrentUser ? (perfil?.conceitoAtual || '—') : '—'}</TableCell>
+                  
+                  <TableCell className="font-mono font-medium">
+                    {isCurrentUser ? conceitoFormatado : '—'}
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -63,6 +71,7 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
     </div>
   );
 };
+
 
 async function getAlunos() {
   return await prisma.usuario.findMany({
@@ -74,7 +83,6 @@ async function getAlunos() {
       }
     },
     include: {
-
       perfilAluno: {
         include: {
           cargo: true,
@@ -90,7 +98,6 @@ export default async function ClassificationPage() {
     getAlunos()
   ]);
 
-
   const groupedByCargo = allAlunos.reduce((acc, aluno) => {
     const cargoNome = aluno.perfilAluno?.cargo?.nome || 'Sem Cargo';
     if (!acc[cargoNome]) {
@@ -100,16 +107,13 @@ export default async function ClassificationPage() {
     return acc;
   }, {} as Record<string, typeof allAlunos>);
 
-
   const rankedCourses = Object.entries(groupedByCargo)
     .sort(([, alunosA], [, alunosB]) => {
-
       const precedenciaA = alunosA[0].perfilAluno?.cargo?.precedencia || 999;
       const precedenciaB = alunosB[0].perfilAluno?.cargo?.precedencia || 999;
       return precedenciaA - precedenciaB;
     })
     .map(([cargo, alunos]) => {
-
       const rankedAlunos = alunos
         .sort((a, b) => {
           const conceitoA = parseFloat(a.perfilAluno?.conceitoAtual || '0');

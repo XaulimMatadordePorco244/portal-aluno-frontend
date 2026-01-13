@@ -73,7 +73,7 @@ const RankingListItem = ({ rank, nome, conceito, numero, cargo, isCurrentUser }:
       </div>
       {isCurrentUser && (
         <div className="text-right shrink-0">
-          <p className="font-bold text-primary">{conceito}</p>
+          <p className="font-bold text-primary font-mono">{conceito}</p> {/* Adicionei font-mono aqui também */}
           <p className="text-xs text-muted-foreground">Conceito</p>
         </div>
       )}
@@ -112,17 +112,29 @@ export default function DashboardClient({
 
         <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="/classification">
           {rankingData.length > 0 ? (
-            rankingData.map(aluno => (
-              <RankingListItem
-                key={aluno.id}
-                rank={aluno.rank}
-                nome={aluno.nomeDeGuerra || aluno.nome}
-                conceito={aluno.conceitoAtual}
-                numero={aluno.numero}
-                cargo={aluno.cargo?.abreviacao || 'S/ Cargo'}
-                isCurrentUser={aluno.id === user.id}
-              />
-            ))
+            rankingData.map(aluno => {
+                
+                let conceitoFormatado = aluno.conceitoAtual;
+                
+                if (aluno.conceitoAtual) {
+                    const valorNumerico = parseFloat(String(aluno.conceitoAtual));
+                    if (!isNaN(valorNumerico)) {
+                        conceitoFormatado = valorNumerico.toFixed(2).replace('.', ',');
+                    }
+                }
+
+                return (
+                  <RankingListItem
+                    key={aluno.id}
+                    rank={aluno.rank}
+                    nome={aluno.nomeDeGuerra || aluno.nome}
+                    conceito={conceitoFormatado} 
+                    numero={aluno.numero}
+                    cargo={aluno.cargo?.abreviacao || 'S/ Cargo'}
+                    isCurrentUser={aluno.id === user.id}
+                  />
+                );
+            })
           ) : (
             <div className="flex items-center justify-center h-full p-4 min-h-[100px]">
                 <p className="text-center text-sm text-muted-foreground">Não há dados de classificação para seu cargo.</p>
