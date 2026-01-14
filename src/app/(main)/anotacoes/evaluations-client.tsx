@@ -40,13 +40,23 @@ const InfoPill = ({ label, count, points }: { label: string; count: number; poin
   </div>
 );
 
-export default function EvaluationsClient({ user, anotacoes }: { user: UserWithRelations, anotacoes: AnotacaoComRelacoes[] }) {
+interface EvaluationsClientProps {
+  user: UserWithRelations;
+  anotacoes: AnotacaoComRelacoes[];
+  conceitoAtual: number;
+}
+
+export default function EvaluationsClient({ 
+  user, 
+  anotacoes, 
+  conceitoAtual 
+}: EvaluationsClientProps) {
   const [activeFilter, setActiveFilter] = useState<AnnotationFilterType>('Todos');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const perfil = user.perfilAluno;
-  const conceitoAtualValor = Number(perfil?.conceitoAtual ?? perfil?.conceitoInicial ?? 0).toFixed(2);
+  const conceitoAtualValor = conceitoAtual.toFixed(2);
 
   const filteredByDate = useMemo(() => {
     if (!startDate && !endDate) return anotacoes;
@@ -223,7 +233,6 @@ export default function EvaluationsClient({ user, anotacoes }: { user: UserWithR
                       </span>
                     </div>
 
-                    {/* Data */}
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {format(new Date(anotacao.data), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
