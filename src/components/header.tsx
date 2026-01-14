@@ -45,7 +45,7 @@ const menuGroups = [
       { href: "/anotacoes", label: "Anotações", icon: ScrollText },
       { href: "/partes", label: "Minhas Partes", icon: AlertCircle },
       { href: "/minhas-tarefas", label: "Minhas Tarefas", icon: ListTodo },
-      { href: "/cargos", label: "Cargos e Funções", icon: Shield },
+      { href: "/cargos", label: "Histórico de Cargos", icon: Shield },
       { href: "/feedback", label: "Enviar Feedback", icon: MessageSquare }
     ]
   },
