@@ -7,7 +7,6 @@ import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from 'next/navigation';
 import { recalcularConceitoAluno } from "@/lib/conceitoUtils";
 
-
 export interface FormState {
   errors?: {
     alunoIds?: string[];
@@ -20,7 +19,6 @@ export interface FormState {
   message?: string;
 }
 
-
 const AnotacaoSchema = z.object({
   alunoIds: z.array(z.string().cuid()).min(1, "Selecione pelo menos um aluno."),
   tipoId: z.string().min(1, "Selecione o tipo de anotação."),
@@ -29,11 +27,10 @@ const AnotacaoSchema = z.object({
   detalhes: z.string().trim().min(3, "A descrição deve ter no mínimo 3 caracteres."),
 });
 
-
-
 export async function createAnotacao(prevState: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUserWithRelations();
   const allowedRoles = ['ADMIN'];
+  
   if (!user || !allowedRoles.includes(user.role)) {
     return { message: "Acesso negado: Você não tem permissão para realizar esta ação." };
   }
@@ -56,14 +53,51 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
 
   try {
 
+    
+    for (const alunoId of alunoIds) {
+      const alunoInfo = await prisma.perfilAluno.findUnique({
+        where: { id: alunoId },
+        include: { usuario: true } 
+      });
+
+      if (!alunoInfo) continue;
+
+      const ultimaPromocao = await prisma.cargoHistory.findFirst({
+        where: { alunoId: alunoId },
+        orderBy: { dataInicio: 'desc' }
+      });
+
+      if (ultimaPromocao) {
+        const dataPromocao = new Date(ultimaPromocao.dataInicio);
+        const dataLancamento = new Date(data);
+
+        dataPromocao.setHours(0, 0, 0, 0);
+        dataLancamento.setHours(0, 0, 0, 0);
+
+        if (dataLancamento < dataPromocao) {
+          const nomeAluno = alunoInfo.nomeDeGuerra || alunoInfo.usuario?.nome || "Aluno";
+          const dataPromoFormatada = dataPromocao.toLocaleDateString('pt-BR');
+          const dataLancaFormatada = dataLancamento.toLocaleDateString('pt-BR');
+
+          return { 
+            message: `BLOQUEADO: A data selecionada (${dataLancaFormatada}) é anterior à última promoção do aluno ${nomeAluno} (${dataPromoFormatada}). Lance apenas na vigência atual.` 
+          };
+        }
+      }
+    }
+
+
     const tipoAnotacao = await prisma.tipoDeAnotacao.findUnique({
       where: { id: tipoId },
       select: { pontos: true, abertoCoordenacao: true, categoriaAberto: true }
     });
-    let pontosFinais = pontosFormulario;
+
     if (!tipoAnotacao) {
       return { message: "O tipo de anotação selecionado não existe ou foi removido." };
     }
+
+    let pontosFinais = pontosFormulario;
+
     if (tipoAnotacao.abertoCoordenacao) {
       if (tipoAnotacao.categoriaAberto === 'ELOGIO' && pontosFinais <= 0) {
         return { message: "Para elogios abertos, a pontuação deve ser positiva." };
@@ -73,28 +107,40 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
       }
     }
 
-
-
-
     if (!tipoAnotacao.abertoCoordenacao) {
-
       pontosFinais = tipoAnotacao.pontos ?? 0;
     }
 
+    const anotacoesDataPromises = alunoIds.map(async (alunoId) => {
+      
+      const blocoCargo = await prisma.cargoHistory.findFirst({
+        where: {
+          alunoId: alunoId,
+          dataInicio: { lte: data }, 
+          OR: [
+            { dataFim: { gte: data } },
+            { dataFim: null }           
+          ]
+        },
+        select: { id: true } 
+      });
 
-    const anotacoesData = alunoIds.map(alunoId => ({
-      alunoId,
-      tipoId,
-      data,
-      pontos: pontosFinais,
-      detalhes,
-      autorId: user.id,
-    }));
+      return {
+        alunoId,
+        tipoId,
+        data,
+        pontos: pontosFinais,
+        detalhes,
+        autorId: user.id,
+        blocoCargoId: blocoCargo?.id || null 
+      };
+    });
+
+    const anotacoesData = await Promise.all(anotacoesDataPromises);
 
     await prisma.$transaction(
       anotacoesData.map(data => prisma.anotacao.create({ data }))
     );
-
 
     const resultadosCalculo = await Promise.allSettled(
       alunoIds.map(id => recalcularConceitoAluno(id))
@@ -111,8 +157,8 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
     return { message: "Ocorreu um erro interno ao processar sua solicitação. Tente novamente." };
   }
 
-
   revalidatePath("/admin/anotacoes");
   revalidatePath("/admin/alunos");
+  
   redirect("/admin/alunos");
 }
