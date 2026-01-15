@@ -1,4 +1,3 @@
-// app/api/partes/[id]/enviar/route.ts
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -6,11 +5,10 @@ import { getCurrentUser } from '@/lib/auth';
 
 export async function PUT(
   req: Request, 
-  { params }: { params: Promise<{ id: string }> } // params é uma Promise
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     const user = await getCurrentUser();
-    // Aguardar a Promise dos params
     const { id: parteId } = await params;
 
     if (!user?.userId) {

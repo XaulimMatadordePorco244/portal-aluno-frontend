@@ -31,7 +31,7 @@ export async function generatePartePDF(data: ParteData) {
     const perfil = data.autor.perfilAluno;
     
     const numero = data.numeroDocumento || 'DOC-S/N';
-    const nome = data.autor.nome;
+    const nomeDeGuerra = perfil?.nomeDeGuerra || data.autor.nome;
     const registro = perfil?.numero || 'N/A';
     const cargo = perfil?.cargo?.nome || 'Não informado';
     const dataCriacao = new Date(data.createdAt).toLocaleDateString('pt-BR');
@@ -93,7 +93,7 @@ export async function generatePartePDF(data: ParteData) {
     y += 10;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
-    doc.text(`Nome: ${nome}`, margin, y);
+    doc.text(`Nome de Guerra: ${nomeDeGuerra}`, margin, y);
     doc.text(`Número: ${registro}`, margin + maxW / 2, y);
     y += 7;
     doc.text(`Graduação/Posto: ${cargo}`, margin, y);
@@ -137,7 +137,6 @@ export async function generatePartePDF(data: ParteData) {
         y = signatureY;
     }
 
-    doc.line(pageW / 2 - 40, y, pageW / 2 + 40, y);
     doc.text(responsavel, pageW / 2, y + 5, { align: 'center' });
     doc.setFontSize(9);
     doc.text('Responsável pela Parte', pageW / 2, y + 9, { align: 'center' });

@@ -1,17 +1,14 @@
 import jsPDF from 'jspdf';
 
-// Interface para estender o jsPDF com métodos que precisamos
 interface jsPDFExtended extends jsPDF {
   getLineHeightFactor: () => number;
   splitTextToSize: (text: string, maxWidth: number) => string[];
-  // Para compatibilidade com autoTable
   autoTable?: (options: UserOptions) => jsPDF;
   lastAutoTable?: {
     finalY: number;
   };
 }
 
-// Interface para as opções do autoTable (simplificada)
 interface UserOptions {
   startY?: number;
   head?: RowInput[];
@@ -81,7 +78,6 @@ interface CellHookData {
   };
 }
 
-// Interface para o objeto interno do jsPDF
 interface jsPDFInternal {
   getNumberOfPages: () => number;
   pageSize: {
@@ -90,7 +86,6 @@ interface jsPDFInternal {
   };
 }
 
-// Interface para o GState do jsPDF
 interface GState {
   opacity: number;
 }
@@ -106,7 +101,7 @@ async function toBase64(url: string): Promise<string> {
   }
 
   try {
-    const allowedOrigins = ['localhost', '127.0.0.1', 'gmnavirai.com.br'];
+    const allowedOrigins = ['localhost', '127.0.0.1', 'gmnaviraims.com.br'];
     const parsedUrl = new URL(absoluteUrl);
     if (!allowedOrigins.some((o) => parsedUrl.hostname.includes(o))) {
       throw new Error('Acesso negado a domínio não autorizado.');
@@ -135,7 +130,6 @@ export class PDFBuilder {
   currentY: number;
 
   constructor(margin = 25) {
-    // Conversão segura para o tipo estendido
     this.doc = new jsPDF({ unit: 'mm', format: 'a4' }) as unknown as jsPDFExtended;
     this.pageWidth = this.doc.internal.pageSize.getWidth();
     this.pageHeight = this.doc.internal.pageSize.getHeight();
@@ -185,7 +179,6 @@ export class PDFBuilder {
   }
 
   addFooter(): this {
-    // Usando uma abordagem mais segura para obter o número de páginas
     const internal = this.doc.internal as unknown as jsPDFInternal;
     const pageCount = internal.getNumberOfPages?.() || 1;
     const footerStartY = this.pageHeight - this.margin;
@@ -217,7 +210,6 @@ export class PDFBuilder {
   addWatermark(): this {
     if (!this.watermarkBase64) return this;
     
-    // Abordagem segura para obter número de páginas
     const internal = this.doc.internal as unknown as jsPDFInternal;
     const pageCount = internal.getNumberOfPages?.() || 1;
     const imgWidth = 150;
@@ -229,8 +221,6 @@ export class PDFBuilder {
       this.doc.setPage(i);
       this.doc.saveGraphicsState();
       try {
-        // Abordagem mais segura para verificar e usar GState
-        // Primeiro tentamos acessar via propriedade do documento
         const docAny = this.doc as unknown as Record<string, unknown>;
         const GStateConstructor = docAny.GState as unknown as (new (options: { opacity: number }) => GState) | undefined;
         

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { generatePartePDF } from "@/lib/pdfGenerator";
+import { generatePartePDF } from "@/lib/PartepdfGenerator";
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { ProcessoCompleto  } from "@/lib/types";

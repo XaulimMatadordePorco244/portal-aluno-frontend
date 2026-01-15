@@ -17,17 +17,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Assunto, conteúdo e tipo são obrigatórios.' }, { status: 400 });
     }
 
-
     if (!Object.values(TipoProcesso).includes(tipo)) {
         return NextResponse.json({ error: 'Tipo de processo inválido.' }, { status: 400 });
     }
 
- 
     const novaParte = await prisma.$transaction(async (tx) => {
-        const config = await tx.configuracao.update({
+        const config = await tx.configuracao.upsert({
             where: { id: "singleton" },
-            data: { ultimaParteNumero: { increment: 1 } },
+            update: { ultimaParteNumero: { increment: 1 } },
+            create: { 
+                id: "singleton", 
+                ultimaParteNumero: 1 
+            },
         });
+
         const novoNumero = config.ultimaParteNumero;
         const numeroFormatado = `DOC-${String(novoNumero).padStart(4, '0')}-${new Date().getFullYear()}`;
 
