@@ -90,7 +90,12 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
             <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
               <InfoRow label="Número" value={perfil?.numero} />
               <InfoRow label="Ano de Ingresso" value={perfil?.anoIngresso} />
-              <InfoRow label="Conceito Atual" value={perfil?.conceitoAtual} />
+              
+              <InfoRow 
+                label="Conceito Atual" 
+                value={perfil?.conceitoAtual ? Number(perfil.conceitoAtual).toFixed(2).replace('.', ',') : null} 
+              />
+              
               <InfoRow label="Situação" value={perfil?.foraDeData ? "Ingresso fora de data" : "Regular"} />
             </div>
           </section>
