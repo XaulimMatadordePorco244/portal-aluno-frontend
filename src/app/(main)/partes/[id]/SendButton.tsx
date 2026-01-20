@@ -4,23 +4,37 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Send, Loader2 } from "lucide-react";
+import { generatePartePDF } from "@/lib/PartepdfGenerator";
 
-export function SendButton({ parteId }: { parteId: string }) {
+interface SendButtonProps {
+    parte: any;
+}
+
+export function SendButton({ parte }: SendButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
     const handleSend = async () => {
-        if (!confirm("Você tem certeza que deseja enviar esta parte para análise? Ela não poderá mais ser editada.")) {
-            return;
-        }
+        const confirmou = window.confirm(
+            "Tem certeza que deseja oficializar este documento?\n\n" +
+            "• Um número de protocolo será gerado.\n" +
+            "• O documento será enviado ao Comandante.\n" +
+            "• Você não poderá mais editar o texto."
+        );
+
+        if (!confirmou) return;
 
         setIsLoading(true);
-        setError(null);
-        
+
         try {
-            const response = await fetch(`/api/partes/${parteId}/enviar`, {
-                method: 'PUT',
+            const pdfFile = await generatePartePDF(parte);
+            
+            const formData = new FormData();
+            formData.append("file", pdfFile);
+
+            const response = await fetch(`/api/partes/${parte.id}/enviar`, {
+                method: 'POST',
+                body: formData,
             });
 
             if (!response.ok) {
@@ -28,31 +42,35 @@ export function SendButton({ parteId }: { parteId: string }) {
                 throw new Error(data.error || 'Falha ao enviar a parte.');
             }
 
-      
+            alert("Parte enviada com sucesso! O protocolo foi gerado.");
             router.refresh();
 
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("Ocorreu um erro inesperado.");
-            }
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || "Ocorreu um erro ao enviar.");
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex flex-col items-center w-full">
-            <Button onClick={handleSend} disabled={isLoading} size="lg">
-                {isLoading ? (
+        <Button
+            onClick={handleSend}
+            disabled={isLoading}
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+        >
+            {isLoading ? (
+                <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
+                    Processando...
+                </>
+            ) : (
+                <>
                     <Send className="mr-2 h-4 w-4" />
-                )}
-                {isLoading ? "Enviando..." : "Enviar para Análise"}
-            </Button>
-            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
-        </div>
+                    Enviar para Análise
+                </>
+            )}
+        </Button>
     );
 }

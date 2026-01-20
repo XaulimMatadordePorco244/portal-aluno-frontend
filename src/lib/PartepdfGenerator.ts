@@ -21,7 +21,7 @@ const toBase64 = async (url: string) => {
     });
 };
 
-export async function generatePartePDF(data: ParteData) {
+export async function generatePartePDF(data: ParteData): Promise<File> {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
     const logoUrl = '/img/logo.png'; 
@@ -30,7 +30,7 @@ export async function generatePartePDF(data: ParteData) {
     
     const perfil = data.autor.perfilAluno;
     
-    const numero = data.numeroDocumento || 'DOC-S/N';
+    const numero = data.numeroDocumento || 'DOC-SN';
     const nomeDeGuerra = perfil?.nomeDeGuerra || data.autor.nome;
     const registro = perfil?.numero || 'N/A';
     const cargo = perfil?.cargo?.nome || 'Não informado';
@@ -149,5 +149,8 @@ export async function generatePartePDF(data: ParteData) {
         addFooter();
     }
     
-    doc.save(`PARTE_${numero}.pdf`);
+    const pdfBlob = doc.output('blob');
+    const nomeLimpo = numero.replace(/[^a-zA-Z0-9]/g, '-');
+    
+    return new File([pdfBlob], `PARTE_${nomeLimpo}.pdf`, { type: "application/pdf" });
 }

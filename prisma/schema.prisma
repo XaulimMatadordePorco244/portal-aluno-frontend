@@ -105,7 +105,6 @@ model Usuario {
   anotacoesFeitas      Anotacao[]           @relation("AnotacoesFeitasPeloAutor")
   etapasResponsavel    EtapaProcesso[]
   logsAtor             LogParte[]
-  partesCriadas        Parte[]
   qesCriados           QES[]
   logsCargoAdmin       CargoLog[]
   comunicacoesCriadas  ComunicacaoInterna[] @relation("CIsCriadas")
@@ -114,44 +113,49 @@ model Usuario {
   perfilAluno          PerfilAluno?
   responsaveis         Responsabilidade[]   @relation("Aluno")
   dependentes          Responsabilidade[]   @relation("Responsavel")
+  
+  partesCriadas             Parte[]           @relation("AutorParte")
+  partesSobResponsabilidade Parte[]           @relation("ResponsavelParte")
+  partesAnalisadas Parte[] @relation("ComandanteAnalise")
+  investigacoesBravura      ProcessoBravura[] @relation("OficialBravura")
 
   @@map("usuarios")
 }
 
 model PerfilAluno {
-  id                            String               @id @default(cuid())
-  usuarioId                     String               @unique
-  numero                        String?              @unique
+  id                            String              @id @default(cuid())
+  usuarioId                     String              @unique
+  numero                        String?             @unique
   anoIngresso                   Int?
   nomeDeGuerra                  String?
   tipagemSanguinea              tipagemSanguinea?
   aptidaoFisicaStatus           AptidaoFisicaStatus?
-  aptidaoFisicaLaudo            Boolean              @default(false)
-  aptidaoFisicaObs              String?              @db.Text
+  aptidaoFisicaLaudo            Boolean             @default(false)
+  aptidaoFisicaObs              String?             @db.Text
   escola                        String?
   serieEscolar                  String?
-  endereco                      String?              @db.Text
-  termoResponsabilidadeAssinado Boolean              @default(false)
-  fazCursoExterno               Boolean              @default(false)
-  cursoExternoDescricao         String?              @db.Text
+  endereco                      String?             @db.Text
+  termoResponsabilidadeAssinado Boolean             @default(false)
+  fazCursoExterno               Boolean             @default(false)
+  cursoExternoDescricao         String?             @db.Text
   cargoId                       String?
   funcaoId                      String?
   companhiaId                   String?
-  createdAt                     DateTime             @default(now())
-  updatedAt                     DateTime             @updatedAt
+  createdAt                     DateTime            @default(now())
+  updatedAt                     DateTime            @updatedAt
   conceitoAtual                 String?
   conceitoInicial               String?
-  foraDeData                    Boolean              @default(false)
-  anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
+  foraDeData                    Boolean             @default(false)
+  anotacoesRecebidas            Anotacao[]          @relation("AnotacoesDoAluno")
   desempenhosEscolares          DesempenhoEscolar[]
   feedbacks                     Feedback[]
   historicoCargos               CargoHistory[]
-  escalasAtribuidas             EscalaItem[]         @relation("EscalasAtribuidas")
+  escalasAtribuidas             EscalaItem[]        @relation("EscalasAtribuidas")
   frequencias                   Frequencia[]
-  cargo                         Cargo?               @relation(fields: [cargoId], references: [id])
-  companhia                     Companhia?           @relation(fields: [companhiaId], references: [id])
-  funcao                        Funcao?              @relation(fields: [funcaoId], references: [id])
-  usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cargo                         Cargo?              @relation(fields: [cargoId], references: [id])
+  companhia                     Companhia?          @relation(fields: [companhiaId], references: [id])
+  funcao                        Funcao?             @relation(fields: [funcaoId], references: [id])
+  usuario                       Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
 
   @@index([cargoId])
@@ -313,22 +317,52 @@ model Funcao {
 }
 
 model Parte {
-  id              String          @id @default(cuid())
+  id              String        @id @default(cuid())
+  numeroDocumento String?       @unique 
+  tipo            TipoProcesso
   assunto         String
-  conteudo        String          @db.Text
-  status          StatusParte     @default(RASCUNHO)
+  conteudo        String        @db.Text
+  dataFato        DateTime?     
+  urlPdf           String?
+  dataEnvio       DateTime?     
+  
+  status          StatusParte   @default(RASCUNHO)
+  
   autorId         String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  dataEnvio       DateTime?
-  numeroDocumento String?         @unique
-  tipo            TipoProcesso    @default(GENERICO)
-  analises        Analise[]
-  etapas          EtapaProcesso[]
-  logs            LogParte[]
-  autor           Usuario         @relation(fields: [autorId], references: [id])
+  autor           Usuario       @relation("AutorParte", fields: [autorId], references: [id])
+  
+  responsavelAtualId String?    
+  responsavelAtual   Usuario?   @relation("ResponsavelParte", fields: [responsavelAtualId], references: [id])
 
-  @@index([autorId])
+  processoBravura ProcessoBravura?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  analiseComando  String?       @db.Text 
+  dataAnalise     DateTime?             
+  analisadoPorId  String?                
+  analisadoPor    Usuario?      @relation("ComandanteAnalise", fields: [analisadoPorId], references: [id])
+  
+  logs            LogParte[]
+  analises        Analise[]     
+  etapas          EtapaProcesso[]
+}
+
+model ProcessoBravura {
+  id                 String   @id @default(cuid())
+  parteId            String   @unique
+  parte              Parte    @relation(fields: [parteId], references: [id])
+  
+  oficialId          String   
+  oficial            Usuario  @relation("OficialBravura", fields: [oficialId], references: [id])
+  
+  prazoInvestigacao  DateTime 
+  
+  parecerOficial     String?  @db.Text
+  parecerCoordenacao String?  @db.Text
+  
+  decisaoFinal       String?  
 }
 
 model Analise {
@@ -362,6 +396,7 @@ model LogParte {
 model Configuracao {
   id                String @id @default("singleton")
   ultimaParteNumero Int    @default(0)
+  anoReferencia     Int?   @default(2025)
 }
 
 model EtapaProcesso {
@@ -540,10 +575,13 @@ enum CategoriaCargo {
 
 enum StatusParte {
   RASCUNHO
-  ENVIADA
-  ANALISADA
-  APROVADO
-  REPROVADO
+  AGUARDANDO_COMANDANTE 
+  EM_ANALISE_COMANDANTE 
+  EM_INVESTIGACAO      
+  AGUARDANDO_COORDENACAO
+  DEFERIDO           
+  INDEFERIDO           
+  ENCAMINHADO           
 }
 
 enum ResultadoAnalise {

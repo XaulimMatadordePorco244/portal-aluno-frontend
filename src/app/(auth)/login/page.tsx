@@ -35,7 +35,9 @@ export default function LoginPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Falha no login');
       }
-
+      if (data.role === "ADMIN"){
+        router.push('/admin')
+      }
       router.push('/dashboard');
 
     } catch (err) {
