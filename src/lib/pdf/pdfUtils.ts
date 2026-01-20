@@ -92,31 +92,56 @@ interface GState {
 
 async function toBase64(url: string): Promise<string> {
   let absoluteUrl = url;
+  
   if (!url.startsWith('http')) {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    absoluteUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    if (typeof window !== 'undefined') {
+      absoluteUrl = `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+    } else {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      absoluteUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
     console.log('PDFBuilder: Buscando imagem de:', absoluteUrl);
   }
 
   try {
-    const allowedOrigins = ['localhost', '127.0.0.1', 'gmnaviraims.com.br'];
+    const allowedOrigins = [
+      'localhost', 
+      '127.0.0.1', 
+      'gmnaviraims.com.br',
+      'vercel.app' 
+    ];
+    
     const parsedUrl = new URL(absoluteUrl);
     if (!allowedOrigins.some((o) => parsedUrl.hostname.includes(o))) {
-      throw new Error('Acesso negado a domínio não autorizado.');
+       throw new Error(`Acesso negado: domínio ${parsedUrl.hostname} não autorizado.`);
     }
 
     const response = await fetch(absoluteUrl);
-    if (!response.ok)
-      throw new Error(`Falha ao buscar imagem: ${response.status} ${response.statusText} de ${absoluteUrl}`);
+    if (!response.ok) {
+      throw new Error(`Falha ao buscar imagem: ${response.status} ${response.statusText}`);
+    }
+
     const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
     const mimeType = response.headers.get('content-type') || 'image/png';
+
+    let base64 = '';
+    if (typeof window !== 'undefined') {
+      const bytes = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        base64 += String.fromCharCode(bytes[i]);
+      }
+      base64 = window.btoa(base64);
+    } else {
+      base64 = Buffer.from(arrayBuffer).toString('base64');
+    }
+
     return `data:${mimeType};base64,${base64}`;
+    
   } catch (error) {
     console.error(`Erro na função toBase64 ao buscar ${absoluteUrl}:`, error);
-    throw error;
+    throw error; 
   }
 }
 
@@ -153,9 +178,9 @@ export class PDFBuilder {
 
   addHeader(): this {
     if (this.logoBase64) {
-      const logoY = this.margin - 10;
+      const logoY = this.margin - 20;
       const logoSize = 27;
-      const logoX = this.margin + 11;
+      const logoX = this.margin + 2;
       this.doc.addImage(this.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize);
     }
 
@@ -165,13 +190,13 @@ export class PDFBuilder {
 
     this.doc.setFont('helvetica', 'bold');
     this.doc.setFontSize(19);
-    this.doc.text('GUARDA MIRIM DE NAVIRAÍ-MS', textCenterX, this.margin + 5, { align: 'center' });
+    this.doc.text('GUARDA MIRIM DE NAVIRAÍ-MS', textCenterX, this.margin - 5, { align: 'center' });
     this.doc.setFontSize(15);
-    this.doc.text('ESTADO DE MATO GROSSO DO SUL', textCenterX, this.margin + 12, { align: 'center' });
+    this.doc.text('ESTADO DE MATO GROSSO DO SUL', textCenterX, this.margin + 2, { align: 'center' });
 
-    const lineY = this.margin + 20;
+    const lineY = this.margin + 9.5;
     this.doc.setLineWidth(1);
-    this.doc.line(this.margin, lineY, this.pageWidth - this.margin, lineY);
+    this.doc.line(this.margin - 11 , lineY, this.pageWidth - 14, lineY);
 
     this.currentY = lineY + 10;
     this.doc.setFont('helvetica', 'normal');
@@ -181,7 +206,7 @@ export class PDFBuilder {
   addFooter(): this {
     const internal = this.doc.internal as unknown as jsPDFInternal;
     const pageCount = internal.getNumberOfPages?.() || 1;
-    const footerStartY = this.pageHeight - this.margin;
+    const footerStartY = this.pageHeight - 10;
 
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
@@ -244,7 +269,7 @@ export class PDFBuilder {
     return lines.length * fontHeightInPoints * pointsToMm;
   }
 
-  addTitle(text: string, fontSize = 14, spacingAfter = 5): this {
+  addTitle(text: string, fontSize = 16, spacingAfter = 5): this {
     if (this.currentY < this.margin) this.currentY = this.margin;
     const textHeight = this.getTextHeight(text, fontSize, this.pageWidth - this.margin * 2);
     if (this.currentY + textHeight > this.pageHeight - this.margin) {
