@@ -5,8 +5,11 @@ import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { AlertCircle, CheckCircle2, Clock, CalendarDays, XCircle, Info } from 'lucide-react'
-import { isSameDay } from 'date-fns'
+import { AlertCircle, CheckCircle2, Clock, CalendarDays, XCircle, Info, ListFilter, X } from 'lucide-react'
+import { isSameDay, format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Button } from '@/components/ui/Button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface ItemCalendario {
     tipoOrigem: 'FREQUENCIA' | 'INSTITUCIONAL'
@@ -17,15 +20,20 @@ interface ItemCalendario {
     titulo?: string
     tipoEvento?: 'FERIADO' | 'AULA_EXTRA' | 'CANCELADO' | 'EVENTO'
     descricao?: string | null
+    observacao?: string | null
 }
 
 interface DashboardProps {
     itens: ItemCalendario[]
 }
 
+type TipoFiltro = 'PRESENTE' | 'FALTA' | 'JUSTIFICADA' | null
+
 export function FrequenciaDashboard({ itens }: DashboardProps) {
     const [date, setDate] = useState<Date | undefined>(new Date())
+    const [filtroAtivo, setFiltroAtivo] = useState<TipoFiltro>(null)
 
+    // Dados processados
     const frequencias = itens.filter(i => i.tipoOrigem === 'FREQUENCIA')
     const totalAulas = frequencias.length
     const presentes = frequencias.filter(f => f.status === 'PRESENTE').length
@@ -36,6 +44,7 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
         ? Math.round(((presentes + justificadas) / totalAulas) * 100)
         : 100
 
+    // Mapeamento para o calendário
     const diasPresentes = frequencias.filter(f => f.status === 'PRESENTE').map(f => f.data)
     const diasFaltas = frequencias.filter(f => f.status === 'FALTA').map(f => f.data)
     const diasJustificadas = frequencias.filter(f => f.status === 'JUSTIFICADA').map(f => f.data)
@@ -44,17 +53,48 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
     const diasFeriado = eventosInst.filter(e => e.tipoEvento === 'FERIADO' || e.tipoEvento === 'CANCELADO').map(e => e.data)
     const diasEvento = eventosInst.filter(e => e.tipoEvento === 'EVENTO' || e.tipoEvento === 'AULA_EXTRA').map(e => e.data)
 
+    // Lógica de Seleção
+    const handleDateSelect = (newDate: Date | undefined) => {
+        setDate(newDate)
+        setFiltroAtivo(null) // Reseta o filtro de lista ao clicar no calendário
+    }
+
+    const handleFilterSelect = (tipo: TipoFiltro) => {
+        if (filtroAtivo === tipo) {
+            setFiltroAtivo(null) // Desativa se clicar no mesmo
+        } else {
+            setFiltroAtivo(tipo)
+        }
+    }
+
+    // Preparação dos dados para exibição (Dia x Lista Filtrada)
     const itensDoDia = date
         ? itens.filter(i => isSameDay(i.data, date))
         : []
 
+    const listaFiltrada = filtroAtivo
+        ? frequencias.filter(f => f.status === filtroAtivo).sort((a, b) => b.data.getTime() - a.data.getTime())
+        : []
+
+    // Cores dinâmicas para o cabeçalho do card de detalhes
+    const getCardHeaderColor = () => {
+        switch (filtroAtivo) {
+            case 'FALTA': return 'border-t-red-500 bg-red-50/50 dark:bg-red-950/20'
+            case 'JUSTIFICADA': return 'border-t-amber-500 bg-amber-50/50 dark:bg-amber-950/20'
+            case 'PRESENTE': return 'border-t-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
+            default: return 'border-t-blue-500 bg-muted/10'
+        }
+    }
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
+            {/* Coluna Esquerda: Stats + Detalhes */}
             <div className="lg:col-span-4 space-y-6">
 
+                {/* Card de Assiduidade (Agora Interativo) */}
                 <Card className="border-l-4 border-l-emerald-600 shadow-sm overflow-hidden relative">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                         <CheckCircle2 className="w-24 h-24" />
                     </div>
                     <CardHeader className="pb-2">
@@ -64,87 +104,174 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Progress value={aproveitamento} className="h-2 mb-4 bg-emerald-100 [&>div]:bg-emerald-600" />
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                            <div className="flex flex-col items-center">
-                                <span className="font-bold text-emerald-600">{presentes}</span>
-                                <span className="text-xs">Presentes</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="font-bold text-red-600">{faltas}</span>
-                                <span className="text-xs">Faltas</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="font-bold text-amber-600">{justificadas}</span>
-                                <span className="text-xs">Justif.</span>
-                            </div>
+                        <Progress value={aproveitamento} className="h-2 mb-6 bg-emerald-100 [&>div]:bg-emerald-600" />
+                        
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                            {/* Botão Presentes */}
+                            <button 
+                                onClick={() => handleFilterSelect('PRESENTE')}
+                                className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'PRESENTE' ? 'bg-emerald-100 ring-2 ring-emerald-500 dark:bg-emerald-900/40' : ''}`}
+                            >
+                                <span className="font-bold text-2xl text-emerald-600">{presentes}</span>
+                                <span className="text-xs text-muted-foreground font-medium">Presentes</span>
+                            </button>
+
+                            {/* Botão Faltas */}
+                            <button 
+                                onClick={() => handleFilterSelect('FALTA')}
+                                className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'FALTA' ? 'bg-red-100 ring-2 ring-red-500 dark:bg-red-900/40' : ''}`}
+                            >
+                                <span className="font-bold text-2xl text-red-600">{faltas}</span>
+                                <span className="text-xs text-muted-foreground font-medium">Faltas</span>
+                            </button>
+
+                            {/* Botão Justificadas */}
+                            <button 
+                                onClick={() => handleFilterSelect('JUSTIFICADA')}
+                                className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'JUSTIFICADA' ? 'bg-amber-100 ring-2 ring-amber-500 dark:bg-amber-900/40' : ''}`}
+                            >
+                                <span className="font-bold text-2xl text-amber-600">{justificadas}</span>
+                                <span className="text-xs text-muted-foreground font-medium">Justif.</span>
+                            </button>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="h-fit border-t-4 border-t-blue-500">
-                    <CardHeader className="bg-muted/10 pb-4 border-b">
+                {/* Card de Detalhes (Condicional: Dia ou Lista) */}
+                <Card className={`h-fit border-t-4 transition-colors duration-300 ${getCardHeaderColor()}`}>
+                    <CardHeader className="pb-4 border-b flex flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-lg flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-blue-500" />
-                            {date ? date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }) : 'Selecione uma data'}
+                            {filtroAtivo ? (
+                                <>
+                                    <ListFilter className="w-5 h-5" />
+                                    <span>
+                                        {filtroAtivo === 'PRESENTE' && 'Histórico de Presenças'}
+                                        {filtroAtivo === 'FALTA' && 'Relatório de Faltas'}
+                                        {filtroAtivo === 'JUSTIFICADA' && 'Justificativas'}
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <Clock className="w-5 h-5" />
+                                    <span>{date ? format(date, "d 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}</span>
+                                </>
+                            )}
                         </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-6 min-h-[200px]">
-                        {itensDoDia.length > 0 ? (
-                            <div className="space-y-4">
-                                {itensDoDia.map((item) => (
-                                    <div key={item.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2">
-                                        <div className="mt-1">
-                                            {item.tipoOrigem === 'FREQUENCIA' && item.status === 'PRESENTE' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                                            {item.tipoOrigem === 'FREQUENCIA' && item.status === 'FALTA' && <XCircle className="w-5 h-5 text-red-500" />}
-                                            {item.tipoOrigem === 'FREQUENCIA' && item.status === 'JUSTIFICADA' && <AlertCircle className="w-5 h-5 text-amber-500" />}
-                                            {item.tipoOrigem === 'INSTITUCIONAL' && <Info className="w-5 h-5 text-blue-500" />}
-                                        </div>
-
-                                        <div>
-                                            {item.tipoOrigem === 'FREQUENCIA' ? (
-                                                <>
-                                                    <h4 className="font-semibold text-base">
-                                                        {item.status === 'PRESENTE' ? 'Presença Confirmada' : item.status === 'FALTA' ? 'Falta Registrada' : 'Falta Justificada'}
-                                                    </h4>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {item.tipoAula === 'GERAL' ? 'Instrução de Rotina' : item.tipoAula?.replace('INST_', 'Instrutor ')}
-                                                    </p>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <h4 className="font-semibold text-base text-blue-700 dark:text-blue-400">{item.titulo}</h4>
-                                                    <Badge variant="secondary" className="mt-1 mb-1 text-[10px]">{item.tipoEvento}</Badge>
-                                                    {item.descricao && <p className="text-sm text-muted-foreground mt-1">{item.descricao}</p>}
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-6 gap-2">
-                                <CalendarDays className="w-8 h-8 opacity-20" />
-                                <p className="text-sm">Nada registrado nesta data.</p>
-                            </div>
+                        {filtroAtivo && (
+                            <Button variant="ghost" size="icon" onClick={() => setFiltroAtivo(null)} className="h-8 w-8">
+                                <X className="w-4 h-4" />
+                            </Button>
                         )}
+                    </CardHeader>
+                    
+                    <CardContent className="pt-0 min-h-[300px] p-0">
+                        <ScrollArea className="h-[300px] p-6 w-full">
+                            {filtroAtivo ? (
+                                /* --- VISUALIZAÇÃO DE LISTA --- */
+                                <div className="space-y-4">
+                                    {listaFiltrada.length > 0 ? (
+                                        listaFiltrada.map((item) => (
+                                            <div key={item.id} className="flex flex-col gap-1 pb-3 border-b last:border-0 animate-in fade-in slide-in-from-right-4">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-sm">
+                                                        {format(item.data, "dd/MM/yyyy")}
+                                                    </span>
+                                                    <Badge variant="outline" className="text-[10px]">
+                                                        {item.tipoAula?.replace('INST_', '') || 'Geral'}
+                                                    </Badge>
+                                                </div>
+                                                
+                                                {/* Exibe o Motivo/Observação se existir */}
+                                                {(item.observacao) ? (
+                                                    <p className="text-sm text-foreground bg-muted/50 p-2 rounded-md mt-1">
+                                                        <span className="font-semibold text-xs text-muted-foreground block mb-0.5">Motivo/Obs:</span>
+                                                        {item.observacao}
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-xs text-muted-foreground italic mt-1">
+                                                        {item.status === 'FALTA' ? 'Sem justificativa registrada.' : 'Sem observações.'}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-10">
+                                            <CheckCircle2 className="w-10 h-10 mb-2 opacity-20" />
+                                            <p>Nenhum registro encontrado.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* --- VISUALIZAÇÃO DO DIA (Padrão) --- */
+                                <>
+                                    {itensDoDia.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {itensDoDia.map((item) => (
+                                                <div key={item.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2">
+                                                    <div className="mt-1">
+                                                        {item.tipoOrigem === 'FREQUENCIA' && item.status === 'PRESENTE' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                                                        {item.tipoOrigem === 'FREQUENCIA' && item.status === 'FALTA' && <XCircle className="w-5 h-5 text-red-500" />}
+                                                        {item.tipoOrigem === 'FREQUENCIA' && item.status === 'JUSTIFICADA' && <AlertCircle className="w-5 h-5 text-amber-500" />}
+                                                        {item.tipoOrigem === 'INSTITUCIONAL' && <Info className="w-5 h-5 text-blue-500" />}
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        {item.tipoOrigem === 'FREQUENCIA' ? (
+                                                            <>
+                                                                <h4 className="font-semibold text-base">
+                                                                    {item.status === 'PRESENTE' ? 'Presença Confirmada' : item.status === 'FALTA' ? 'Falta Registrada' : 'Falta Justificada'}
+                                                                </h4>
+                                                                <p className="text-sm text-muted-foreground mb-1">
+                                                                    {item.tipoAula === 'GERAL' ? 'Instrução de Rotina' : item.tipoAula?.replace('INST_', 'Instrutor ')}
+                                                                </p>
+                                                                {item.observacao && (
+                                                                     <p className="text-xs bg-muted p-1.5 rounded text-muted-foreground">
+                                                                        {item.observacao}
+                                                                     </p>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <h4 className="font-semibold text-base text-blue-700 dark:text-blue-400">{item.titulo}</h4>
+                                                                <Badge variant="secondary" className="mt-1 mb-1 text-[10px]">{item.tipoEvento}</Badge>
+                                                                {item.descricao && <p className="text-sm text-muted-foreground mt-1">{item.descricao}</p>}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-6 gap-2 mt-10">
+                                            <CalendarDays className="w-8 h-8 opacity-20" />
+                                            <p className="text-sm">Nada registrado nesta data.</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </ScrollArea>
                     </CardContent>
                 </Card>
             </div>
 
+            {/* Coluna Direita: Calendário */}
             <div className="lg:col-span-8">
                 <Card className="h-full flex flex-col shadow-md">
                     <CardHeader>
                         <CardTitle>Calendário de Atividades</CardTitle>
-                        <CardDescription>Visualize sua frequência e eventos da Guarda Mirim.</CardDescription>
+                        <CardDescription>
+                            {filtroAtivo 
+                                ? 'Modo de visualização de lista ativo. Clique em uma data para voltar.' 
+                                : 'Visualize sua frequência e eventos da Guarda Mirim.'}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 p-2 sm:p-6 flex justify-center">
-
                         <Calendar
                             mode="single"
                             selected={date}
-                            onSelect={setDate}
+                            onSelect={handleDateSelect}
                             className="rounded-md border w-full max-w-full"
+                            // ... (Mantenha as configurações de styles e modifiers originais aqui) ...
                             classNames={{
                                 month: "space-y-4 w-full",
                                 table: "w-full border-collapse space-y-1",
@@ -172,27 +299,27 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                             }}
                         />
                     </CardContent>
-
+                    {/* Legenda (Mantenha igual) */}
                     <div className="p-4 border-t bg-muted/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></div>
-                            <span>Presente</span>
+                             <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></div>
+                             <span>Presente</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-red-100 border border-red-300"></div>
-                            <span>Falta</span>
+                             <div className="w-3 h-3 rounded bg-red-100 border border-red-300"></div>
+                             <span>Falta</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-amber-100 border border-amber-300"></div>
-                            <span>Justificada</span>
+                             <div className="w-3 h-3 rounded bg-amber-100 border border-amber-300"></div>
+                             <span>Justificada</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-blue-50 border border-blue-300"></div>
-                            <span>Evento GM</span>
+                             <div className="w-3 h-3 rounded bg-blue-50 border border-blue-300"></div>
+                             <span>Evento GM</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-slate-100 border border-slate-300 line-through decoration-slate-400 text-slate-400">abc</div>
-                            <span>Feriado/Canc.</span>
+                             <div className="w-3 h-3 rounded bg-slate-100 border border-slate-300 line-through decoration-slate-400 text-slate-400">abc</div>
+                             <span>Feriado/Canc.</span>
                         </div>
                     </div>
                 </Card>

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import prisma from '@/lib/prisma'
 import { getCurrentUserWithRelations } from '@/lib/auth'
-import { FrequenciaDashboard } from '@/components/frequencia/frequencia-dashboard'
+import { FrequenciaDashboard } from '@/components/frequencia/frequencia-dashboard' 
 
 export const metadata: Metadata = { title: 'Minha Frequência' }
 
@@ -11,6 +11,7 @@ export default async function AlunoFrequenciaPage() {
 
   const frequencias = await prisma.frequencia.findMany({
     where: { alunoId: user.perfilAluno.id },
+    orderBy: { data: 'desc' } 
   })
 
   const eventos = await prisma.gmEventoCalendario.findMany()
@@ -22,7 +23,7 @@ export default async function AlunoFrequenciaPage() {
       data: f.data,
       status: f.status,
       tipoAula: f.tipo,
-      observacao: f.observacao
+      observacao: f.observacao 
     })),
     ...eventos.map(e => ({
       tipoOrigem: 'INSTITUCIONAL' as const,
