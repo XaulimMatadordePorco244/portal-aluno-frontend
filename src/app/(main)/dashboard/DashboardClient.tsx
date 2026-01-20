@@ -61,7 +61,23 @@ const DashboardCard = ({ title, children, linkText, linkHref = "#" }: { title: s
   </div>
 );
 
-const RankingListItem = ({ rank, nome, conceito, numero, cargo, isCurrentUser }: { rank: number; nome: React.ReactNode; conceito: string | null | undefined; numero: string | null | undefined; cargo: string | null | undefined; isCurrentUser?: boolean }) => (
+const RankingListItem = ({ 
+  rank, 
+  nome, 
+  conceito, 
+  numero, 
+  cargo, 
+  isCurrentUser, 
+  canViewGrade 
+}: { 
+  rank: number; 
+  nome: React.ReactNode; 
+  conceito: string | null | undefined; 
+  numero: string | null | undefined; 
+  cargo: string | null | undefined; 
+  isCurrentUser?: boolean;
+  canViewGrade?: boolean;
+}) => (
   <div className={`border-b last:border-b-0 p-3 ${isCurrentUser ? 'bg-primary/10' : 'hover:bg-accent transition-colors'}`}>
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-3 overflow-hidden">
@@ -71,9 +87,9 @@ const RankingListItem = ({ rank, nome, conceito, numero, cargo, isCurrentUser }:
           <p className="text-xs text-muted-foreground">Nº {numero || 'N/A'}</p>
         </div>
       </div>
-      {isCurrentUser && (
+      {canViewGrade && (
         <div className="text-right shrink-0">
-          <p className="font-bold text-primary font-mono">{conceito}</p> {/* Adicionei font-mono aqui também */}
+          <p className="font-bold text-primary font-mono">{conceito || '—'}</p>
           <p className="text-xs text-muted-foreground">Conceito</p>
         </div>
       )}
@@ -101,6 +117,7 @@ export default function DashboardClient({
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
   const nomeExibicao = perfil?.nomeDeGuerra || user.nome;
+  const currentUserCargoName = perfil?.cargo?.nome;
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6">
@@ -113,7 +130,10 @@ export default function DashboardClient({
         <DashboardCard title="Classificação Geral" linkText="Ver classificação completa" linkHref="/classification">
           {rankingData.length > 0 ? (
             rankingData.map(aluno => {
-                
+                const isCurrentUser = aluno.id === user.id;
+                const isSameCargo = !!currentUserCargoName && aluno.cargo?.nome === currentUserCargoName;
+                const canViewGrade = isCurrentUser || isSameCargo;
+
                 let conceitoFormatado = aluno.conceitoAtual;
                 
                 if (aluno.conceitoAtual) {
@@ -131,7 +151,8 @@ export default function DashboardClient({
                     conceito={conceitoFormatado} 
                     numero={aluno.numero}
                     cargo={aluno.cargo?.abreviacao || 'S/ Cargo'}
-                    isCurrentUser={aluno.id === user.id}
+                    isCurrentUser={isCurrentUser}
+                    canViewGrade={canViewGrade}
                   />
                 );
             })

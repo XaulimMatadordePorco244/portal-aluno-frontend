@@ -15,7 +15,17 @@ type AlunoComRank = Awaited<ReturnType<typeof getAlunos>>[0] & {
   rank: number;
 };
 
-const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: string, students: AlunoComRank[], loggedInUserId?: string }) => {
+const CourseRanking = ({ 
+  courseName, 
+  students, 
+  loggedInUserId,
+  loggedInUserCargoId 
+}: { 
+  courseName: string, 
+  students: AlunoComRank[], 
+  loggedInUserId?: string,
+  loggedInUserCargoId?: string | null
+}) => {
 
   if (students.length === 0) {
     return null;
@@ -39,6 +49,9 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
               const isCurrentUser = aluno.id === loggedInUserId;
               const perfil = aluno.perfilAluno;
               
+              const isSameCargo = loggedInUserCargoId && perfil?.cargoId === loggedInUserCargoId;
+              const canViewGrade = isCurrentUser || isSameCargo;
+
               let conceitoFormatado = '—';
               
               if (perfil?.conceitoAtual) {
@@ -60,7 +73,7 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
                   <TableCell className="font-mono border-r">{perfil?.numero || 'N/A'}</TableCell>
                   
                   <TableCell className="font-mono font-medium">
-                    {isCurrentUser ? conceitoFormatado : '—'}
+                    {canViewGrade ? conceitoFormatado : '—'}
                   </TableCell>
                 </TableRow>
               );
@@ -71,7 +84,6 @@ const CourseRanking = ({ courseName, students, loggedInUserId }: { courseName: s
     </div>
   );
 };
-
 
 async function getAlunos() {
   return await prisma.usuario.findMany({
@@ -97,6 +109,11 @@ export default async function ClassificationPage() {
     getCurrentUser(),
     getAlunos()
   ]);
+
+  const loggedInUserId = currentUser?.userId;
+  
+  const currentUserData = allAlunos.find(a => a.id === loggedInUserId);
+  const loggedInUserCargoId = currentUserData?.perfilAluno?.cargoId;
 
   const groupedByCargo = allAlunos.reduce((acc, aluno) => {
     const cargoNome = aluno.perfilAluno?.cargo?.nome || 'Sem Cargo';
@@ -129,7 +146,6 @@ export default async function ClassificationPage() {
     });
 
   const dataAtualizacao = new Date().toLocaleDateString('pt-BR');
-  const loggedInUserId = currentUser?.userId;
 
   return (
     <div className="container mx-auto py-10 max-w-5xl">
@@ -150,6 +166,7 @@ export default async function ClassificationPage() {
           courseName={course.name}
           students={course.data}
           loggedInUserId={loggedInUserId}
+          loggedInUserCargoId={loggedInUserCargoId}
         />
       ))}
 
