@@ -84,6 +84,7 @@ export function AdminSidebar() {
     { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen },
     { href: "/admin/alunos/cargos", label: "Promoções", icon: TrendingUp },
     { href: "/admin/comunicacoes-internas", label: "Comunicação Interna", icon: Megaphone },
+    { href: "/admin/classificacao-geral", label: "Classificação Geral", icon: TrendingUp },
     { href: "/admin/frequencia", label: "Frequência", icon: CalendarCheck },
     { href: "/admin/nota-escolar", label: "Nota Escolar", icon: GraduationCap },
     { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
