@@ -1,8 +1,7 @@
 "use client";
 
-
 import { useFormStatus } from 'react-dom';
-import { useState, useEffect, useMemo, useActionState } from 'react';
+import { useState, useEffect, useMemo, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
@@ -12,42 +11,90 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createAnotacao } from '../actions';
+import { createAnotacao, updateAnotacao } from '@/actions/anotacoes'; 
 import Link from 'next/link';
 import { Usuario, TipoDeAnotacao, Companhia, PerfilAluno } from '@prisma/client';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FormState } from '../actions';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
+// Interfaces
 type AlunoComCompanhia = Usuario & {
   perfilAluno: (PerfilAluno & {
     companhia: Companhia | null;
   }) | null;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Lançando...' : 'Lançar Anotação'}
-    </Button>
-  );
+export interface FormState {
+  errors?: {
+    alunoIds?: string[];
+    tipoId?: string[];
+    data?: string[];
+    pontos?: string[];
+    detalhes?: string[];
+    _form?: string[];
+  };
+  message?: string;
+  success?: boolean;
 }
 
-const initialState: FormState = {};
+interface AnotacaoFormProps {
+  alunos: AlunoComCompanhia[];
+  tiposDeAnotacao: TipoDeAnotacao[];
+  preSelectedAlunoId?: string; 
+  initialData?: {              
+    id: string;
+    alunoId: string;
+    tipoId: string;
+    data: Date;
+    pontos: number;
+    detalhes: string | null;
+  };
+}
 
-export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: AlunoComCompanhia[], tiposDeAnotacao: TipoDeAnotacao[] }) {
-
-  const [state, formAction] = useActionState<FormState, FormData>(createAnotacao, initialState);
+export default function AnotacaoForm({ 
+  alunos, 
+  tiposDeAnotacao, 
+  preSelectedAlunoId, 
+  initialData 
+}: AnotacaoFormProps) {
+  
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [formState, setFormState] = useState<FormState>({});
+  
+  const isEditing = !!initialData;
 
   const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
   const [selectedAlunos, setSelectedAlunos] = useState<AlunoComCompanhia[]>([]);
-
   const [selectedTipo, setSelectedTipo] = useState<TipoDeAnotacao | null>(null);
   const [pontos, setPontos] = useState<number | string>('');
+  const [dataOcorrencia, setDataOcorrencia] = useState<string>('');
+  const [detalhes, setDetalhes] = useState<string>('');
+
   const [isTipoComboboxOpen, setIsTipoComboboxOpen] = useState(false);
+  const [isAlunoComboboxOpen, setIsAlunoComboboxOpen] = useState(false);
+
   useEffect(() => {
-    if (selectedTipo) {
+    if (initialData) {
+      const aluno = alunos.find(a => a.perfilAluno?.id === initialData.alunoId);
+      if (aluno) setSelectedAlunos([aluno]);
+
+      const tipo = tiposDeAnotacao.find(t => t.id === initialData.tipoId);
+      if (tipo) setSelectedTipo(tipo);
+
+      setDataOcorrencia(new Date(initialData.data).toISOString().split('T')[0]);
+      setPontos(Number(initialData.pontos));
+      setDetalhes(initialData.detalhes || '');
+    } else if (preSelectedAlunoId) {
+      const aluno = alunos.find(a => a.perfilAluno?.id === preSelectedAlunoId);
+      if (aluno) setSelectedAlunos([aluno]);
+    }
+  }, [initialData, preSelectedAlunoId, alunos, tiposDeAnotacao]);
+
+  useEffect(() => {
+    if (selectedTipo && !isEditing) {
       if (selectedTipo.abertoCoordenacao) {
         if (pontos === '' || pontos === selectedTipo.pontos) {
           setPontos('');
@@ -55,22 +102,21 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
       } else {
         setPontos(selectedTipo.pontos ?? 0);
       }
-    } else {
+    } else if (!selectedTipo && !isEditing) {
       setPontos('');
     }
-  }, [selectedTipo]);
+  }, [selectedTipo, isEditing]);
 
   const companhias = useMemo(() => [...new Set(alunos.map(a => a.perfilAluno?.companhia?.nome).filter(Boolean))], [alunos]) as string[];
 
   const { positivas, negativas, abertasElogio, abertasPunicao } = useMemo(() => {
     const positivas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0 && !t.abertoCoordenacao);
     const negativas = tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos < 0 && !t.abertoCoordenacao);
-
     const abertasElogio = tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'ELOGIO');
     const abertasPunicao = tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'PUNICAO');
-
     return { positivas, negativas, abertasElogio, abertasPunicao };
   }, [tiposDeAnotacao]);
+
   const handleCompanhiaChange = (companhia: string) => {
     const alunosDaCompanhia = alunos.filter(a => a.perfilAluno?.companhia?.nome === companhia);
     setSelectedAlunos(alunosDaCompanhia);
@@ -78,19 +124,74 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
 
   const handleAlunoSelect = (aluno: AlunoComCompanhia) => {
     setSelectedAlunos(prev => prev.find(a => a.id === aluno.id) ? prev : [...prev, aluno]);
+    setIsAlunoComboboxOpen(false);
   };
 
   const handleAlunoRemove = (alunoId: string) => {
     setSelectedAlunos(prev => prev.filter(a => a.id !== alunoId));
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedAlunos.length === 0) {
+      toast.error("Selecione pelo menos um aluno");
+      return;
+    }
+    if (!selectedTipo) {
+      toast.error("Selecione um tipo");
+      return;
+    }
+
+    startTransition(async () => {
+      const formData = new FormData();
+      selectedAlunos.forEach(aluno => {
+        if (aluno.perfilAluno?.id) formData.append("alunoIds", aluno.perfilAluno.id);
+      });
+      formData.append("tipoId", selectedTipo.id);
+      formData.append("data", dataOcorrencia);
+      formData.append("pontos", pontos.toString());
+      formData.append("detalhes", detalhes);
+
+      let result;
+
+      if (isEditing && initialData) {
+        result = await updateAnotacao(initialData.id, {}, formData);
+      } else {
+        result = await createAnotacao({}, formData);
+      }
+
+      setFormState(result); 
+
+      if (result?.success) {
+        toast.success(isEditing ? "Anotação atualizada!" : "Anotação lançada!");
+        
+        if (preSelectedAlunoId || initialData?.alunoId) {
+            router.push(`/admin/alunos/${preSelectedAlunoId || initialData?.alunoId}`);
+        } else {
+            router.push("/admin/alunos");
+        }
+      } else if (result?.message) {
+        toast.error(result.message);
+      }
+    });
+  };
+
   const pontosValue = Number(pontos);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-3 rounded-md border p-4">
         <Label className="font-semibold">Aplicar para</Label>
-        <RadioGroup value={selectionMode} onValueChange={(value: 'companhia' | 'individual') => { setSelectionMode(value); setSelectedAlunos([]); }}>
+        
+        <RadioGroup 
+          value={selectionMode} 
+          onValueChange={(value: 'companhia' | 'individual') => { 
+            setSelectionMode(value); 
+            if(!isEditing && !preSelectedAlunoId) setSelectedAlunos([]); 
+          }}
+          disabled={isEditing || !!preSelectedAlunoId}
+        >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="individual" id="individual" />
             <Label htmlFor="individual" className="font-normal">Alunos Específicos</Label>
@@ -112,10 +213,14 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
           )}
 
           {selectionMode === 'individual' && (
-            <Popover>
+            <Popover open={isAlunoComboboxOpen} onOpenChange={setIsAlunoComboboxOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start font-normal">
-                  Adicionar aluno...
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start font-normal"
+                  disabled={isEditing || !!preSelectedAlunoId} 
+                >
+                  {isEditing || preSelectedAlunoId ? "Aluno selecionado (fixo)" : "Adicionar aluno..."}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -147,18 +252,18 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
               {selectedAlunos.map(aluno => (
                 <Badge key={aluno.id} variant="secondary">
                   {aluno.perfilAluno?.nomeDeGuerra || aluno.nome}
-                  <button type="button" onClick={() => handleAlunoRemove(aluno.id)} className="ml-1.5 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </button>
+                  {!isEditing && !preSelectedAlunoId && (
+                    <button type="button" onClick={() => handleAlunoRemove(aluno.id)} className="ml-1.5 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
                 </Badge>
               ))}
             </div>
           </div>
         )}
-        {selectedAlunos.map(aluno => <input key={aluno.id} type="hidden" name="alunoIds" value={aluno.perfilAluno?.id} />)}
-        {state?.errors?.alunoIds && <p className="text-sm text-red-500 mt-1">{state.errors.alunoIds[0]}</p>}
+        {formState?.errors?.alunoIds && <p className="text-sm text-red-500 mt-1">{formState.errors.alunoIds[0]}</p>}
       </div>
-
 
       <div className="space-y-2">
         <Label htmlFor="tipoId">Tipo de Anotação</Label>
@@ -253,15 +358,21 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
             </Command>
           </PopoverContent>
         </Popover>
-        {selectedTipo && <input type="hidden" name="tipoId" value={selectedTipo.id} />}
-        {state?.errors?.tipoId && <p className="text-sm text-red-500 mt-1">{state.errors.tipoId[0]}</p>}
+        {formState?.errors?.tipoId && <p className="text-sm text-red-500 mt-1">{formState.errors.tipoId[0]}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="data">Data da Ocorrência</Label>
-          <Input id="data" name="data" type="date" required />
-          {state?.errors?.data && <p className="text-sm text-red-500 mt-1">{state.errors.data[0]}</p>}
+          <Input 
+            id="data" 
+            name="data" 
+            type="date" 
+            required 
+            value={dataOcorrencia}
+            onChange={(e) => setDataOcorrencia(e.target.value)}
+          />
+          {formState?.errors?.data && <p className="text-sm text-red-500 mt-1">{formState.errors.data[0]}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="pontos">Pontos</Label>
@@ -300,22 +411,33 @@ export default function AnotacaoForm({ alunos, tiposDeAnotacao, }: { alunos: Alu
             />
           </div>
           {selectedTipo && !selectedTipo.abertoCoordenacao && (<p className="text-xs text-muted-foreground pt-1">Pontuação padrão aplicada.</p>)}
-          {state?.errors?.pontos && <p className="text-sm text-red-500 mt-1">{state.errors.pontos[0]}</p>}
+          {formState?.errors?.pontos && <p className="text-sm text-red-500 mt-1">{formState.errors.pontos[0]}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="detalhes">Descrição do Ocorrido (Obrigatório)</Label>
-        <Textarea id="detalhes" name="detalhes" placeholder="Descreva a ocorrência..." required />
-        {state?.errors?.detalhes && <p className="text-sm text-red-500 mt-1">{state.errors.detalhes[0]}</p>}
+        <Textarea 
+            id="detalhes" 
+            name="detalhes" 
+            placeholder="Descreva a ocorrência..." 
+            required 
+            value={detalhes}
+            onChange={(e) => setDetalhes(e.target.value)}
+        />
+        {formState?.errors?.detalhes && <p className="text-sm text-red-500 mt-1">{formState.errors.detalhes[0]}</p>}
       </div>
 
-      {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-
+      {formState?.message && <p className="text-sm text-red-500">{formState.message}</p>}
 
       <div className="flex gap-2 pt-4">
-        <SubmitButton />
-        <Button variant="outline" asChild><Link href="/admin/alunos">Cancelar</Link></Button>
+        <Button type="submit" disabled={isPending} className="bg-primary">
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isEditing ? 'Salvar Alterações' : 'Lançar Anotação'}
+        </Button>
+        <Button variant="outline" type="button" onClick={() => router.back()}>
+          Cancelar
+        </Button>
       </div>
     </form>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -31,9 +32,9 @@ interface ClassificacaoTableProps {
 }
 
 export function ClassificacaoTable({ data }: ClassificacaoTableProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
 
-  
   const filteredData = useMemo(() => {
     return data.filter((aluno) =>
       aluno.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -119,9 +120,13 @@ export function ClassificacaoTable({ data }: ClassificacaoTableProps) {
                 </TableHeader>
                 <TableBody>
                   {group.items.map((aluno) => (
-                    <TableRow key={aluno.id} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                    <TableRow 
+                      key={aluno.id} 
+                      onClick={() => router.push(`/admin/alunos/${aluno.id}/anotacoes`)}
+                      className="border-b border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group"
+                    >
                       
-                      <TableCell className="font-bold text-center border-r text-foreground py-3">
+                      <TableCell className="font-bold text-center border-r text-foreground py-3 group-hover:text-primary transition-colors">
                         {aluno.posicao}º
                       </TableCell>
                       

@@ -1,14 +1,23 @@
 import prisma from "@/lib/prisma";
 import AnotacaoForm from "@/components/admin/anotacoes/AnotacaoForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { notFound } from "next/navigation";
 
-interface NewAnotacaoPageProps {
-  searchParams: {
-    alunoId?: string;
+interface EditAnotacaoPageProps {
+  params: {
+    id: string;
   };
 }
 
-export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageProps) {
+export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps) {
+  const anotacao = await prisma.anotacao.findUnique({
+    where: { id: params.id },
+  });
+
+  if (!anotacao) {
+    notFound();
+  }
+
   const alunos = await prisma.usuario.findMany({
     where: { 
       status: 'ATIVO', 
@@ -36,16 +45,23 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
     <div className="container mx-auto py-10">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Lançar Nova Anotação</CardTitle>
+          <CardTitle>Editar Anotação</CardTitle>
           <CardDescription>
-            Selecione o aluno, o tipo de anotação e preencha os detalhes.
+            Altere os dados da ocorrência abaixo.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AnotacaoForm 
             alunos={alunos} 
             tiposDeAnotacao={tiposDeAnotacao}
-            preSelectedAlunoId={searchParams.alunoId} 
+            initialData={{
+              id: anotacao.id,
+              alunoId: anotacao.alunoId, 
+              tipoId: anotacao.tipoId,
+              data: anotacao.data,
+              pontos: Number(anotacao.pontos),
+              detalhes: anotacao.detalhes,
+            }}
           />
         </CardContent>
       </Card>
