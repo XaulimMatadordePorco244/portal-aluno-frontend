@@ -65,7 +65,7 @@ export default async function PainelComandantePage() {
   });
 
   return (
-    <div className="container mx-auto py-10">
+    <div >
       <div className="flex justify-between items-center mb-6">
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Partes Pendentes</h1>

@@ -36,8 +36,8 @@ export default async function AlunoFrequenciaPage() {
   ]
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-2 ">
         <div>
            <h1 className="text-3xl font-bold tracking-tight">Painel de Frequência</h1>
            <p className="text-muted-foreground">Histórico pessoal e calendário de atividades da Guarda Mirim.</p>

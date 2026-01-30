@@ -65,6 +65,7 @@ const menuGroups = [
       { href: "/partes", label: "Minhas Partes", icon: AlertCircle },
       { href: "/minhas-tarefas", label: "Minhas Tarefas", icon: ListTodo },
       { href: "/cargos", label: "Histórico de Cargos", icon: Shield },
+      { href: "/carteirinha", label: "Carteira de Identificação", icon: Shield },
       { href: "/feedback", label: "Enviar Feedback", icon: MessageSquare },
     ],
   },
@@ -95,12 +96,12 @@ export function Header({ user }: { user: User | null }) {
     user?.role === "ADMIN";
 
   return (
-    <header className="sticky top-0 z-50 bg-primary text-white shadow-md dark:bg-gray-900 dark:border-b dark:border-gray-800">
+    <header className="sticky top-0 z-50 bg-primary text-white shadow-md dark:bg-gray-900 dark:border-b dark:border-gray-800 ">
       <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center gap-2 text-xl font-bold">
             <Image
-              src="/img/logo.png"
+              src="/img/logo.svg"
               alt="Logo da Guarda Mirim"
               width={40}
               height={40}

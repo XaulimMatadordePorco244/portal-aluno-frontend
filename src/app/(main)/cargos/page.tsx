@@ -161,7 +161,7 @@ export default async function AlunoCargosPage() {
   const evolucaoTexto = `${saldoAtual > 0 ? '+' : ''}${saldoAtual.toFixed(2).replace('.', ',')}`;
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
+    <div className="space-y-8">
       
       <div className="space-y-6">
         <div className="mb-2">

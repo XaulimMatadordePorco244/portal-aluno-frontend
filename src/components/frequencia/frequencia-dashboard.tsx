@@ -33,7 +33,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [filtroAtivo, setFiltroAtivo] = useState<TipoFiltro>(null)
 
-    // Dados processados
     const frequencias = itens.filter(i => i.tipoOrigem === 'FREQUENCIA')
     const totalAulas = frequencias.length
     const presentes = frequencias.filter(f => f.status === 'PRESENTE').length
@@ -44,7 +43,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
         ? Math.round(((presentes + justificadas) / totalAulas) * 100)
         : 100
 
-    // Mapeamento para o calendário
     const diasPresentes = frequencias.filter(f => f.status === 'PRESENTE').map(f => f.data)
     const diasFaltas = frequencias.filter(f => f.status === 'FALTA').map(f => f.data)
     const diasJustificadas = frequencias.filter(f => f.status === 'JUSTIFICADA').map(f => f.data)
@@ -53,21 +51,19 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
     const diasFeriado = eventosInst.filter(e => e.tipoEvento === 'FERIADO' || e.tipoEvento === 'CANCELADO').map(e => e.data)
     const diasEvento = eventosInst.filter(e => e.tipoEvento === 'EVENTO' || e.tipoEvento === 'AULA_EXTRA').map(e => e.data)
 
-    // Lógica de Seleção
     const handleDateSelect = (newDate: Date | undefined) => {
         setDate(newDate)
-        setFiltroAtivo(null) // Reseta o filtro de lista ao clicar no calendário
+        setFiltroAtivo(null) 
     }
 
     const handleFilterSelect = (tipo: TipoFiltro) => {
         if (filtroAtivo === tipo) {
-            setFiltroAtivo(null) // Desativa se clicar no mesmo
+            setFiltroAtivo(null) 
         } else {
             setFiltroAtivo(tipo)
         }
     }
 
-    // Preparação dos dados para exibição (Dia x Lista Filtrada)
     const itensDoDia = date
         ? itens.filter(i => isSameDay(i.data, date))
         : []
@@ -76,7 +72,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
         ? frequencias.filter(f => f.status === filtroAtivo).sort((a, b) => b.data.getTime() - a.data.getTime())
         : []
 
-    // Cores dinâmicas para o cabeçalho do card de detalhes
     const getCardHeaderColor = () => {
         switch (filtroAtivo) {
             case 'FALTA': return 'border-t-red-500 bg-red-50/50 dark:bg-red-950/20'
@@ -89,10 +84,8 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            {/* Coluna Esquerda: Stats + Detalhes */}
             <div className="lg:col-span-4 space-y-6">
 
-                {/* Card de Assiduidade (Agora Interativo) */}
                 <Card className="border-l-4 border-l-emerald-600 shadow-sm overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                         <CheckCircle2 className="w-24 h-24" />
@@ -107,7 +100,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                         <Progress value={aproveitamento} className="h-2 mb-6 bg-emerald-100 [&>div]:bg-emerald-600" />
                         
                         <div className="grid grid-cols-3 gap-2 text-sm">
-                            {/* Botão Presentes */}
                             <button 
                                 onClick={() => handleFilterSelect('PRESENTE')}
                                 className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'PRESENTE' ? 'bg-emerald-100 ring-2 ring-emerald-500 dark:bg-emerald-900/40' : ''}`}
@@ -116,7 +108,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                                 <span className="text-xs text-muted-foreground font-medium">Presentes</span>
                             </button>
 
-                            {/* Botão Faltas */}
                             <button 
                                 onClick={() => handleFilterSelect('FALTA')}
                                 className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'FALTA' ? 'bg-red-100 ring-2 ring-red-500 dark:bg-red-900/40' : ''}`}
@@ -125,7 +116,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                                 <span className="text-xs text-muted-foreground font-medium">Faltas</span>
                             </button>
 
-                            {/* Botão Justificadas */}
                             <button 
                                 onClick={() => handleFilterSelect('JUSTIFICADA')}
                                 className={`flex flex-col items-center p-2 rounded-lg transition-all hover:bg-muted ${filtroAtivo === 'JUSTIFICADA' ? 'bg-amber-100 ring-2 ring-amber-500 dark:bg-amber-900/40' : ''}`}
@@ -137,7 +127,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                     </CardContent>
                 </Card>
 
-                {/* Card de Detalhes (Condicional: Dia ou Lista) */}
                 <Card className={`h-fit border-t-4 transition-colors duration-300 ${getCardHeaderColor()}`}>
                     <CardHeader className="pb-4 border-b flex flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -167,7 +156,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                     <CardContent className="pt-0 min-h-[300px] p-0">
                         <ScrollArea className="h-[300px] p-6 w-full">
                             {filtroAtivo ? (
-                                /* --- VISUALIZAÇÃO DE LISTA --- */
                                 <div className="space-y-4">
                                     {listaFiltrada.length > 0 ? (
                                         listaFiltrada.map((item) => (
@@ -181,7 +169,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                                                     </Badge>
                                                 </div>
                                                 
-                                                {/* Exibe o Motivo/Observação se existir */}
                                                 {(item.observacao) ? (
                                                     <p className="text-sm text-foreground bg-muted/50 p-2 rounded-md mt-1">
                                                         <span className="font-semibold text-xs text-muted-foreground block mb-0.5">Motivo/Obs:</span>
@@ -202,7 +189,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                                     )}
                                 </div>
                             ) : (
-                                /* --- VISUALIZAÇÃO DO DIA (Padrão) --- */
                                 <>
                                     {itensDoDia.length > 0 ? (
                                         <div className="space-y-4">
@@ -254,7 +240,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                 </Card>
             </div>
 
-            {/* Coluna Direita: Calendário */}
             <div className="lg:col-span-8">
                 <Card className="h-full flex flex-col shadow-md">
                     <CardHeader>
@@ -271,7 +256,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                             selected={date}
                             onSelect={handleDateSelect}
                             className="rounded-md border w-full max-w-full"
-                            // ... (Mantenha as configurações de styles e modifiers originais aqui) ...
                             classNames={{
                                 month: "space-y-4 w-full",
                                 table: "w-full border-collapse space-y-1",
@@ -299,7 +283,6 @@ export function FrequenciaDashboard({ itens }: DashboardProps) {
                             }}
                         />
                     </CardContent>
-                    {/* Legenda (Mantenha igual) */}
                     <div className="p-4 border-t bg-muted/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                         <div className="flex items-center gap-2">
                              <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></div>

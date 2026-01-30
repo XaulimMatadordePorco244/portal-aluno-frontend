@@ -120,7 +120,7 @@ export default function DashboardClient({
   const currentUserCargoName = perfil?.cargo?.nome;
 
   return (
-    <div className="container mx-auto py-6 px-4 sm:px-6">
+    <div >
       <h1 className="text-xl md:text-3xl font-bold text-foreground mb-6 wrap-break-words">
         Mural do Aluno - Bem-vindo, {cargoAbreviacao} {nomeExibicao}!
       </h1>

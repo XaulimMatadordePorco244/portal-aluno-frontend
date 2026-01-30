@@ -25,8 +25,8 @@ export default async function RegulationsPage() {
   });
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="bg-card rounded-xl shadow-lg p-8 max-w-4xl mx-auto border">
+    <div >
+      <div className="bg-card rounded-xl shadow-lg p-8 mx-auto border">
         
         <div className="flex items-center gap-4 mb-6 pb-4 border-b">
           <div>

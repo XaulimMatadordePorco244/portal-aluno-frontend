@@ -79,7 +79,7 @@ export default async function Page({
   }`;
 
   return (
-    <div className="container mx-auto py-10 max-w-3xl">
+    <div>
       <div className="mb-4">
         <Link
           href="/partes"

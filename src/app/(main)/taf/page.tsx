@@ -47,11 +47,9 @@ export default async function AlunoTafPage() {
   const anos = Object.keys(tafsPorAno).map(Number).sort((a, b) => b - a)
 
   return (
-    <div className="max-w-md mx-auto py-6 px-4 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-primary/10 p-3 rounded-full">
-            <Trophy className="w-6 h-6 text-primary" />
-        </div>
+    <div >
+      <div className="flex items-center gap-3 mb-6 pl-2">
+        
         <div>
             <h1 className="text-2xl font-bold">Meu Desempenho</h1>
             <p className="text-sm text-muted-foreground">Histórico de Testes Físicos</p>

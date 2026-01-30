@@ -50,7 +50,7 @@ export default async function MinhasPartesPage() {
     const minhasPartes = await getMinhasPartes();
 
     return (
-        <div className="container mx-auto py-10 max-w-5xl">
+        <div >
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                     <FileText className="w-8 h-8 text-foreground" />

@@ -11,12 +11,12 @@ export default async function AlunoOrganizacaoPage() {
     const funcoes = await prisma.gmFuncao.findMany({ orderBy: { ordem: 'desc' } })
 
     return (
-        <div className="p-4 md:p-8 max-w-[1400px] mx-auto space-y-10">
+        <div >
 
             <section className="space-y-6">
                 <div className="flex items-center gap-3 mb-6 border-b pb-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Sessões</h2>
+                        <h2 className="text-4xl font-bold tracking-tight">Sessões</h2>
                     </div>
                 </div>
 

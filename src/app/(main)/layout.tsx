@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Metadata } from "next";
 import React from "react";
+import { Container } from "@/components/layout/Container";
 
 export const metadata: Metadata = {
   title: "Portal do Aluno - Guarda Mirim",
@@ -43,13 +44,16 @@ export default async function MainLayout({
       };
     }
   }
+return (
+  <div className="flex flex-col min-h-screen">
+    <Header user={userForHeader} />
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Header user={userForHeader} />
-      <main className="flex grow bg-background p-6">
+    <main className="grow   py-8">
+      <Container>
         {children}
-      </main>
-    </div>
-  );
+      </Container>
+    </main>
+  </div>
+);
+
 }

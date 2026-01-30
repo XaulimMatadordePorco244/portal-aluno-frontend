@@ -66,7 +66,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="rounded-full bg-primary/5 p-3 mb-2">
             <Image
-                src="/img/logo.png"
+                src="/img/logo.svg"
                 alt="Logo da Guarda Mirim"
                 width={80}
                 height={80}

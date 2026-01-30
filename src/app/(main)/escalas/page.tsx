@@ -64,11 +64,10 @@ export default async function AlunoEscalasPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <div className="w-9/10 mx-auto py-10">
-        <div className="flex justify-between items-center mb-8 ">
+      <div >
+        <div className="flex justify-between items-center mb-6 ">
           <div className="flex items-center gap-3">
-            <Scale className="w-8 h-8 text-foreground" />
-            <h1 className="text-3xl font-bold text-foreground">Escalas de Serviço</h1>
+            <h1 className="text-3xl font-bold text-foreground pl-1" >Escalas de Serviço</h1>
           </div>
 
           <div className="flex gap-2">

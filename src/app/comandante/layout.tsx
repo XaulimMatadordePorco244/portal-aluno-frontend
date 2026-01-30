@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import React from "react";
+import { Container } from "@/components/layout/Container";
 
 export default async function ComandanteLayout({
   children,
@@ -50,8 +51,10 @@ export default async function ComandanteLayout({
   return (
     <div className="flex flex-col min-h-screen">
       <Header user={userForHeader} />
-      <main className="flex grow bg-background p-6">
-        {children}
+      <main className="bg-background p-6">
+        <Container>
+          {children}
+        </Container>
       </main>
     </div>
   );

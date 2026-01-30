@@ -21,10 +21,10 @@ export default async function PaginaFeedbackAluno() {
   ])
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <div>
+    <div >
+      <div className='pb-3 pl-2'>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Fale com a Coordenação</h1>
-        <p className="text-gray-500 mt-2">Envie mensagens, dúvidas ou denúncias.</p>
+        <p className="text-gray-500 ">Envie mensagens, dúvidas ou denúncias.</p>
       </div>
 
       <FormularioFeedback 

@@ -46,9 +46,9 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
   };
 
   return (
-    <div className="container mx-auto py-10 max-w-4xl space-y-8">
+    <div className="space-y-6">
       
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pb-6 border-b border-border">
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pb-6 border-b  border-border">
         <div className="shrink-0">
           {user.fotoUrl ? (
             <Image 
