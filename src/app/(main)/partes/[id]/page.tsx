@@ -130,7 +130,7 @@ export default async function Page({
 
                   <DeleteButton parteId={parte.id} />
 
-                  <SendButton parteId={parte.id} />
+                  <SendButton parte={parte.id} />
                 </div>
               </div>
             </div>
