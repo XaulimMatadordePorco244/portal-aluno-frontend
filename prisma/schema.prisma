@@ -82,42 +82,42 @@ model PasswordResetAttempt {
 }
 
 model Usuario {
-  id                   String               @id @default(cuid())
-  cpf                  String               @unique @db.VarChar(11)
-  password             String
-  nome                 String
-  email                String?              @unique
-  fotoUrl              String?
-  validationId         String               @unique @default(cuid())
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  passwordResetToken   String?              @unique
-  passwordResetExpires DateTime?
-  status               StatusUsuario        @default(ATIVO)
-  role                 Role
-  genero               GeneroUsuario?
-  dataNascimento       DateTime?            @db.Date
-  rg                   String?
-  rgEstadoEmissor      String?
-  telefone             String?
-  tokenVersion         Int                  @default(1)
-  analisesFeitas       Analise[]
-  anotacoesFeitas      Anotacao[]           @relation("AnotacoesFeitasPeloAutor")
-  etapasResponsavel    EtapaProcesso[]
-  logsAtor             LogParte[]
-  qesCriados           QES[]
-  logsCargoAdmin       CargoLog[]
-  comunicacoesCriadas  ComunicacaoInterna[] @relation("CIsCriadas")
-  escalasCriadas       Escala[]             @relation("EscalasCriadas")
-  informativosCriados  Informativo[]        @relation("InformativosCriados")
-  perfilAluno          PerfilAluno?
-  responsaveis         Responsabilidade[]   @relation("Aluno")
-  dependentes          Responsabilidade[]   @relation("Responsavel")
-
-  partesCriadas             Parte[]           @relation("AutorParte")
-  partesSobResponsabilidade Parte[]           @relation("ResponsavelParte")
-  partesAnalisadas          Parte[]           @relation("ComandanteAnalise")
-  investigacoesBravura      ProcessoBravura[] @relation("OficialBravura")
+  id                        String               @id @default(cuid())
+  cpf                       String               @unique @db.VarChar(11)
+  password                  String
+  nome                      String
+  email                     String?              @unique
+  fotoUrl                   String?
+  validationId              String               @unique @default(cuid())
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  passwordResetToken        String?              @unique
+  passwordResetExpires      DateTime?
+  status                    StatusUsuario        @default(ATIVO)
+  role                      Role
+  genero                    GeneroUsuario?
+  dataNascimento            DateTime?            @db.Date
+  rg                        String?
+  rgEstadoEmissor           String?
+  telefone                  String?
+  tokenVersion              Int                  @default(1)
+  analisesFeitas            Analise[]
+  anotacoesFeitas           Anotacao[]           @relation("AnotacoesFeitasPeloAutor")
+  etapasResponsavel         EtapaProcesso[]
+  logsAtor                  LogParte[]
+  partesAnalisadas          Parte[]              @relation("ComandanteAnalise")
+  partesCriadas             Parte[]              @relation("AutorParte")
+  partesSobResponsabilidade Parte[]              @relation("ResponsavelParte")
+  investigacoesBravura      ProcessoBravura[]    @relation("OficialBravura")
+  qesCriados                QES[]
+  logsCargoAdmin            CargoLog[]
+  comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
+  escalasCriadas            Escala[]             @relation("EscalasCriadas")
+  informativosCriados       Informativo[]        @relation("InformativosCriados")
+  perfilAluno               PerfilAluno?
+  responsaveis              Responsabilidade[]   @relation("Aluno")
+  dependentes               Responsabilidade[]   @relation("Responsavel")
+  fatosObservados     Anotacao[] @relation("FatosObservados")
 
   @@map("usuarios")
 }
@@ -267,6 +267,8 @@ model Anotacao {
   tipoId       String
   alunoId      String
   autorId      String
+  quemAnotouId   String?        
+  quemAnotouNome String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   blocoCargoId String?
@@ -274,6 +276,7 @@ model Anotacao {
   autor        Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
   blocoCargo   CargoHistory?  @relation(fields: [blocoCargoId], references: [id])
   tipo         TipoDeAnotacao @relation(fields: [tipoId], references: [id])
+  quemAnotou     Usuario?       @relation("FatosObservados", fields: [quemAnotouId], references: [id])
 
   @@index([tipoId])
   @@index([alunoId])
@@ -317,52 +320,47 @@ model Funcao {
 }
 
 model Parte {
-  id              String       @id @default(cuid())
-  numeroDocumento String?      @unique
-  tipo            TipoProcesso
-  assunto         String
-  conteudo        String       @db.Text
-  dataFato        DateTime?
-  urlPdf          String?
-  dataEnvio       DateTime?
-
-  status StatusParte @default(RASCUNHO)
-
-  autorId String
-  autor   Usuario @relation("AutorParte", fields: [autorId], references: [id])
-
+  id                 String           @id @default(cuid())
+  assunto            String
+  conteudo           String           @db.Text
+  status             StatusParte      @default(RASCUNHO)
+  autorId            String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  dataEnvio          DateTime?
+  numeroDocumento    String?          @unique
+  tipo               TipoProcesso
+  dataFato           DateTime?
   responsavelAtualId String?
-  responsavelAtual   Usuario? @relation("ResponsavelParte", fields: [responsavelAtualId], references: [id])
+  analisadoPorId     String?
+  analiseComando     String?          @db.Text
+  dataAnalise        DateTime?
+  urlPdf             String?
+  analises           Analise[]
+  etapas             EtapaProcesso[]
+  logs               LogParte[]
+  analisadoPor       Usuario?         @relation("ComandanteAnalise", fields: [analisadoPorId], references: [id])
+  autor              Usuario          @relation("AutorParte", fields: [autorId], references: [id])
+  responsavelAtual   Usuario?         @relation("ResponsavelParte", fields: [responsavelAtualId], references: [id])
+  processoBravura    ProcessoBravura?
 
-  processoBravura ProcessoBravura?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  analiseComando String?   @db.Text
-  dataAnalise    DateTime?
-  analisadoPorId String?
-  analisadoPor   Usuario?  @relation("ComandanteAnalise", fields: [analisadoPorId], references: [id])
-
-  logs     LogParte[]
-  analises Analise[]
-  etapas   EtapaProcesso[]
+  @@index([analisadoPorId], map: "Parte_analisadoPorId_fkey")
+  @@index([autorId])
+  @@index([responsavelAtualId], map: "Parte_responsavelAtualId_fkey")
 }
 
 model ProcessoBravura {
-  id      String @id @default(cuid())
-  parteId String @unique
-  parte   Parte  @relation(fields: [parteId], references: [id])
+  id                 String   @id @default(cuid())
+  parteId            String   @unique
+  oficialId          String
+  prazoInvestigacao  DateTime
+  parecerOficial     String?  @db.Text
+  parecerCoordenacao String?  @db.Text
+  decisaoFinal       String?
+  oficial            Usuario  @relation("OficialBravura", fields: [oficialId], references: [id])
+  parte              Parte    @relation(fields: [parteId], references: [id])
 
-  oficialId String
-  oficial   Usuario @relation("OficialBravura", fields: [oficialId], references: [id])
-
-  prazoInvestigacao DateTime
-
-  parecerOficial     String? @db.Text
-  parecerCoordenacao String? @db.Text
-
-  decisaoFinal String?
+  @@index([oficialId], map: "ProcessoBravura_oficialId_fkey")
 }
 
 model Analise {

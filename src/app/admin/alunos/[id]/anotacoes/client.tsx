@@ -16,14 +16,12 @@ import {
 } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { deleteAnotacao } from '@/actions/anotacoes'; // Importe da nova estrutura actions/admin/anotacoes
+import { deleteAnotacao } from '@/actions/anotacoes';
 import { toast } from "sonner";
-import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service'; // Certifique-se que o path está correto
+import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service';
 
-// Tipos
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-';
 
-// Componente InfoPill (Idêntico ao do Aluno)
 const InfoPill = ({ label, count, points }: { label: string; count: number; points: number }) => (
   <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-background/50 border shadow-sm">
     <p className="text-xs sm:text-sm font-semibold text-muted-foreground">
@@ -63,7 +61,6 @@ export default function AdminStudentHistoryClient({
   const nomeCompleto = perfilAluno.usuario.nome;
   const nomeGuerra = perfilAluno.nomeDeGuerra;
 
-  // --- Lógica de Filtros ---
   const filteredByDate = useMemo(() => {
     if (!startDate && !endDate) return anotacoes;
     let items = [...anotacoes];
@@ -105,10 +102,8 @@ export default function AdminStudentHistoryClient({
     return stats;
   }, [filteredByDate]);
 
-  // --- Ações do Admin ---
 
   const handleCreateNew = () => {
-    // Redireciona para /new com o ID do aluno pré-selecionado
     router.push(`/admin/anotacoes/new?alunoId=${perfilAluno.id}`);
   };
 
@@ -170,7 +165,6 @@ export default function AdminStudentHistoryClient({
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl space-y-6">
       
-      {/* Header Admin */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -185,13 +179,11 @@ export default function AdminStudentHistoryClient({
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          {/* Botão Extrato */}
           <Button variant="outline" onClick={handleGeneratePDF} className="gap-2">
             <FileDown className="h-4 w-4" />
             Gerar Extrato
           </Button>
           
-          {/* Botão Nova Anotação */}
           <Button onClick={handleCreateNew} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <PlusCircle className="h-4 w-4" />
             Lançar Nova Anotação
@@ -199,7 +191,6 @@ export default function AdminStudentHistoryClient({
         </div>
       </div>
 
-      {/* Card de Resumo (Idêntico ao do Aluno) */}
       <div className="bg-card p-4 sm:p-6 rounded-lg shadow-md border flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto text-center sm:text-left">
           <Award size={48} className="text-yellow-500 shrink-0" />
@@ -223,10 +214,8 @@ export default function AdminStudentHistoryClient({
         </div>
       </div>
 
-      {/* Lista de Anotações */}
       <div className="bg-card rounded-xl shadow-lg border">
         
-        {/* Filtros */}
         <div className="p-4 sm:p-6 border-b space-y-4">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Filter size={20} /> Histórico Detalhado
@@ -257,7 +246,6 @@ export default function AdminStudentHistoryClient({
           </div>
         </div>
 
-        {/* Accordion com Visual Idêntico ao do Aluno + Botões Admin */}
         <Accordion type="single" collapsible className="w-full">
           {filteredAnnotations.map(anotacao => {
             const autorNome = anotacao.autor.perfilAluno?.nomeDeGuerra || anotacao.autor.nome;
@@ -265,14 +253,12 @@ export default function AdminStudentHistoryClient({
 
             return (
               <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
-                {/* TRIGGER IDÊNTICO AO ALUNO */}
                 <AccordionTrigger className="px-4 sm:px-6 hover:bg-accent/50 text-left py-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 pr-4">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <span className="font-medium text-foreground text-sm sm:text-base">
                         {anotacao.tipo.titulo}
                       </span>
-                      {/* Badge de Pontos */}
                       <span className={`px-2 py-0.5 rounded text-xs font-bold shrink-0 ${
                           pts >= 0 
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
@@ -287,7 +273,6 @@ export default function AdminStudentHistoryClient({
                   </div>
                 </AccordionTrigger>
 
-                {/* CONTENT COM AÇÕES ADMIN NO FOOTER */}
                 <AccordionContent className="px-4 sm:px-6 pb-4 bg-accent/30 border-t pt-4 space-y-3">
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
@@ -299,7 +284,6 @@ export default function AdminStudentHistoryClient({
                   </div>
 
                   <div className="flex flex-col md:flex-row justify-between items-end md:items-center pt-2 border-t border-border/50 gap-4 mt-2">
-                    {/* Info de Log (Igual Aluno) */}
                     <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs text-muted-foreground">
                         <span>
                             Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
@@ -308,7 +292,6 @@ export default function AdminStudentHistoryClient({
                         <span>Autor: {autorNome}</span>
                     </div>
 
-                    {/* BOTOES ADMIN (EXCLUSIVOS DESTA TELA) */}
                     <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
                         <Button 
                             variant="outline" 
