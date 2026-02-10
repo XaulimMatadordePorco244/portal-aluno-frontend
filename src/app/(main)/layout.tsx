@@ -41,6 +41,7 @@ export default async function MainLayout({
         nomeDeGuerra: user.perfilAluno?.nomeDeGuerra ?? null,
         cargo: user.perfilAluno?.cargo?.nome ?? null,
         funcao: user.perfilAluno?.funcao?.nome ?? null,
+        fotoUrl: user.fotoUrl ?? null,
       };
     }
   }

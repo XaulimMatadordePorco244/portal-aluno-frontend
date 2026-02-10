@@ -17,6 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ChevronDown,
   Home,
@@ -53,6 +54,7 @@ interface User {
   cargo: string | null;
   funcao: string | null;
   role?: string;
+  fotoUrl?: string | null;
 }
 
 const menuGroups = [
@@ -253,9 +255,19 @@ export function Header({ user }: { user: User | null }) {
                   {user ? (
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-3 px-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                          {user.nome.charAt(0)}
-                        </div>
+                        <Avatar className="h-10 w-10 border border-border/20">
+                          {user.fotoUrl ? (
+                             <AvatarImage 
+                               src={user.fotoUrl} 
+                               alt={user.nome} 
+                               className="object-cover" 
+                             />
+                          ) : null}
+                          <AvatarFallback className="bg-primary/10 font-bold text-primary">
+                             {user.nome.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+
                         <div className="flex flex-col">
                           <span className="max-w-[180px] truncate text-sm font-medium">
                             {user.nomeDeGuerra || user.nome}

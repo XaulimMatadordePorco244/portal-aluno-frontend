@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider"; 
-import NextTopLoader from "nextjs-toploader"; // <--- 1. Importe aqui
+import NextTopLoader from "nextjs-toploader"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
