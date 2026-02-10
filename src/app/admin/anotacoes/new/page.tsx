@@ -17,7 +17,8 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
     include: {
       perfilAluno: {
         include: {
-          companhia: true
+          companhia: true,
+          cargo: true
         }
       }
     },
@@ -26,6 +27,21 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
         nomeDeGuerra: 'asc'
       }
     }
+  });
+
+  const usuarios = await prisma.usuario.findMany({
+    where: { 
+      status: 'ATIVO',
+      role: { in: ['ADMIN', 'ALUNO'] }
+    },
+    include: {
+      perfilAluno: {
+        include: {
+          cargo: true
+        }
+      }
+    },
+    orderBy: { nome: 'asc' }
   });
 
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({
@@ -38,12 +54,13 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
         <CardHeader>
           <CardTitle>Lançar Nova Anotação</CardTitle>
           <CardDescription>
-            Selecione o aluno, o tipo de anotação e preencha os detalhes.
+            Selecione o aluno, o tipo de anotação e defina quem observou o fato.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AnotacaoForm 
-            alunos={alunos} 
+            alunos={alunos as any} 
+            usuarios={usuarios as any}
             tiposDeAnotacao={tiposDeAnotacao}
             preSelectedAlunoId={searchParams.alunoId} 
           />

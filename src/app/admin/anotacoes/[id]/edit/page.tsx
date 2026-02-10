@@ -26,7 +26,8 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
     include: {
       perfilAluno: {
         include: {
-          companhia: true
+          companhia: true,
+          cargo: true
         }
       }
     },
@@ -35,6 +36,21 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
         nomeDeGuerra: 'asc'
       }
     }
+  });
+
+  const usuarios = await prisma.usuario.findMany({
+    where: { 
+      status: 'ATIVO',
+      role: { in: ['ADMIN', 'ALUNO'] }
+    },
+    include: {
+      perfilAluno: {
+        include: {
+          cargo: true
+        }
+      }
+    },
+    orderBy: { nome: 'asc' }
   });
 
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({
@@ -52,7 +68,8 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
         </CardHeader>
         <CardContent>
           <AnotacaoForm 
-            alunos={alunos} 
+            alunos={alunos as any} 
+            usuarios={usuarios as any}
             tiposDeAnotacao={tiposDeAnotacao}
             initialData={{
               id: anotacao.id,
@@ -61,6 +78,8 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
               data: anotacao.data,
               pontos: Number(anotacao.pontos),
               detalhes: anotacao.detalhes,
+              quemAnotouId: anotacao.quemAnotouId,
+              quemAnotouNome: anotacao.quemAnotouNome,
             }}
           />
         </CardContent>

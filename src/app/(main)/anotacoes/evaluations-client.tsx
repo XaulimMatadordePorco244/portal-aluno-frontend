@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown } from 'lucide-react';
+import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown, UserCheck, Keyboard, Clock, Calendar } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWithRelations } from '@/lib/auth'; 
@@ -22,7 +22,16 @@ type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
     tipo: true;
     autor: {
       include: {
-        perfilAluno: true
+        perfilAluno: {
+          include: { cargo: true }
+        }
+      }
+    };
+    quemAnotou: {
+      include: {
+        perfilAluno: {
+          include: { cargo: true }
+        }
       }
     }
   }
@@ -66,6 +75,23 @@ export default function EvaluationsClient({
 
   const perfil = user.perfilAluno;
   const conceitoAtualValor = conceitoAtual.toFixed(2);
+
+  const formatarNome = (usuario: any) => {
+    if (!usuario) return "Sistema";
+    const p = usuario.perfilAluno;
+    if (p) {
+        const cargo = p.cargo?.abreviacao || '';
+        const nome = p.nomeDeGuerra || usuario.nome.split(' ')[0];
+        return `${cargo} GM ${nome}`.trim();
+    }
+    return usuario.nome;
+  };
+
+  const formatarResponsavel = (anotacao: AnotacaoComRelacoes) => {
+    if (anotacao.quemAnotouNome) return anotacao.quemAnotouNome.toUpperCase();
+    if (anotacao.quemAnotou) return formatarNome(anotacao.quemAnotou);
+    return formatarNome(anotacao.autor);
+  };
 
   const filteredByDate = useMemo(() => {
     if (!startDate && !endDate) return anotacoes;
@@ -166,7 +192,7 @@ export default function EvaluationsClient({
   };
 
   return (
-    <div className=" space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
           Minhas Anotações
@@ -191,26 +217,10 @@ export default function EvaluationsClient({
 
         <div className="w-full md:w-auto border-t md:border-t-0 md:border-l pt-6 md:pt-0 md:pl-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <InfoPill
-              label="Elogios"
-              count={summaryStats.elogio.count}
-              points={summaryStats.elogio.points}
-            />
-            <InfoPill
-              label="Punições"
-              count={summaryStats.punicao.count}
-              points={summaryStats.punicao.points}
-            />
-            <InfoPill
-              label="FO+"
-              count={summaryStats.foPositivo.count}
-              points={summaryStats.foPositivo.points}
-            />
-            <InfoPill
-              label="FO-"
-              count={summaryStats.foNegativo.count}
-              points={summaryStats.foNegativo.points}
-            />
+            <InfoPill label="Elogios" count={summaryStats.elogio.count} points={summaryStats.elogio.points} />
+            <InfoPill label="Punições" count={summaryStats.punicao.count} points={summaryStats.punicao.points} />
+            <InfoPill label="FO+" count={summaryStats.foPositivo.count} points={summaryStats.foPositivo.points} />
+            <InfoPill label="FO-" count={summaryStats.foNegativo.count} points={summaryStats.foNegativo.points} />
           </div>
         </div>
       </div>
@@ -222,143 +232,82 @@ export default function EvaluationsClient({
           </h2>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant={activeFilter === 'Todos' ? 'default' : 'outline'}
-              onClick={() => setActiveFilter('Todos')}
-            >
-              Todos
-            </Button>
-
-            <Button
-              size="sm"
-              variant={activeFilter === 'Elogio' ? 'default' : 'outline'}
-              className="text-green-600 border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50"
-              onClick={() => setActiveFilter('Elogio')}
-            >
-              <ThumbsUp className="mr-2 h-3 w-3" /> Elogios
-            </Button>
-
-            <Button
-              size="sm"
-              variant={activeFilter === 'Punição' ? 'default' : 'outline'}
-              className="text-red-600 border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
-              onClick={() => setActiveFilter('Punição')}
-            >
-              <ThumbsDown className="mr-2 h-3 w-3" /> Punições
-            </Button>
-
-            <Button
-              size="sm"
-              variant={activeFilter === 'FO+' ? 'default' : 'outline'}
-              className="text-blue-600 border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
-              onClick={() => setActiveFilter('FO+')}
-            >
-              <Megaphone className="mr-2 h-3 w-3" /> FO+
-            </Button>
-
-            <Button
-              size="sm"
-              variant={activeFilter === 'FO-' ? 'default' : 'outline'}
-              className="text-orange-600 border-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/50"
-              onClick={() => setActiveFilter('FO-')}
-            >
-              <Megaphone className="mr-2 h-3 w-3" /> FO-
-            </Button>
+            <Button size="sm" variant={activeFilter === 'Todos' ? 'default' : 'outline'} onClick={() => setActiveFilter('Todos')}>Todos</Button>
+            <Button size="sm" variant={activeFilter === 'Elogio' ? 'default' : 'outline'} className="text-green-600 border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50" onClick={() => setActiveFilter('Elogio')}><ThumbsUp className="mr-2 h-3 w-3" /> Elogios</Button>
+            <Button size="sm" variant={activeFilter === 'Punição' ? 'default' : 'outline'} className="text-red-600 border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setActiveFilter('Punição')}><ThumbsDown className="mr-2 h-3 w-3" /> Punições</Button>
+            <Button size="sm" variant={activeFilter === 'FO+' ? 'default' : 'outline'} className="text-blue-600 border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50" onClick={() => setActiveFilter('FO+')}><Megaphone className="mr-2 h-3 w-3" /> FO+</Button>
+            <Button size="sm" variant={activeFilter === 'FO-' ? 'default' : 'outline'} className="text-orange-600 border-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/50" onClick={() => setActiveFilter('FO-')}><Megaphone className="mr-2 h-3 w-3" /> FO-</Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <Label
-                htmlFor="start-date"
-                className="text-xs text-muted-foreground"
-              >
-                De
-              </Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label
-                htmlFor="end-date"
-                className="text-xs text-muted-foreground"
-              >
-                Até
-              </Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
+            <div><Label className="text-xs text-muted-foreground">De</Label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
+            <div><Label className="text-xs text-muted-foreground">Até</Label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></div>
           </div>
         </div>
 
         <Accordion type="single" collapsible className="w-full">
           {filteredAnnotations.map(anotacao => {
-            const autorPerfil = anotacao.autor.perfilAluno;
-            const autorNome =
-              autorPerfil?.nomeDeGuerra || anotacao.autor.nome;
+            const autorNome = formatarNome(anotacao.autor);
+            const responsavelNome = formatarResponsavel(anotacao);
 
             return (
-              <AccordionItem
-                value={`item-${anotacao.id}`}
-                key={anotacao.id}
-              >
+              <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
                 <AccordionTrigger className="px-4 sm:px-6 hover:bg-accent/50 text-left py-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <span className="font-medium text-foreground text-sm sm:text-base">
                         {anotacao.tipo.titulo}
                       </span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-bold shrink-0 ${
-                          Number(anotacao.pontos) >= 0
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold shrink-0 ${
+                          Number(anotacao.pontos) >= 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}
                       >
-                        {Number(anotacao.pontos) > 0 ? '+' : ''}
-                        {anotacao.pontos}
+                        {Number(anotacao.pontos) > 0 ? '+' : ''}{anotacao.pontos}
                       </span>
                     </div>
 
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {format(new Date(anotacao.data), 'dd/MM/yyyy', {
-                        locale: ptBR,
-                      })}
-                    </span>
+                    <div className="flex flex-col sm:items-end text-xs text-muted-foreground gap-0.5 whitespace-nowrap">
+                         <span className="flex items-center gap-1">
+                             <Calendar className="h-3 w-3" /> {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}
+                         </span>
+                    </div>
                   </div>
                 </AccordionTrigger>
 
-                <AccordionContent className="px-4 sm:px-6 pb-4 bg-accent/30 border-t pt-4 space-y-3">
+                <AccordionContent className="px-4 sm:px-6 pb-4 bg-accent/10 border-t pt-4 space-y-4">
+                  
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                      Detalhes
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                      Detalhes do Fato
                     </p>
-                    <p className="text-sm text-foreground leading-relaxed">
                       {anotacao.detalhes}
-                    </p>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs text-muted-foreground pt-2 border-t border-border/50">
-                    <span>
-                      Lançado em:{' '}
-                      {format(
-                        new Date(anotacao.createdAt),
-                        "dd/MM/yyyy 'às' HH:mm",
-                        { locale: ptBR }
-                      )}
-                    </span>
-                    <span className="hidden sm:inline">|</span>
-                    <span>Autor: {autorNome}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border/40 text-xs text-muted-foreground">
+                    
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                            <Keyboard className="h-3.5 w-3.5 opacity-70" />
+                            <span>Lançado por: <strong className="text-foreground/80">{autorNome}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <UserCheck className="h-3.5 w-3.5 opacity-70" />
+                            <span>Anotado por: <strong className="text-foreground/80">{responsavelNome}</strong></span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:items-end">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 opacity-70" />
+                            <span>Ocorrido em: {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 opacity-70" />
+                            <span>Registrado em: {format(new Date(anotacao.createdAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                        </div>
+                    </div>
                   </div>
+
                 </AccordionContent>
               </AccordionItem>
             );

@@ -14,6 +14,8 @@ export interface FormState {
     data?: string[];
     pontos?: string[];
     detalhes?: string[];
+    quemAnotouId?: string[];
+    quemAnotouNome?: string[];
     _form?: string[];
   };
   message?: string;
@@ -26,13 +28,15 @@ const AnotacaoSchema = z.object({
   data: z.string().min(1, "Data é obrigatória.").pipe(z.coerce.date()),
   pontos: z.string().min(1, "Pontos são obrigatórios.").pipe(z.coerce.number()),
   detalhes: z.string().trim().min(3, "A descrição deve ter no mínimo 3 caracteres."),
+  quemAnotouId: z.string().optional().nullable(),
+  quemAnotouNome: z.string().optional().nullable(),
 });
 
 const UpdateAnotacaoSchema = AnotacaoSchema.omit({ alunoIds: true });
 
 async function checkAdminPermission() {
   const user = await getCurrentUserWithRelations();
-  const allowedRoles = ["ADMIN"];
+  const allowedRoles = ["ADMIN", "INSTRUTOR"];
   
   if (!user || !allowedRoles.includes(user.role)) {
     throw new Error("Acesso negado.");
@@ -45,6 +49,19 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
     const user = await checkAdminPermission();
 
     const alunoIds = formData.getAll("alunoIds") as string[];
+    const quemAnotouIdRaw = formData.get("quemAnotouId") as string;
+    const quemAnotouNomeRaw = formData.get("quemAnotouNome") as string;
+
+    let finalQuemAnotouId: string | null = null;
+    let finalQuemAnotouNome: string | null = null;
+
+    if (quemAnotouIdRaw === 'AUTOR_LOGADO') {
+      finalQuemAnotouId = user.id;
+    } else if (quemAnotouIdRaw) {
+      finalQuemAnotouId = quemAnotouIdRaw;
+    } else {
+      finalQuemAnotouNome = quemAnotouNomeRaw || null;
+    }
     
     const validatedFields = AnotacaoSchema.safeParse({
       alunoIds,
@@ -52,13 +69,15 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
       data: formData.get("data"),
       pontos: formData.get("pontos"),
       detalhes: formData.get("detalhes"),
+      quemAnotouId: finalQuemAnotouId,
+      quemAnotouNome: finalQuemAnotouNome
     });
 
     if (!validatedFields.success) {
       return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { tipoId, data, pontos: pontosFormulario, detalhes } = validatedFields.data;
+    const { tipoId, data, pontos: pontosFormulario, detalhes, quemAnotouId, quemAnotouNome } = validatedFields.data;
 
     for (const alunoId of alunoIds) {
       const alunoInfo = await prisma.perfilAluno.findUnique({
@@ -127,6 +146,8 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
         pontos: pontosFinais,
         detalhes,
         autorId: user.id,
+        quemAnotouId: quemAnotouId || user.id,
+        quemAnotouNome: quemAnotouNome,
         blocoCargoId: blocoCargo?.id || null 
       };
     });
@@ -155,20 +176,36 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
 
 export async function updateAnotacao(id: string, prevState: FormState, formData: FormData): Promise<FormState> {
   try {
-    await checkAdminPermission();
+    const user = await checkAdminPermission();
+
+    const quemAnotouIdRaw = formData.get("quemAnotouId") as string;
+    const quemAnotouNomeRaw = formData.get("quemAnotouNome") as string;
+
+    let finalQuemAnotouId: string | null = null;
+    let finalQuemAnotouNome: string | null = null;
+
+    if (quemAnotouIdRaw === 'AUTOR_LOGADO') {
+      finalQuemAnotouId = user.id;
+    } else if (quemAnotouIdRaw) {
+      finalQuemAnotouId = quemAnotouIdRaw;
+    } else {
+      finalQuemAnotouNome = quemAnotouNomeRaw || null;
+    }
 
     const validatedFields = UpdateAnotacaoSchema.safeParse({
         tipoId: formData.get("tipoId"),
         data: formData.get("data"),
         pontos: formData.get("pontos"),
         detalhes: formData.get("detalhes"),
+        quemAnotouId: finalQuemAnotouId,
+        quemAnotouNome: finalQuemAnotouNome
     });
 
     if (!validatedFields.success) {
         return { errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { tipoId, data, pontos, detalhes } = validatedFields.data;
+    const { tipoId, data, pontos, detalhes, quemAnotouId, quemAnotouNome } = validatedFields.data;
 
     const anotacaoExistente = await prisma.anotacao.findUnique({
         where: { id },
@@ -183,7 +220,9 @@ export async function updateAnotacao(id: string, prevState: FormState, formData:
             tipoId,
             data,
             pontos,
-            detalhes
+            detalhes,
+            quemAnotouId: quemAnotouId || null,
+            quemAnotouNome: quemAnotouNome || null
         }
     });
 

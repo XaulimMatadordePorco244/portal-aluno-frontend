@@ -37,6 +37,15 @@ async function getAlunoData() {
           }
         }
       },
+      quemAnotou: {
+        include: {
+          perfilAluno: {
+            include: {
+              cargo: true
+            }
+          }
+        }
+      }
     },
     orderBy: {
       data: 'desc',

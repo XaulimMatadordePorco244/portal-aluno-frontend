@@ -12,13 +12,31 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { 
-  Award, Filter, PlusCircle, Pencil, Trash2, ArrowLeft, FileDown 
+  Award, Filter, Pencil, Trash2, ArrowLeft, FileDown, 
+  UserCheck, Keyboard, Clock, Calendar, Megaphone, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { deleteAnotacao } from '@/actions/anotacoes';
 import { toast } from "sonner";
 import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service';
+import { Prisma } from '@prisma/client';
+
+type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
+  include: {
+    tipo: true;
+    autor: {
+      include: {
+        perfilAluno: { include: { cargo: true } }
+      }
+    };
+    quemAnotou: {
+      include: {
+        perfilAluno: { include: { cargo: true } }
+      }
+    }
+  }
+}>;
 
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-';
 
@@ -27,39 +45,41 @@ const InfoPill = ({ label, count, points }: { label: string; count: number; poin
     <p className="text-xs sm:text-sm font-semibold text-muted-foreground">
       {label}: {count}
     </p>
-    <p
-      className={`text-base sm:text-lg font-bold ${
-        points >= 0
-          ? 'text-emerald-600 dark:text-emerald-500'
-          : 'text-red-600 dark:text-red-500'
-      }`}
-    >
-      {points > 0 ? '+' : ''}
-      {points.toFixed(1)}
+    <p className={`text-base sm:text-lg font-bold ${points >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+      {points > 0 ? '+' : ''}{points.toFixed(1)}
     </p>
   </div>
 );
 
-interface AdminStudentHistoryProps {
-  perfilAluno: any; 
-  anotacoes: any[];
+interface Props {
+  perfilAluno: any;
+  anotacoes: AnotacaoComRelacoes[];
   conceitoAtual: number;
 }
 
-export default function AdminStudentHistoryClient({
-  perfilAluno,
-  anotacoes,
-  conceitoAtual,
-}: AdminStudentHistoryProps) {
+export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conceitoAtual }: Props) {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<AnnotationFilterType>('Todos');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const conceitoAtualValor = conceitoAtual.toFixed(2);
-  const nomeCompleto = perfilAluno.usuario.nome;
-  const nomeGuerra = perfilAluno.nomeDeGuerra;
+  const formatarNome = (usuario: any) => {
+    if (!usuario) return "Sistema";
+    const p = usuario.perfilAluno;
+    if (p) {
+        const cargo = p.cargo?.abreviacao || '';
+        const nome = p.nomeDeGuerra || usuario.nome.split(' ')[0];
+        return `${cargo} GM ${nome}`.trim();
+    }
+    return usuario.nome;
+  };
+
+  const formatarResponsavel = (anotacao: AnotacaoComRelacoes) => {
+    if (anotacao.quemAnotouNome) return anotacao.quemAnotouNome.toUpperCase();
+    if (anotacao.quemAnotou) return formatarNome(anotacao.quemAnotou);
+    return formatarNome(anotacao.autor);
+  };
 
   const filteredByDate = useMemo(() => {
     if (!startDate && !endDate) return anotacoes;
@@ -74,16 +94,6 @@ export default function AdminStudentHistoryClient({
     }
     return items;
   }, [anotacoes, startDate, endDate]);
-
-  const filteredAnnotations = useMemo(() => {
-    switch (activeFilter) {
-      case 'Elogio': return filteredByDate.filter(a => Number(a.pontos) > 0.5);
-      case 'Punição': return filteredByDate.filter(a => Number(a.pontos) < -0.3);
-      case 'FO+': return filteredByDate.filter(a => Number(a.pontos) === 0.5);
-      case 'FO-': return filteredByDate.filter(a => Number(a.pontos) === -0.3);
-      default: return filteredByDate;
-    }
-  }, [filteredByDate, activeFilter]);
 
   const summaryStats = useMemo(() => {
     const stats = {
@@ -102,201 +112,168 @@ export default function AdminStudentHistoryClient({
     return stats;
   }, [filteredByDate]);
 
-
-  const handleCreateNew = () => {
-    router.push(`/admin/anotacoes/new?alunoId=${perfilAluno.id}`);
-  };
+  const filteredAnnotations = useMemo(() => {
+    switch (activeFilter) {
+      case 'Elogio': return filteredByDate.filter(a => Number(a.pontos) > 0.5);
+      case 'Punição': return filteredByDate.filter(a => Number(a.pontos) < -0.3);
+      case 'FO+': return filteredByDate.filter(a => Number(a.pontos) === 0.5);
+      case 'FO-': return filteredByDate.filter(a => Number(a.pontos) === -0.3);
+      default: return filteredByDate;
+    }
+  }, [filteredByDate, activeFilter]);
 
   const handleEdit = (id: string) => {
     router.push(`/admin/anotacoes/${id}/edit`);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta anotação permanentemente?")) return;
-    
+    if (!confirm("Tem certeza que deseja excluir esta anotação?")) return;
     setIsLoading(true);
-    const result = await deleteAnotacao(id, perfilAluno.id);
+    const result = await deleteAnotacao(id, perfilAluno.id); 
     setIsLoading(false);
-
     if (result.success) {
-      toast.success("Anotação excluída com sucesso");
+      toast.success("Anotação excluída com sucesso.");
     } else {
-      toast.error("Erro ao excluir anotação");
+      toast.error("Erro ao excluir anotação.");
     }
   };
 
- const handleGeneratePDF = async () => {
-    try {
+  const generateStatement = async () => {
+      let descricaoFiltro = activeFilter;
+      if (startDate || endDate) {
+        const i = startDate ? format(parseISO(startDate), 'dd/MM/yy') : '...';
+        const f = endDate ? format(parseISO(endDate), 'dd/MM/yy') : '...';
+        descricaoFiltro += ` (${i} até ${f})`;
+      }
+  
       await anotacoesPdfService.generate({
         aluno: {
-          nome: nomeCompleto,
-          nomeDeGuerra: nomeGuerra,
-          cargo: perfilAluno.cargo?.nome || "Aluno" 
+          nome: perfilAluno.usuario.nome,
+          nomeDeGuerra: perfilAluno.nomeDeGuerra,
+          cargo: perfilAluno.cargo?.abreviacao,
         },
-        conceitoAtual: conceitoAtualValor,
-        filtroAplicado: activeFilter, 
+        conceitoAtual: conceitoAtual.toFixed(2),
+        filtroAplicado: descricaoFiltro,
         anotacoes: filteredAnnotations.map(a => ({
-          data: new Date(a.data),
-          tipo: a.tipo.titulo, 
+          data: a.data,
+          tipo: a.tipo.titulo,
           pontos: Number(a.pontos),
-          detalhes: a.detalhes
-        }))
+          detalhes: a.detalhes,
+        })),
       });
-      toast.success("Extrato gerado com sucesso!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao gerar PDF.");
-    }
-  };
-
-  const getFilterButtonStyle = (filterType: AnnotationFilterType) => {
-    const baseStyle = "border transition-all";
-    if (activeFilter !== filterType) return `text-muted-foreground hover:text-foreground ${baseStyle}`;
-
-    switch (filterType) {
-        case 'Elogio': return `bg-emerald-100 text-emerald-700 border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-400 ${baseStyle}`;
-        case 'Punição': return `bg-red-100 text-red-700 border-red-500 dark:bg-red-900/30 dark:text-red-400 ${baseStyle}`;
-        case 'FO+': return `bg-blue-100 text-blue-700 border-blue-500 dark:bg-blue-900/30 dark:text-blue-400 ${baseStyle}`;
-        case 'FO-': return `bg-orange-100 text-orange-700 border-orange-500 dark:bg-orange-900/30 dark:text-orange-400 ${baseStyle}`;
-        default: return `bg-primary text-primary-foreground border-primary ${baseStyle}`;
-    }
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl space-y-6">
-      
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <div className="space-y-6 animate-in fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <Button variant="ghost" size="icon" onClick={() => router.push('/admin/alunos')}>
                 <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                {nomeGuerra}
-                </h1>
-                <p className="text-sm text-muted-foreground capitalize">{nomeCompleto.toLowerCase()}</p>
+                <h1 className="text-2xl font-bold tracking-tight">{perfilAluno.nomeDeGuerra}</h1>
+                <p className="text-muted-foreground text-sm">{perfilAluno.usuario.nome}</p>
             </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <Button variant="outline" onClick={handleGeneratePDF} className="gap-2">
-            <FileDown className="h-4 w-4" />
-            Gerar Extrato
-          </Button>
-          
-          <Button onClick={handleCreateNew} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-            <PlusCircle className="h-4 w-4" />
-            Lançar Nova Anotação
-          </Button>
-        </div>
+        <Button onClick={generateStatement} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" /> Gerar Extrato (PDF)
+        </Button>
       </div>
 
-      <div className="bg-card p-4 sm:p-6 rounded-lg shadow-md border flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto text-center sm:text-left">
-          <Award size={48} className="text-yellow-500 shrink-0" />
+      <div className="bg-card p-4 sm:p-6 rounded-lg shadow-sm border flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <Award size={40} className="text-yellow-500" />
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Conceito Atual
-            </p>
-            <p className="text-4xl font-bold text-foreground">
-              {conceitoAtualValor}
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Conceito Atual</p>
+            <p className="text-3xl font-bold">{conceitoAtual.toFixed(2)}</p>
           </div>
         </div>
-
-        <div className="w-full md:w-auto border-t md:border-t-0 md:border-l pt-6 md:pt-0 md:pl-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="w-full md:w-auto grid grid-cols-2 lg:grid-cols-4 gap-3">
             <InfoPill label="Elogios" count={summaryStats.elogio.count} points={summaryStats.elogio.points} />
             <InfoPill label="Punições" count={summaryStats.punicao.count} points={summaryStats.punicao.points} />
             <InfoPill label="FO+" count={summaryStats.foPositivo.count} points={summaryStats.foPositivo.points} />
             <InfoPill label="FO-" count={summaryStats.foNegativo.count} points={summaryStats.foNegativo.points} />
-          </div>
         </div>
       </div>
 
-      <div className="bg-card rounded-xl shadow-lg border">
-        
+      <div className="bg-card rounded-xl shadow-sm border">
         <div className="p-4 sm:p-6 border-b space-y-4">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Filter size={20} /> Histórico Detalhado
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {['Todos', 'Elogio', 'Punição', 'FO+', 'FO-'].map((f) => (
-                <Button
-                    key={f}
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setActiveFilter(f as AnnotationFilterType)}
-                    className={getFilterButtonStyle(f as AnnotationFilterType)}
-                >
-                    {f}
-                </Button>
-            ))}
-          </div>
+            <h2 className="text-lg font-semibold flex items-center gap-2"><Filter size={18} /> Histórico de Ocorrências</h2>
+            
+            <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant={activeFilter === 'Todos' ? 'default' : 'outline'} onClick={() => setActiveFilter('Todos')}>Todos</Button>
+                <Button size="sm" variant={activeFilter === 'Elogio' ? 'default' : 'outline'} className="text-green-600 border-green-600 hover:bg-green-100" onClick={() => setActiveFilter('Elogio')}><ThumbsUp className="mr-2 h-3 w-3" /> Elogios</Button>
+                <Button size="sm" variant={activeFilter === 'Punição' ? 'default' : 'outline'} className="text-red-600 border-red-600 hover:bg-red-100" onClick={() => setActiveFilter('Punição')}><ThumbsDown className="mr-2 h-3 w-3" /> Punições</Button>
+                <Button size="sm" variant={activeFilter === 'FO+' ? 'default' : 'outline'} className="text-blue-600 border-blue-600 hover:bg-blue-100" onClick={() => setActiveFilter('FO+')}><Megaphone className="mr-2 h-3 w-3" /> FO+</Button>
+                <Button size="sm" variant={activeFilter === 'FO-' ? 'default' : 'outline'} className="text-orange-600 border-orange-600 hover:bg-orange-100" onClick={() => setActiveFilter('FO-')}><Megaphone className="mr-2 h-3 w-3" /> FO-</Button>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <Label className="text-xs text-muted-foreground">De</Label>
-              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><Label className="text-xs">De</Label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
+                <div><Label className="text-xs">Até</Label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></div>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Até</Label>
-              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-            </div>
-          </div>
         </div>
 
         <Accordion type="single" collapsible className="w-full">
           {filteredAnnotations.map(anotacao => {
-            const autorNome = anotacao.autor.perfilAluno?.nomeDeGuerra || anotacao.autor.nome;
-            const pts = Number(anotacao.pontos);
+            const autorNome = formatarNome(anotacao.autor);
+            const responsavelNome = formatarResponsavel(anotacao);
 
             return (
               <AccordionItem value={`item-${anotacao.id}`} key={anotacao.id}>
-                <AccordionTrigger className="px-4 sm:px-6 hover:bg-accent/50 text-left py-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 pr-4">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <span className="font-medium text-foreground text-sm sm:text-base">
-                        {anotacao.tipo.titulo}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold shrink-0 ${
-                          pts >= 0 
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                        }`}>
-                        {pts > 0 ? '+' : ''}{pts}
+                <AccordionTrigger className="px-4 sm:px-6 hover:bg-accent/50 py-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm sm:text-base">{anotacao.tipo.titulo}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${Number(anotacao.pontos) >= 0 ? ' text-green-700' : ' text-red-700'}`}>
+                        {Number(anotacao.pontos) > 0 ? '+' : ''}{Number(anotacao.pontos)}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}
-                    </span>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="flex items-center gap-1">
+                             <Calendar className="h-3 w-3" /> {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                    </div>
                   </div>
                 </AccordionTrigger>
 
-                <AccordionContent className="px-4 sm:px-6 pb-4 bg-accent/30 border-t pt-4 space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                      Detalhes
-                    </p>
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {anotacao.detalhes}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col md:flex-row justify-between items-end md:items-center pt-2 border-t border-border/50 gap-4 mt-2">
-                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs text-muted-foreground">
-                        <span>
-                            Lançado em: {format(new Date(anotacao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </span>
-                        <span className="hidden sm:inline">|</span>
-                        <span>Autor: {autorNome}</span>
+                <AccordionContent className="px-4 sm:px-6 pb-4 bg-accent/5 border-t pt-4 space-y-4">
+                    
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                           Detalhes do Fato
+                        </p>
+                            {anotacao.detalhes}
                     </div>
 
-                    <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border/40 text-xs text-muted-foreground">
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <Keyboard className="h-3.5 w-3.5 opacity-70" />
+                                <span>Lançado por: <strong className="text-foreground/80">{autorNome}</strong></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <UserCheck className="h-3.5 w-3.5 opacity-70" />
+                                <span>Anotado por: <strong className="text-foreground/80">{responsavelNome}</strong></span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:items-end">
+                             <div className="flex items-center gap-2">
+                                <Calendar className="h-3.5 w-3.5 opacity-70" />
+                                <span>Ocorrido em: {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-3.5 w-3.5 opacity-70" />
+                                <span>Registrado em: {format(new Date(anotacao.createdAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 justify-end border-t border-border/40">
                         <Button 
                             variant="outline" 
                             size="sm" 
-                            className="h-8 gap-2 w-full md:w-auto text-xs"
+                            className="h-8 gap-2 text-xs"
                             onClick={() => handleEdit(anotacao.id)}
                             disabled={isLoading}
                         >
@@ -305,7 +282,7 @@ export default function AdminStudentHistoryClient({
                         <Button 
                             variant="destructive" 
                             size="sm" 
-                            className="h-8 gap-2 w-full md:w-auto text-xs"
+                            className="h-8 gap-2 text-xs"
                             onClick={() => handleDelete(anotacao.id)}
                             disabled={isLoading}
                         >
@@ -313,7 +290,6 @@ export default function AdminStudentHistoryClient({
                         </Button>
                     </div>
 
-                  </div>
                 </AccordionContent>
               </AccordionItem>
             );
@@ -323,7 +299,7 @@ export default function AdminStudentHistoryClient({
         {filteredAnnotations.length === 0 && (
           <div className="text-center py-12 px-4 text-muted-foreground flex flex-col items-center gap-2">
             <Filter className="h-8 w-8 opacity-20" />
-            <p>Nenhuma anotação encontrada para este período/filtro.</p>
+            <p>Nenhuma anotação encontrada.</p>
           </div>
         )}
       </div>

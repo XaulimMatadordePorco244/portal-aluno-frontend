@@ -6,7 +6,6 @@ import {
   PlusCircle, 
   Search, 
   MoreHorizontal, 
-  User, 
   Edit2, 
   Trash, 
   UserCheck, 
@@ -105,7 +104,7 @@ export default async function AnotacoesDashboardPage({
           <div className="space-y-0.5">
             <h1 className="text-2xl font-medium tracking-tight text-foreground">Gestão de Anotações</h1>
             <p className="text-sm text-muted-foreground/80">
-              {totalCount} registros ativos no bloco vigente
+              {totalCount} registros encontrados.
             </p>
           </div>
           <Link href="/admin/anotacoes/new">
@@ -188,7 +187,7 @@ export default async function AnotacoesDashboardPage({
                         <div className="space-y-3">
                           <div className="flex flex-col gap-1.5 border-b border-border/40 pb-2">
                             <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">Descrição detalhada</span>
-                            <p className="text-sm leading-relaxed text-foreground/90 font-normal break-words">
+                            <p className="text-sm leading-relaxed text-foreground/90 font-normal wrap-break-word">
                               {item.detalhes || "Nenhuma descrição informada."}
                             </p>
                           </div>

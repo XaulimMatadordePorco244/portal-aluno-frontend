@@ -32,9 +32,18 @@ export default async function AdminStudentDetailsPage({ params }: PageProps) {
       tipo: true,
       autor: {
         include: {
-          perfilAluno: true
+          perfilAluno: {
+            include: { cargo: true } 
+          }
         }
       },
+      quemAnotou: {
+        include: {
+          perfilAluno: {
+            include: { cargo: true }
+          }
+        }
+      }
     },
     orderBy: {
       data: 'desc',
