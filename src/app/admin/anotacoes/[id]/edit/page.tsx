@@ -2,12 +2,35 @@ import prisma from "@/lib/prisma";
 import AnotacaoForm from "@/components/admin/anotacoes/AnotacaoForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { notFound } from "next/navigation";
+import { Prisma } from '@prisma/client';
 
 interface EditAnotacaoPageProps {
   params: {
     id: string;
   };
 }
+type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true,
+        cargo: true
+      }
+    }
+  }
+}>;
+
+type UsuarioWithPerfilCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true,
+        cargo: true
+      }
+    }
+
+  }
+}>;
 
 export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps) {
   const anotacao = await prisma.anotacao.findUnique({
@@ -56,6 +79,8 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({
     orderBy: { titulo: 'asc' }
   });
+  const alunosWithRelations = alunos as AlunoWithPerfilCompanhiaCargo[];
+  const usuariosWithRelations = usuarios as UsuarioWithPerfilCargo[];
 
   return (
     <div className="container mx-auto py-10">
@@ -68,8 +93,8 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
         </CardHeader>
         <CardContent>
           <AnotacaoForm 
-            alunos={alunos as any} 
-            usuarios={usuarios as any}
+            alunos={alunosWithRelations} 
+            usuarios={usuariosWithRelations}
             tiposDeAnotacao={tiposDeAnotacao}
             initialData={{
               id: anotacao.id,

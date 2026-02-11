@@ -28,6 +28,12 @@ const CreateFormSchema = z.object({
     .refine((file) => file.type === "application/pdf", "O arquivo precisa ser um PDF."),
 });
 
+function gerarCaminhoArquivo(arquivo: File, dataReferencia: Date) {
+  const ano = dataReferencia.getFullYear();
+  const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return `QES/${ano}/${nomeLimpo}`;
+}
+
 export async function createQES(prevState: QESState, formData: FormData): Promise<QESState> {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
@@ -48,7 +54,13 @@ export async function createQES(prevState: QESState, formData: FormData): Promis
   const titulo = `QES - ${format(dataInicio, 'dd/MM')} a ${format(dataFim, 'dd/MM/yyyy', { locale: ptBR })}`;
 
   try {
-    const blob = await put(arquivo.name, arquivo, { access: "public", addRandomSuffix: true });
+    const caminho = gerarCaminhoArquivo(arquivo, dataInicio);
+    
+    const blob = await put(caminho, arquivo, { 
+      access: "public", 
+      addRandomSuffix: true 
+    });
+
     await prisma.qES.create({
       data: { titulo, arquivoUrl: blob.url, dataInicio, dataFim, autorId: user.id },
     });
@@ -56,7 +68,7 @@ export async function createQES(prevState: QESState, formData: FormData): Promis
     revalidatePath("/admin/qes");
     return { success: true }; 
   } catch (error) {
-    console.error("Erro ao fazer upload do QES:", error);
+    console.error(error);
     return { success: false, message: "Erro ao salvar o QES." };
   }
 }
@@ -79,7 +91,7 @@ export async function deleteQES(formData: FormData) {
     await prisma.qES.delete({ where: { id } });
     revalidatePath("/admin/qes");
   } catch (error) {
-    console.error("Erro ao deletar QES:", error);
+    console.error(error);
   }
 }
 
@@ -117,7 +129,12 @@ export async function updateQES(prevState: QESState, formData: FormData): Promis
       if (qesAntigo?.arquivoUrl) {
         await del(qesAntigo.arquivoUrl);
       }
-      const blob = await put(arquivo.name, arquivo, { access: "public", addRandomSuffix: true });
+      
+      const caminho = gerarCaminhoArquivo(arquivo, dataInicio);
+      const blob = await put(caminho, arquivo, { 
+        access: "public", 
+        addRandomSuffix: true 
+      });
       arquivoUrl = blob.url;
     }
 
@@ -126,7 +143,7 @@ export async function updateQES(prevState: QESState, formData: FormData): Promis
       data: { titulo, dataInicio, dataFim, ...(arquivoUrl && { arquivoUrl }) },
     });
   } catch (error) {
-    console.error("Erro ao atualizar o QES:", error);
+    console.error(error);
     return { success: false, message: "Erro ao atualizar o QES." };
   }
 

@@ -31,7 +31,7 @@ export default async function ClassificacaoGeralPage() {
     }
   });
 
-  let processedData = alunos.map((aluno) => {
+  const processedData = alunos.map((aluno) => {
     let elogios = 0;
     let punicoes = 0;
     let foPos = 0;

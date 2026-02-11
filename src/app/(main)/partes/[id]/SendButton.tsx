@@ -5,9 +5,32 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Send, Loader2 } from "lucide-react";
 import { generatePartePDF } from "@/lib/PartepdfGenerator";
+import { Prisma } from "@prisma/client";
+
+type ParteWithRelations = Prisma.ParteGetPayload<{
+  include: {
+    autor: {
+      include: {
+        perfilAluno: {
+          include: {
+            cargo: true;
+            companhia: true;
+          };
+        };
+      };
+    };
+    analises: {
+      include: {
+        analista: true;
+      };
+    };
+    etapas: true;
+    logs: true;
+  };
+}>;
 
 interface SendButtonProps {
-    parte: any;
+    parte: ParteWithRelations;
 }
 
 export function SendButton({ parte }: SendButtonProps) {
@@ -45,9 +68,10 @@ export function SendButton({ parte }: SendButtonProps) {
             alert("Parte enviada com sucesso! O protocolo foi gerado.");
             router.refresh();
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            alert(err.message || "Ocorreu um erro ao enviar.");
+            const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro ao enviar.";
+            alert(errorMessage);
         } finally {
             setIsLoading(false);
         }

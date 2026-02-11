@@ -1,11 +1,11 @@
 import { Metadata } from 'next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Save, Users, Building2 } from 'lucide-react'
+import { Save, Building2 } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { atualizarSessao, atualizarFuncao, listarAlunosParaSelect } from './actions' 
+import { atualizarSessao, listarAlunosParaSelect } from './actions' 
 import { redirect } from 'next/navigation'
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth'
 import { ResponsavelSelect } from './responsavel-select' 
@@ -17,7 +17,6 @@ export default async function OrganizacaoPage() {
   if (!user || !canAccessAdminArea(user)) redirect('/dashboard')
 
   const sessoes = await prisma.gmSessao.findMany({ orderBy: { ordem: 'asc' } })
-  const funcoes = await prisma.gmFuncao.findMany({ orderBy: { ordem: 'desc' } })
   
   const alunosOpcoes = await listarAlunosParaSelect()
 

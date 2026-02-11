@@ -27,12 +27,39 @@ type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
     tipo: true;
     autor: {
       include: {
-        perfilAluno: { include: { cargo: true } }
+        perfilAluno: { 
+          include: { 
+            cargo: true 
+          } 
+        }
       }
     };
     quemAnotou: {
       include: {
-        perfilAluno: { include: { cargo: true } }
+        perfilAluno: { 
+          include: { 
+            cargo: true 
+          } 
+        }
+      }
+    }
+  }
+}>;
+
+type PerfilAlunoWithRelations = Prisma.PerfilAlunoGetPayload<{
+  include: {
+    usuario: true;
+    cargo: true;
+    companhia: true;
+    funcao: true;
+  }
+}>;
+
+type UsuarioWithPerfil = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        cargo: true;
       }
     }
   }
@@ -52,7 +79,7 @@ const InfoPill = ({ label, count, points }: { label: string; count: number; poin
 );
 
 interface Props {
-  perfilAluno: any;
+  perfilAluno: PerfilAlunoWithRelations;
   anotacoes: AnotacaoComRelacoes[];
   conceitoAtual: number;
 }
@@ -64,18 +91,18 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const formatarNome = (usuario: any) => {
+  const formatarNome = (usuario: UsuarioWithPerfil | null | undefined): string => {
     if (!usuario) return "Sistema";
-    const p = usuario.perfilAluno;
-    if (p) {
-        const cargo = p.cargo?.abreviacao || '';
-        const nome = p.nomeDeGuerra || usuario.nome.split(' ')[0];
+    const perfil = usuario.perfilAluno;
+    if (perfil) {
+        const cargo = perfil.cargo?.abreviacao || '';
+        const nome = perfil.nomeDeGuerra || usuario.nome.split(' ')[0];
         return `${cargo} GM ${nome}`.trim();
     }
     return usuario.nome;
   };
 
-  const formatarResponsavel = (anotacao: AnotacaoComRelacoes) => {
+  const formatarResponsavel = (anotacao: AnotacaoComRelacoes): string => {
     if (anotacao.quemAnotouNome) return anotacao.quemAnotouNome.toUpperCase();
     if (anotacao.quemAnotou) return formatarNome(anotacao.quemAnotou);
     return formatarNome(anotacao.autor);

@@ -9,7 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Save, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function EditarParteForm({ parte }: { parte: any }) {
+interface Parte {
+    id: string;
+    assunto: string;
+    conteudo: string;
+}
+
+export default function EditarParteForm({ parte }: { parte: Parte }) {
     const router = useRouter();
     const [assunto, setAssunto] = useState(parte.assunto);
     const [conteudo, setConteudo] = useState(parte.conteudo);
@@ -30,7 +36,7 @@ export default function EditarParteForm({ parte }: { parte: any }) {
 
             router.push(`/partes/${parte.id}`); 
             router.refresh();
-        } catch (error) {
+        } catch  {
             alert("Erro ao salvar alterações.");
         } finally {
             setIsLoading(false);
@@ -41,7 +47,11 @@ export default function EditarParteForm({ parte }: { parte: any }) {
         <form onSubmit={handleUpdate} className="space-y-6">
             <div className="space-y-2">
                 <Label>Assunto</Label>
-                <Input value={assunto} onChange={(e) => setAssunto(e.target.value)} required />
+                <Input 
+                    value={assunto} 
+                    onChange={(e) => setAssunto(e.target.value)} 
+                    required 
+                />
             </div>
 
             <div className="space-y-2">
@@ -56,10 +66,17 @@ export default function EditarParteForm({ parte }: { parte: any }) {
 
             <div className="flex justify-between">
                 <Link href={`/partes/${parte.id}`}>
-                    <Button variant="ghost" type="button"><ArrowLeft className="mr-2 h-4 w-4"/> Cancelar</Button>
+                    <Button variant="ghost" type="button">
+                        <ArrowLeft className="mr-2 h-4 w-4"/> 
+                        Cancelar
+                    </Button>
                 </Link>
                 <Button type="submit" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
+                    {isLoading ? (
+                        <Loader2 className="mr-2 animate-spin"/>
+                    ) : (
+                        <Save className="mr-2 h-4 w-4"/>
+                    )}
                     Salvar Alterações
                 </Button>
             </div>

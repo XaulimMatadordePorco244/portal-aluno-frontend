@@ -31,10 +31,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(novaParte, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao criar parte:", error);
     return NextResponse.json(
-        { error: error.message || 'Erro interno ao criar parte.' }, 
+        { error: error instanceof Error ? error.message : 'Erro interno ao criar parte.' }, 
         { status: 400 } 
     );
   }

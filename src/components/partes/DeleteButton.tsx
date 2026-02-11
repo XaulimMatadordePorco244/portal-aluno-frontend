@@ -25,7 +25,7 @@ export function DeleteButton({ parteId }: { parteId: string }) {
             router.push("/partes"); 
             router.refresh(); 
 
-        } catch (error) {
+        } catch {
             alert("Erro ao excluir parte.");
         } finally {
             setIsLoading(false);

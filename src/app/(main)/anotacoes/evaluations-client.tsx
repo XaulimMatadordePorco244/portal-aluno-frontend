@@ -37,6 +37,14 @@ type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
   }
 }>;
 
+type UsuarioAnotacao = {
+  nome: string;
+  perfilAluno?: {
+    cargo?: { abreviacao: string } | null;
+    nomeDeGuerra?: string | null;
+  } | null;
+};
+
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-';
 
 const InfoPill = ({ label, count, points }: { label: string; count: number; points: number }) => (
@@ -76,12 +84,12 @@ export default function EvaluationsClient({
   const perfil = user.perfilAluno;
   const conceitoAtualValor = conceitoAtual.toFixed(2);
 
-  const formatarNome = (usuario: any) => {
+  const formatarNome = (usuario: UsuarioAnotacao | null | undefined) => {
     if (!usuario) return "Sistema";
-    const p = usuario.perfilAluno;
-    if (p) {
-        const cargo = p.cargo?.abreviacao || '';
-        const nome = p.nomeDeGuerra || usuario.nome.split(' ')[0];
+    const perfil = usuario.perfilAluno;
+    if (perfil) {
+        const cargo = perfil.cargo?.abreviacao || '';
+        const nome = perfil.nomeDeGuerra || usuario.nome.split(' ')[0];
         return `${cargo} GM ${nome}`.trim();
     }
     return usuario.nome;

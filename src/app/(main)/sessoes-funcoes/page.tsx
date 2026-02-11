@@ -8,7 +8,6 @@ export const metadata: Metadata = { title: 'Sessões e Funções' }
 
 export default async function AlunoOrganizacaoPage() {
     const sessoes = await prisma.gmSessao.findMany({ orderBy: { ordem: 'asc' } })
-    const funcoes = await prisma.gmFuncao.findMany({ orderBy: { ordem: 'desc' } })
 
     return (
         <div >

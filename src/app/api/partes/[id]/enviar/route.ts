@@ -19,11 +19,11 @@ export async function PUT(
 
     return NextResponse.json(parteEnviada);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao enviar parte:", error);
     
     return NextResponse.json(
-      { error: error.message || 'Erro ao processar o envio.' }, 
+      { error: error instanceof Error ? error.message : 'Erro ao processar o envio.' }, 
       { status: 400 }
     );
   }

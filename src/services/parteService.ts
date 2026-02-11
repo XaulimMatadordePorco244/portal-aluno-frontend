@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { TipoProcesso, StatusParte } from '@prisma/client';
+import { TipoProcesso } from '@prisma/client';
 
 interface CriarParteDTO {
   assunto: string;

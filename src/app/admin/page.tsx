@@ -9,8 +9,61 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { TipoDeAnotacao } from "@prisma/client";
 
-async function getDashboardStats() {
+type AnotacaoWithRelations = {
+    id: string;
+    pontos: number;
+    createdAt: Date;
+    tipo: TipoDeAnotacao;
+    autor: {
+        id: string;
+        nome: string;
+        perfilAluno?: {
+            nomeDeGuerra: string | null;
+            cargo: {
+                abreviacao: string;
+            } | null;
+        } | null;
+    };
+    aluno: {
+        id: string;
+        nomeDeGuerra: string | null;
+        cargo: {
+            abreviacao: string;
+        } | null;
+        usuario: {
+            nome: string;
+        } | null;
+    } | null;
+};
+
+type PunicaoWithRelations = {
+    id: string;
+    pontos: number;
+    createdAt: Date;
+    tipo: TipoDeAnotacao;
+    aluno: {
+        id: string;
+        nomeDeGuerra: string | null;
+        cargo: {
+            abreviacao: string;
+        } | null;
+        usuario: {
+            nome: string;
+        } | null;
+    } | null;
+};
+
+type DashboardStats = {
+    partesPendentes: number;
+    totalAlunos: number;
+    ocorrenciasHoje: number;
+    ultimasAnotacoes: AnotacaoWithRelations[];
+    ultimasPunicoes: PunicaoWithRelations[];
+};
+
+async function getDashboardStats(): Promise<DashboardStats> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -21,20 +74,17 @@ async function getDashboardStats() {
         ultimasAnotacoes,
         ultimasPunicoes
     ] = await prisma.$transaction([
-        // 1. Contagem de Partes
+
         prisma.parte.count({ where: { status: 'AGUARDANDO_COORDENACAO' } }),
         
-        // 2. Total de Alunos Ativos
         prisma.usuario.count({ where: { role: 'ALUNO', status: 'ATIVO' } }),
         
-        // 3. Ocorrências Hoje
         prisma.anotacao.count({ 
             where: { 
                 createdAt: { gte: today } 
             } 
         }),
 
-        // 4. Feed: Últimas 5 anotações gerais
         prisma.anotacao.findMany({
             take: 5,
             orderBy: { createdAt: 'desc' },
@@ -45,7 +95,7 @@ async function getDashboardStats() {
                         perfilAluno: { include: { cargo: true } } 
                     } 
                 },
-                aluno: { // Relação: Anotacao -> PerfilAluno
+                aluno: {
                     include: { 
                         usuario: true, 
                         cargo: true 
@@ -54,10 +104,9 @@ async function getDashboardStats() {
             }
         }),
 
-        // 5. Substituindo "Conceito" (que não existe no banco) por "Últimas Punições"
         prisma.anotacao.findMany({
             take: 5,
-            where: { pontos: { lt: 0 } }, // Apenas anotações negativas
+            where: { pontos: { lt: 0 } },
             orderBy: { createdAt: 'desc' },
             include: {
                 tipo: true,
@@ -71,11 +120,22 @@ async function getDashboardStats() {
         })
     ]);
 
-    return { partesPendentes, totalAlunos, ocorrenciasHoje, ultimasAnotacoes, ultimasPunicoes };
+    return { 
+        partesPendentes, 
+        totalAlunos, 
+        ocorrenciasHoje, 
+        ultimasAnotacoes: ultimasAnotacoes as AnotacaoWithRelations[], 
+        ultimasPunicoes: ultimasPunicoes as PunicaoWithRelations[] 
+    };
 }
 
-// Helper seguro para formatar nome
-const formatarNomeGuerra = (perfil: any, nomeUsuario: string) => {
+const formatarNomeGuerra = (
+    perfil: {
+        nomeDeGuerra?: string | null;
+        cargo?: { abreviacao: string } | null;
+    } | null | undefined,
+    nomeUsuario: string
+): string => {
     if (perfil?.cargo?.abreviacao && perfil?.nomeDeGuerra) {
         return `${perfil.cargo.abreviacao} ${perfil.nomeDeGuerra}`;
     }
@@ -93,7 +153,6 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -108,7 +167,6 @@ export default async function AdminDashboardPage() {
                 </div>
             </div>
 
-            {/* KPIs - Indicadores Superiores */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -158,10 +216,8 @@ export default async function AdminDashboardPage() {
                 </Card>
             </div>
 
-            {/* Grid Principal - Feed e Riscos */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 
-                {/* Coluna Esquerda: Feed de Ocorrências (Maior) */}
                 <Card className="lg:col-span-4 h-full flex flex-col">
                     <CardHeader>
                         <CardTitle>Últimas Ocorrências</CardTitle>
@@ -203,7 +259,6 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Coluna Direita: Últimas Punições (Menor) */}
                 <Card className="lg:col-span-3 h-full flex flex-col">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -223,16 +278,16 @@ export default async function AdminDashboardPage() {
                                 </div>
                             ) : (
                                 stats.ultimasPunicoes.map((anotacao) => (
-                                    <Link href={`/admin/alunos/${anotacao.aluno.id}`} key={anotacao.id} className="flex items-center justify-between p-2 hover:bg-accent rounded-md transition-colors">
+                                    <Link href={`/admin/alunos/${anotacao.aluno?.id}`} key={anotacao.id} className="flex items-center justify-between p-2 hover:bg-accent rounded-md transition-colors">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarFallback className="text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-                                                    {anotacao.aluno.nomeDeGuerra?.substring(0, 2) || "AL"}
+                                                    {anotacao.aluno?.nomeDeGuerra?.substring(0, 2) || "AL"}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="grid gap-0.5">
                                                 <p className="text-sm font-medium leading-none">
-                                                    {anotacao.aluno.cargo?.abreviacao} {anotacao.aluno.nomeDeGuerra}
+                                                    {anotacao.aluno?.cargo?.abreviacao} {anotacao.aluno?.nomeDeGuerra}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
                                                     {anotacao.tipo.titulo}
@@ -257,13 +312,11 @@ export default async function AdminDashboardPage() {
                 </Card>
             </div>
 
-            {/* Seção "Em Breve" - Inteligência do Sistema */}
             <div className="space-y-4">
                 <h2 className="text-lg font-semibold flex items-center gap-2 opacity-80">
                     <BrainCircuit className="h-5 w-5" /> Inteligência do Sistema (Em Breve)
                 </h2>
                 <div className="grid gap-4 md:grid-cols-3 opacity-60 pointer-events-none select-none grayscale-[0.5]">
-                    {/* Card Fake 1 */}
                     <Card className="border-dashed bg-muted/40">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center justify-between">
@@ -279,7 +332,6 @@ export default async function AdminDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Card Fake 2 */}
                     <Card className="border-dashed bg-muted/40">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center justify-between">
@@ -295,7 +347,6 @@ export default async function AdminDashboardPage() {
                         </CardContent>
                     </Card>
 
-                     {/* Card Fake 3 */}
                      <Card className="border-dashed bg-muted/40">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center justify-between">

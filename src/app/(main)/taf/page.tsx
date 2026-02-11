@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { 
-  Trophy, 
+import {
   Calendar, 
   Dumbbell, 
   Activity, 

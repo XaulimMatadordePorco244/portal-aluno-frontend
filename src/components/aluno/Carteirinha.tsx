@@ -169,7 +169,7 @@ export default function Carteirinha({ aluno }: CarteirinhaProps) {
     );
 }
 
-function LinhaDado({ label, valor, destaque }: any) {
+function LinhaDado({ label, valor, destaque }: { label: string; valor: string | null; destaque?: boolean }) {
     return (
         <div className="flex items-center gap-0 leading-none">
             <span className="text-[8px] font-bold text-black uppercase mt-0.5 shrink-0">{label}:</span>

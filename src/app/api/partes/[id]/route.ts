@@ -27,7 +27,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Parte excluída com sucesso' });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erro ao excluir parte' }, { status: 500 });
   }
 }

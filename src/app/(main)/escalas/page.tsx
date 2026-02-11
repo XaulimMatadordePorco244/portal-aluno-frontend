@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { FileDown, Scale } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

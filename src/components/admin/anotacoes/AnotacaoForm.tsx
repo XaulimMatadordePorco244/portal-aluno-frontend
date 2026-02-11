@@ -44,7 +44,16 @@ interface AnotacaoFormProps {
   usuarios: AlunoComCompanhia[];
   tiposDeAnotacao: TipoDeAnotacao[];
   preSelectedAlunoId?: string; 
-  initialData?: any;
+  initialData?: {
+    id: string;
+    alunoId: string;
+    tipoId: string;
+    data: Date;
+    pontos: number;
+    detalhes: string | null;
+    quemAnotouId: string | null;
+    quemAnotouNome: string | null;
+  };
 }
 
 export default function AnotacaoForm({ 
@@ -106,11 +115,13 @@ export default function AnotacaoForm({
       const aluno = alunos.find(a => a.perfilAluno?.id === preSelectedAlunoId);
       if (aluno) setSelectedAlunos([aluno]);
     }
-
-    if (!initialData && !dataOcorrencia) {
-         setDataOcorrencia(new Date().toISOString().split('T')[0]);
-    }
   }, [initialData, preSelectedAlunoId, alunos, tiposDeAnotacao, usuarios]);
+
+  useEffect(() => {
+    if (!initialData && !dataOcorrencia) {
+      setDataOcorrencia(new Date().toISOString().split('T')[0]);
+    }
+  }, [initialData, dataOcorrencia]);
 
   useEffect(() => {
     if (selectedTipo && !isEditing) {
@@ -124,7 +135,7 @@ export default function AnotacaoForm({
     } else if (!selectedTipo && !isEditing) {
       setPontos('');
     }
-  }, [selectedTipo, isEditing]);
+  }, [selectedTipo, isEditing, pontos]);
 
   const getDisplayText = (u: AlunoComCompanhia) => {
     if (u.role === 'ALUNO') {
@@ -214,7 +225,6 @@ export default function AnotacaoForm({
   };
 
   const companhias = useMemo(() => [...new Set(alunos.map(a => a.perfilAluno?.companhia?.nome).filter(Boolean))], [alunos]);
-  const pontosValue = Number(pontos);
 
   const { positivas, negativas, abertasElogio, abertasPunicao } = useMemo(() => {
     return {
@@ -456,7 +466,12 @@ export default function AnotacaoForm({
                 <CommandInput placeholder="Pesquisar..." />
                 <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
                 <CommandList>
-                    {[{ label: "Positivas", data: positivas }, { label: "Negativas", data: negativas }, { label: "Elogios (Aberto)", data: abertasElogio }, { label: "Punições (Aberto)", data: abertasPunicao }].map(group => group.data.length > 0 && (
+                    {[
+                      { label: "Elogios (Aberto)", data: abertasElogio }, 
+                      { label: "Positivas", data: positivas }, 
+                      { label: "Punições (Aberto)", data: abertasPunicao },
+                      { label: "Negativas", data: negativas }
+                    ].map(group => group.data.length > 0 && (
                         <CommandGroup key={group.label} heading={group.label}>
                         {group.data.map(tipo => (
                             <CommandItem 

@@ -1,6 +1,30 @@
 import prisma from "@/lib/prisma";
 import AnotacaoForm from "@/components/admin/anotacoes/AnotacaoForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Prisma } from '@prisma/client';
+
+type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true,
+        cargo: true
+      }
+    }
+  }
+}>;
+
+type UsuarioWithPerfilCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true,
+        cargo: true
+      }
+    }
+
+  }
+}>;
 
 interface NewAnotacaoPageProps {
   searchParams: {
@@ -48,6 +72,9 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
     orderBy: { titulo: 'asc' }
   });
 
+  const alunosWithRelations = alunos as AlunoWithPerfilCompanhiaCargo[];
+  const usuariosWithRelations = usuarios as UsuarioWithPerfilCargo[];
+
   return (
     <div className="container mx-auto py-10">
       <Card className="max-w-2xl mx-auto">
@@ -59,8 +86,8 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
         </CardHeader>
         <CardContent>
           <AnotacaoForm 
-            alunos={alunos as any} 
-            usuarios={usuarios as any}
+            alunos={alunosWithRelations}
+            usuarios={usuariosWithRelations}
             tiposDeAnotacao={tiposDeAnotacao}
             preSelectedAlunoId={searchParams.alunoId} 
           />
