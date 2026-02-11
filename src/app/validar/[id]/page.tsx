@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { cn } from "@/lib/utils"; 
 
-export default async function ValidationResultPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ValidationResultPage({ params }: PageProps) {
+  const { id } = await params;
 
   const user = await prisma.usuario.findFirst({
     where: {
-      perfilAluno: { id: params.id }
+      perfilAluno: { id: id }
     },
     include: {
       perfilAluno: { include: { cargo: true, companhia: true } }
@@ -110,11 +115,9 @@ export default async function ValidationResultPage({ params }: { params: { id: s
         </div>
       </div>
 
-
     </div>
   );
 }
-
 
 interface InfoRowProps {
     label: string;

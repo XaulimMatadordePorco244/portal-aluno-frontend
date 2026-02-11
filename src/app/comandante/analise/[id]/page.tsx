@@ -7,12 +7,14 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AnalisePage({ params }: PageProps) {
+  const { id } = await params;
+  
   const parte = await prisma.parte.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       autor: {
         include: { perfilAluno: { include: { cargo: true } } }
@@ -115,7 +117,7 @@ export default async function AnalisePage({ params }: PageProps) {
             <Separator />
 
             <div className="flex-1 p-6 bg-gray-50/50 dark:bg-black/20">
-               <DecisionForm id={params.id} />
+               <DecisionForm id={id} />
             </div>
 
           </div>

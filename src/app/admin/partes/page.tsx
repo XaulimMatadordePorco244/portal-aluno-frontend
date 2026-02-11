@@ -58,7 +58,7 @@ async function getPartes({ search, status }: SearchParams) {
 async function getPartesStats() {
     const [total, pendentes, aprovadas, negadas] = await prisma.$transaction([
         prisma.parte.count(),
-        prisma.parte.count({ where: { status: 'ENVIADA' } }),
+        prisma.parte.count({ where: { status: 'AGUARDANDO_COMANDANTE' } }),
         prisma.analise.count({ where: { resultado: 'APROVADA' } }),
         prisma.analise.count({ where: { resultado: 'NEGADA' } }),
     ]);
@@ -119,7 +119,7 @@ export default async function AdminPartesPage({
                                         <TableCell className="font-medium">{nomeFormatado}</TableCell>
                                         <TableCell>{parte.assunto}</TableCell>
                                         <TableCell>
-                                            <Badge variant={parte.status === 'ENVIADA' ? 'default' : parte.status === 'RASCUNHO' ? 'outline' : 'secondary'}>
+                                            <Badge variant={parte.status === 'AGUARDANDO_COMANDANTE' ? 'default' : parte.status === 'RASCUNHO' ? 'outline' : 'secondary'}>
                                                 {parte.status}
                                             </Badge>
                                         </TableCell>

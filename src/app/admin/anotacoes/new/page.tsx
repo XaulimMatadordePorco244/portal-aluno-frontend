@@ -14,25 +14,26 @@ type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
   }
 }>;
 
-type UsuarioWithPerfilCargo = Prisma.UsuarioGetPayload<{
+type UsuarioWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
   include: {
     perfilAluno: {
       include: {
-        companhia: true,
+        companhia: true, 
         cargo: true
       }
     }
-
   }
 }>;
 
 interface NewAnotacaoPageProps {
-  searchParams: {
+  searchParams: Promise<{  
     alunoId?: string;
-  };
+  }>;
 }
 
 export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageProps) {
+  const { alunoId } = await searchParams;  
+
   const alunos = await prisma.usuario.findMany({
     where: { 
       status: 'ATIVO', 
@@ -61,6 +62,7 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
     include: {
       perfilAluno: {
         include: {
+          companhia: true,  
           cargo: true
         }
       }
@@ -73,7 +75,7 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
   });
 
   const alunosWithRelations = alunos as AlunoWithPerfilCompanhiaCargo[];
-  const usuariosWithRelations = usuarios as UsuarioWithPerfilCargo[];
+  const usuariosWithRelations = usuarios as UsuarioWithPerfilCompanhiaCargo[]; 
 
   return (
     <div className="container mx-auto py-10">
@@ -89,7 +91,7 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
             alunos={alunosWithRelations}
             usuarios={usuariosWithRelations}
             tiposDeAnotacao={tiposDeAnotacao}
-            preSelectedAlunoId={searchParams.alunoId} 
+            preSelectedAlunoId={alunoId}  
           />
         </CardContent>
       </Card>

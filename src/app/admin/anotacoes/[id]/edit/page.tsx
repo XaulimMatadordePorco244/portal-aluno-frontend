@@ -5,10 +5,11 @@ import { notFound } from "next/navigation";
 import { Prisma } from '@prisma/client';
 
 interface EditAnotacaoPageProps {
-  params: {
+  params: Promise<{  
     id: string;
-  };
+  }>;
 }
+
 type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
   include: {
     perfilAluno: {
@@ -20,21 +21,21 @@ type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
   }
 }>;
 
-type UsuarioWithPerfilCargo = Prisma.UsuarioGetPayload<{
+type UsuarioWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
   include: {
     perfilAluno: {
       include: {
-        companhia: true,
+        companhia: true,  
         cargo: true
       }
     }
-
   }
 }>;
 
 export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps) {
+  const { id } = await params;  
   const anotacao = await prisma.anotacao.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!anotacao) {
@@ -69,6 +70,7 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
     include: {
       perfilAluno: {
         include: {
+          companhia: true,  
           cargo: true
         }
       }
@@ -79,8 +81,9 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({
     orderBy: { titulo: 'asc' }
   });
+
   const alunosWithRelations = alunos as AlunoWithPerfilCompanhiaCargo[];
-  const usuariosWithRelations = usuarios as UsuarioWithPerfilCargo[];
+  const usuariosWithRelations = usuarios as UsuarioWithPerfilCompanhiaCargo[];
 
   return (
     <div className="container mx-auto py-10">

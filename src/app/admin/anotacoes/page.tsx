@@ -90,17 +90,20 @@ type WhereCondition = {
   }>;
 };
 
+interface PageProps {
+  searchParams: Promise<SearchParams>;
+}
+
 export default async function AnotacoesDashboardPage({
   searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+}: PageProps) {
   const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") redirect("/dashboard");
 
-  const q = searchParams.q || "";
-  const sentido = searchParams.sentido || "";
-  const page = Number(searchParams.page) || 1;
+  const params = await searchParams;
+  const q = params.q || "";
+  const sentido = params.sentido || "";
+  const page = Number(params.page) || 1;
   const pageSize = 15;
 
   const whereCondition: WhereCondition = {

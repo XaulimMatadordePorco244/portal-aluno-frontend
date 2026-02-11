@@ -1,22 +1,24 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import AdminStudentHistoryClient from "./client";
-import { recalcularConceitoAluno } from "@/lib/conceitoUtils"; 
+import { recalcularConceitoAluno } from "@/lib/conceitoUtils";
 
 interface PageProps {
-  params: {
+  params: Promise<{ 
     id: string;
-  };
+  }>;
 }
 
 export default async function AdminStudentDetailsPage({ params }: PageProps) {
-  const alunoId = params.id;
+  const { id: alunoId } = await params;  
 
   const perfilAluno = await prisma.perfilAluno.findUnique({
     where: { id: alunoId }, 
     include: {
       usuario: true,
       cargo: true,
+      funcao: true,
+      companhia: true,
     }
   });
 
@@ -33,14 +35,22 @@ export default async function AdminStudentDetailsPage({ params }: PageProps) {
       autor: {
         include: {
           perfilAluno: {
-            include: { cargo: true } 
+            include: { 
+              cargo: true,
+              funcao: true,
+              companhia: true
+            } 
           }
         }
       },
       quemAnotou: {
         include: {
           perfilAluno: {
-            include: { cargo: true }
+            include: { 
+              cargo: true,
+              funcao: true,
+              companhia: true
+            }
           }
         }
       }

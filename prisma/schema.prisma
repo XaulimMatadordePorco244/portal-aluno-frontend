@@ -117,7 +117,7 @@ model Usuario {
   perfilAluno               PerfilAluno?
   responsaveis              Responsabilidade[]   @relation("Aluno")
   dependentes               Responsabilidade[]   @relation("Responsavel")
-  fatosObservados     Anotacao[] @relation("FatosObservados")
+  fatosObservados           Anotacao[]           @relation("FatosObservados")
 
   @@map("usuarios")
 }
@@ -260,22 +260,22 @@ model TipoDeAnotacao {
 }
 
 model Anotacao {
-  id           String         @id @default(cuid())
-  pontos       Float
-  detalhes     String?        @db.Text
-  data         DateTime
-  tipoId       String
-  alunoId      String
-  autorId      String
-  quemAnotouId   String?        
+  id             String         @id @default(cuid())
+  pontos         Float
+  detalhes       String?        @db.Text
+  data           DateTime
+  tipoId         String
+  alunoId        String
+  autorId        String
+  quemAnotouId   String?
   quemAnotouNome String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  blocoCargoId String?
-  aluno        PerfilAluno    @relation("AnotacoesDoAluno", fields: [alunoId], references: [id])
-  autor        Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
-  blocoCargo   CargoHistory?  @relation(fields: [blocoCargoId], references: [id])
-  tipo         TipoDeAnotacao @relation(fields: [tipoId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  blocoCargoId   String?
+  aluno          PerfilAluno    @relation("AnotacoesDoAluno", fields: [alunoId], references: [id])
+  autor          Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
+  blocoCargo     CargoHistory?  @relation(fields: [blocoCargoId], references: [id])
+  tipo           TipoDeAnotacao @relation(fields: [tipoId], references: [id])
   quemAnotou     Usuario?       @relation("FatosObservados", fields: [quemAnotouId], references: [id])
 
   @@index([tipoId])

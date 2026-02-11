@@ -20,7 +20,8 @@ async function getParteDetails(id: string) {
         include: {
           perfilAluno: {
             include: {
-              cargo: true
+              cargo: true,
+              companhia: true,
             }
           }
         }
@@ -31,7 +32,8 @@ async function getParteDetails(id: string) {
             include: {
               perfilAluno: {
                 include: {
-                  cargo: true
+                  cargo: true,
+                  companhia: true,
                 }
               }
             }
@@ -44,13 +46,15 @@ async function getParteDetails(id: string) {
             include: {
               perfilAluno: {
                 include: {
-                  cargo: true
+                  cargo: true,
+                  companhia: true,
                 }
               }
             }
           } 
         } 
       },
+      logs: true,
     },
   });
 
@@ -130,7 +134,7 @@ export default async function Page({
 
                   <DeleteButton parteId={parte.id} />
 
-                  <SendButton parte={parte.id} />
+                  <SendButton parte={parte} />
                 </div>
               </div>
             </div>
