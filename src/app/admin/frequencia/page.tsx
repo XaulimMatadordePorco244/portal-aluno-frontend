@@ -22,7 +22,7 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
   const dados = await obterMapaFrequencia(mesSelecionado, 2025, tipoSelecionado)
 
   return (
-    <div className="p-6 max-w-[100vw] space-y-6 h-screen flex flex-col">
+    <div className=" space-y-6 flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Mapa de Frequência</h1>

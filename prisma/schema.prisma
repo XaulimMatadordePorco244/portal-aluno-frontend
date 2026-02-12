@@ -298,6 +298,29 @@ model QES {
   @@index([autorId])
 }
 
+model RegraPromocao {
+  id             String   @id @default(cuid())
+  modalidade     String   
+  
+  cargoOrigemId  String
+  cargoDestinoId String
+  
+  minConceito       Float?   @default(0)
+  minMediaEscolar   Float?   @default(0)
+  minTaf            Float?   @default(0)
+  
+
+  cargoOrigem  Cargo @relation("RegraOrigem", fields: [cargoOrigemId], references: [id])
+  cargoDestino Cargo @relation("RegraDestino", fields: [cargoDestinoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([modalidade, cargoOrigemId, cargoDestinoId])
+  @@map("regras_promocao")
+}
+
+
 model Cargo {
   id              String         @id @default(cuid())
   nome            String         @unique
@@ -310,6 +333,9 @@ model Cargo {
   divisaUrl       String?
   historicoCargos CargoHistory[]
   alunos          PerfilAluno[]
+
+  regrasOrigem  RegraPromocao[] @relation("RegraOrigem")
+  regrasDestino RegraPromocao[] @relation("RegraDestino")
 }
 
 model Funcao {

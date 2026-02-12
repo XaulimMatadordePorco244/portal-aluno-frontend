@@ -191,7 +191,7 @@ export default async function AnotacoesDashboardPage({
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto  space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="space-y-0.5">
             <h1 className="text-2xl font-medium tracking-tight text-foreground">

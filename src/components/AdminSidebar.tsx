@@ -22,7 +22,8 @@ import {
   Activity,
   MessageSquare,
   Medal, 
-  ScrollText
+  ScrollText,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
@@ -82,7 +83,7 @@ export function AdminSidebar() {
     { href: "/admin/alunos", label: "Alunos", icon: Users },
     { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Medal },
     { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen },
-    { href: "/admin/alunos/cargos", label: "Promoções", icon: TrendingUp },
+    { href: "/admin/promocoes", label: "Promoções", icon: TrendingUp },
     { href: "/admin/comunicacoes-internas", label: "Comunicação Interna", icon: Megaphone },
     { href: "/admin/classificacao-geral", label: "Classificação Geral", icon: TrendingUp },
     { href: "/admin/frequencia", label: "Frequência", icon: CalendarCheck },
@@ -93,6 +94,7 @@ export function AdminSidebar() {
     { href: "/admin/qes", label: "QES", icon: ScrollText },
     { href: "/admin/taf", label: "TAF", icon: Activity },
     { href: "/admin/qpe", label: "QPE", icon: FileSpreadsheet },
+    { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
     { href: "/admin/feedback", label: "Feedback", icon: MessageSquare },
   ];
 

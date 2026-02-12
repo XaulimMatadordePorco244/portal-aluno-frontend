@@ -17,7 +17,7 @@ export default async function AdminCalendarioPage() {
   })
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <CalendarDays className="w-8 h-8 text-primary" />
