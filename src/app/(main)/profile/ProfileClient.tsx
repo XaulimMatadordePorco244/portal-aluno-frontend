@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { UserCircle} from 'lucide-react'; 
 import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
 import Image from 'next/image';
+import { formatDate } from '@/lib/utils';
 
 type UserWithRelations = Usuario & {
   perfilAluno: (PerfilAluno & {
@@ -40,10 +41,7 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
     }, 1000);
   };
 
-  const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
+
 
   return (
     <div className="space-y-6">

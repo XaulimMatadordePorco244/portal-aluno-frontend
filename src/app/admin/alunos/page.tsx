@@ -60,10 +60,10 @@ export default async function AdminAlunosPage() {
               </TableHeader>
               <TableBody>
                 {alunos.map((aluno) => (
-                  <TableRow key={aluno.id} className="group">
+                  <TableRow key={aluno.perfilAluno?.id} className="group">
                     <TableCell className="font-medium">
                       <Link 
-                        href={`/admin/alunos/${aluno.id}`} 
+                        href={`/admin/alunos/${aluno.perfilAluno?.id}`} 
                         className="block w-full h-full hover:underline font-semibold text-primary"
                       >
                         {aluno.nome}

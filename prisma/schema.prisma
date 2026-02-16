@@ -157,6 +157,7 @@ model PerfilAluno {
   funcao                        Funcao?              @relation(fields: [funcaoId], references: [id])
   usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
+  candidatoCiclos               CandidatoCiclo[]
 
   @@index([cargoId])
   @@index([funcaoId])
@@ -298,17 +299,49 @@ model QES {
   @@index([autorId])
 }
 
+model CicloPromocao {
+  id             String      @id @default(cuid())
+  nome           String
+  dataReferencia DateTime
+  status         StatusCiclo @default(ABERTO)
+
+  candidatos       CandidatoCiclo[]
+  promocoesGeradas CargoHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ciclos_promocao")
+}
+
+model CandidatoCiclo {
+  id      String @id @default(cuid())
+  cicloId String
+  alunoId String
+
+  mediaEscolarSnapshot  Float
+  conceitoSnapshot      Float
+  tafSnapshot           Float
+  comportamentoSnapshot String?
+
+  resultado        StatusAprovacao @default(PENDENTE)
+  motivoReprovacao String?         @db.Text
+
+  ciclo CicloPromocao @relation(fields: [cicloId], references: [id])
+  aluno PerfilAluno   @relation(fields: [alunoId], references: [id])
+
+  @@unique([cicloId, alunoId])
+  @@map("candidatos_ciclo")
+}
+
 model RegraPromocao {
-  id             String   @id @default(cuid())
-  modalidade     String   
-  
+  id         String @id @default(cuid())
+  modalidade String
+
   cargoOrigemId  String
   cargoDestinoId String
-  
-  minConceito       Float?   @default(0)
-  minMediaEscolar   Float?   @default(0)
-  minTaf            Float?   @default(0)
-  
+
+  requisitos RequisitoPromocao[]
 
   cargoOrigem  Cargo @relation("RegraOrigem", fields: [cargoOrigemId], references: [id])
   cargoDestino Cargo @relation("RegraDestino", fields: [cargoDestinoId], references: [id])
@@ -320,6 +353,20 @@ model RegraPromocao {
   @@map("regras_promocao")
 }
 
+model RequisitoPromocao {
+  id      String @id @default(cuid())
+  regraId String
+
+  campo    CampoRequisito
+  operador OperadorLogico
+  valor    String
+
+  obrigatorio Boolean @default(true)
+
+  regra RegraPromocao @relation(fields: [regraId], references: [id], onDelete: Cascade)
+
+  @@map("requisitos_promocao")
+}
 
 model Cargo {
   id              String         @id @default(cuid())
@@ -510,6 +557,11 @@ model CargoHistory {
   aluno             PerfilAluno        @relation(fields: [alunoId], references: [id], onDelete: Cascade)
   cargo             Cargo              @relation(fields: [cargoId], references: [id])
   logs              CargoLog[]
+
+  cicloId String?
+
+  ciclo        CicloPromocao?      @relation(fields: [cicloId], references: [id])
+  tipoPromocao TipoPromocaoHistory @default(AUTOMATICA)
 
   @@index([alunoId, dataInicio])
   @@index([status])
@@ -706,3 +758,41 @@ enum TipoEvento {
   CANCELADO
   EVENTO
 }
+
+enum StatusCiclo {
+  ABERTO
+  PROCESSANDO
+  FECHADO
+  CANCELADO
+}
+
+enum StatusAprovacao {
+  PENDENTE
+  APROVADO
+  REPROVADO
+}
+
+enum CampoRequisito {
+  MEDIA_ESCOLAR
+  CONCEITO
+  TAF
+  PUNICOES_GRAVES
+  PUNICOES_MEDIA
+  INTERSTICIO_MESES
+  NOTA_PROVA_TEORICA
+  SEM_NOTA_VERMELHA
+}
+
+enum OperadorLogico {
+  GTE
+  LTE
+  EQ
+  NEQ
+}
+
+enum TipoPromocaoHistory {
+  AUTOMATICA
+  MANUAL_OVERRIDE
+  RECLASSIFICACAO
+}
+
