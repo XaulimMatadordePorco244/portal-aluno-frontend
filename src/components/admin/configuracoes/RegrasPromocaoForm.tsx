@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button'; 
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Save, ArrowRight, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowRight, Loader2, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveRegrasDinamicas, RegraDinamicaInput } from '@/app/actions/configuracoes';
 import { CampoRequisito, OperadorLogico } from '@prisma/client';
@@ -45,7 +45,6 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
 
   const [saving, setSaving] = useState(false);
 
-
   const addRequisito = (indexRegra: number) => {
     const novasRegras = [...regras];
     novasRegras[indexRegra].requisitos.push({
@@ -67,7 +66,7 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
     const novasRegras = [...regras];
     const requisito = novasRegras[indexRegra].requisitos.find(r => r.id === idRequisito);
     if (requisito) {
-      // @ts-ignore - Typescript 
+      // @ts-ignore
       requisito[field] = value;
       setRegras(novasRegras);
     }
@@ -100,114 +99,141 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
     }
   };
 
-  if (!pares || pares.length === 0) return <div>Nenhum fluxo configurado.</div>;
+  if (!pares || pares.length === 0) return (
+    <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 text-muted-foreground">
+      <SlidersHorizontal className="mb-2 h-8 w-8 opacity-50" />
+      <p>Nenhum fluxo configurado para esta modalidade.</p>
+    </div>
+  );
 
   return (
-    <div className="space-y-6 max-w-5xl pb-20">
+    <div className="space-y-8 pb-32">
       
       {regras.map((regra, index) => (
-        <Card key={`${regra.cargoOrigemId}-${regra.cargoDestinoId}`} className="border-l-4 border-l-blue-600 shadow-sm">
-          <CardHeader className="bg-slate-50/50 pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-base font-bold flex items-center gap-3">
-                <Badge variant="outline" className="text-sm px-3 py-1 bg-white">{regra.origemNome}</Badge>
-                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                <Badge variant="default" className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-700">{regra.destinoNome}</Badge>
-              </CardTitle>
-              <Button size="sm" variant="secondary" onClick={() => addRequisito(index)} className="text-xs h-8">
-                <Plus className="w-3 h-3 mr-1.5" /> Adicionar Critério
-              </Button>
+        <Card 
+          key={`${regra.cargoOrigemId}-${regra.cargoDestinoId}`} 
+          className="group overflow-hidden border-l-4 border-l-primary transition-all hover:shadow-md"
+        >
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/20 py-4">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="bg-background text-base font-medium text-foreground px-3">
+                {regra.origemNome}
+              </Badge>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <Badge className="text-base font-medium px-3 bg-primary text-primary-foreground hover:bg-primary/90">
+                {regra.destinoNome}
+              </Badge>
             </div>
+            
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => addRequisito(index)} 
+              className="h-8 border-dashed border-border bg-transparent hover:bg-muted hover:text-foreground text-muted-foreground"
+            >
+              <Plus className="mr-2 h-3.5 w-3.5" /> 
+              Critério
+            </Button>
           </CardHeader>
           
-          <CardContent className="pt-4 space-y-2">
+          <CardContent className="space-y-4 pt-6">
             {regra.requisitos.length === 0 && (
-              <p className="text-sm text-muted-foreground italic pl-1">Nenhum requisito configurado (Promoção Automática).</p>
+              <div className="flex flex-col items-center justify-center py-6 text-center text-sm text-muted-foreground">
+                <span className="mb-1 block font-medium text-foreground">Promoção Automática</span>
+                Nenhum critério restritivo configurado. O aluno será promovido ao atingir o tempo base.
+              </div>
             )}
 
-            {regra.requisitos.map((req) => (
-              <div key={req.id} className="flex items-center gap-3 animate-in fade-in slide-in-from-left-1">
-                
-                <div className="flex-1 min-w-[180px]">
-                  <Select value={req.campo} onValueChange={(v) => updateRequisito(index, req.id, 'campo', v)}>
-                    <SelectTrigger className="h-9 text-xs font-semibold">
-                      <SelectValue placeholder="Selecione o critério" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MEDIA_ESCOLAR">Média Escolar</SelectItem>
-                      <SelectItem value="CONCEITO">Conceito (Pontos)</SelectItem>
-                      <SelectItem value="TAF">TAF (Média Física)</SelectItem>
-                      <SelectItem value="INTERSTICIO_MESES">Tempo de Serviço (Meses)</SelectItem>
-                      <SelectItem value="PUNICOES_GRAVES">Qtd. Punições Graves</SelectItem>
-                      <SelectItem value="SEM_NOTA_VERMELHA">Sem Nota Vermelha</SelectItem>
-                      <SelectItem value="NOTA_PROVA_TEORICA">Nota Prova Interna</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="w-[100px]">
-                  <Select value={req.operador} onValueChange={(v) => updateRequisito(index, req.id, 'operador', v)}>
-                    <SelectTrigger className="h-9 text-xs bg-slate-100 font-mono text-center">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="GTE">{'>='} (Min)</SelectItem>
-                      <SelectItem value="LTE">{'<='} (Máx)</SelectItem>
-                      <SelectItem value="EQ">{'='} (Igual)</SelectItem>
-                      <SelectItem value="NEQ">{'!='} (Dif)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="w-[120px]">
-                  {req.campo === 'SEM_NOTA_VERMELHA' ? (
-                     <Select value={req.valor} onValueChange={(v) => updateRequisito(index, req.id, 'valor', v)}>
-                        <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="true">Sim (Exigido)</SelectItem>
-                          <SelectItem value="false">Não</SelectItem>
-                        </SelectContent>
-                     </Select>
-                  ) : (
-                    <Input 
-                      className="h-9 text-xs font-mono" 
-                      placeholder="Valor"
-                      value={req.valor}
-                      onChange={(e) => updateRequisito(index, req.id, 'valor', e.target.value)}
-                    />
-                  )}
-                </div>
-
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-9 w-9 text-muted-foreground hover:text-red-600 hover:bg-red-50" 
-                  onClick={() => removeRequisito(index, req.id)}
+            <div className="grid gap-3">
+              {regra.requisitos.map((req) => (
+                <div 
+                  key={req.id} 
+                  className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-sm transition-all animate-in fade-in slide-in-from-left-2 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
+                  
+                  <div className="flex-1 min-w-[200px]">
+                    <Select value={req.campo} onValueChange={(v) => updateRequisito(index, req.id, 'campo', v)}>
+                      <SelectTrigger className="h-9 border-input bg-background text-sm ring-offset-background focus:ring-ring">
+                        <SelectValue placeholder="Selecione o critério" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MEDIA_ESCOLAR">Média Escolar</SelectItem>
+                        <SelectItem value="CONCEITO">Conceito (Pontos)</SelectItem>
+                        <SelectItem value="TAF">TAF (Média Física)</SelectItem>
+                        <SelectItem value="INTERSTICIO_MESES">Tempo de Serviço (Meses)</SelectItem>
+                        <SelectItem value="PUNICOES_GRAVES">Qtd. Punições Graves</SelectItem>
+                        <SelectItem value="SEM_NOTA_VERMELHA">Sem Nota Vermelha</SelectItem>
+                        <SelectItem value="NOTA_PROVA_TEORICA">Nota Prova Interna</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="w-full sm:w-[130px]">
+                    <Select value={req.operador} onValueChange={(v) => updateRequisito(index, req.id, 'operador', v)}>
+                      <SelectTrigger className="h-9 border-input bg-muted/50 font-mono text-xs text-muted-foreground">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GTE">Maior ou Igual (&ge;)</SelectItem>
+                        <SelectItem value="LTE">Menor ou Igual (&le;)</SelectItem>
+                        <SelectItem value="EQ">Igual (=)</SelectItem>
+                        <SelectItem value="NEQ">Diferente (!=)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="w-full sm:w-[150px]">
+                    {req.campo === 'SEM_NOTA_VERMELHA' ? (
+                       <Select value={req.valor} onValueChange={(v) => updateRequisito(index, req.id, 'valor', v)}>
+                          <SelectTrigger className="h-9 border-input bg-background"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Exigido (Sim)</SelectItem>
+                            <SelectItem value="false">Não Exigido</SelectItem>
+                          </SelectContent>
+                       </Select>
+                    ) : (
+                      <Input 
+                        className="h-9 border-input bg-background font-mono" 
+                        placeholder="Valor"
+                        value={req.valor}
+                        onChange={(e) => updateRequisito(index, req.id, 'valor', e.target.value)}
+                      />
+                    )}
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" 
+                    onClick={() => removeRequisito(index, req.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       ))}
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t z-50 flex justify-end gap-4 container mx-auto max-w-5xl">
-        <div className="flex-1 flex items-center text-sm text-muted-foreground">
-          <span className="hidden sm:inline">Configure os critérios acima e clique em salvar para aplicar ao próximo ciclo.</span>
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 backdrop-blur-md p-4 supports-backdrop-filter:bg-background/60">
+        <div className="container mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div className="hidden text-sm text-muted-foreground sm:block">
+            <span className="font-medium text-foreground">Atenção:</span> As alterações impactam o cálculo de promoção imediatamente.
+          </div>
+          <Button 
+            size="lg" 
+            onClick={handleSaveAll} 
+            disabled={saving}
+            className="w-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 sm:w-auto font-semibold"
+          >
+            {saving ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
+            ) : (
+              <><Save className="mr-2 h-4 w-4" /> Salvar Alterações</>
+            )}
+          </Button>
         </div>
-        <Button 
-          size="lg" 
-          onClick={handleSaveAll} 
-          disabled={saving}
-          className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 shadow-lg transition-all"
-        >
-          {saving ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Salvar Configurações</>
-          )}
-        </Button>
       </div>
     </div>
   );
