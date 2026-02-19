@@ -26,7 +26,6 @@ interface User {
 }
 
 export function UserNav({ user }: { user: User }) {
-  console.log("DADOS DO USERNAV:", user);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
