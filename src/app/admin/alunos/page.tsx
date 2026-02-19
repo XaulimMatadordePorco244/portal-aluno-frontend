@@ -26,6 +26,7 @@ export default async function AdminAlunosPage() {
     },
     orderBy: { nome: 'asc' }
   });
+console.log(alunos.map(a => a.perfilAluno?.id));
 
   return (
     <div className="container mx-auto py-10">

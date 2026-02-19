@@ -11,6 +11,7 @@ interface TransicaoInput {
     tipo: TipoTransicao;
     cargoDestinoId?: string; 
     motivo: string;
+    modalidadePromocao?: string;
 }
 
 export async function processarTransicaoEmMassa(data: TransicaoInput) {
@@ -39,7 +40,6 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
             let novoCargoId = null;
             let conceitoNovo = 7.0;
 
-
             if (data.tipo === 'CURSO' || data.tipo === 'BRAVURA' || data.tipo === 'CORRECAO') {
                 if (!data.cargoDestinoId) throw new Error(`Cargo de destino obrigatório para ${data.tipo}`);
                 novoCargoId = data.cargoDestinoId;
@@ -48,7 +48,6 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
                 if (!aluno.cargo) throw new Error(`Aluno ${aluno.usuario.nome} não tem cargo inicial para ser promovido.`);
 
                 const currentIndex = todosCargos.findIndex(c => c.id === aluno.cargoId);
-
                 const targetIndex = currentIndex - 1;
 
                 if (targetIndex < 0) throw new Error(`Aluno ${aluno.usuario.nome} já está no topo!`);
@@ -65,7 +64,6 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
             }
 
             const novoCargoObj = todosCargos.find(c => c.id === novoCargoId);
-
 
             operations.push(prisma.cargoHistory.updateMany({
                 where: { alunoId: aluno.id, status: 'ATIVO' },
@@ -88,7 +86,7 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
                     logs: {
                         create: {
                             adminId: admin.id,
-                            tipo: data.tipo === 'PROMOCAO' ? 'PROMOCAO' : data.tipo === 'DESPROMOCAO' ? 'DESPROMOCAO' : 'REVERSAO', // Adapte seu Enum
+                            tipo: data.tipo === 'PROMOCAO' ? 'PROMOCAO' : data.tipo === 'DESPROMOCAO' ? 'DESPROMOCAO' : 'REVERSAO',
                             motivo: `Transição em massa: ${data.tipo}. ${data.motivo}`
                         }
                     }
@@ -101,6 +99,10 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
                     cargoId: novoCargoId,
                     conceitoAtual: String(conceitoNovo),
                     foraDeData: false,
+                    ...(data.tipo === 'PROMOCAO' && {
+                        dataUltimaPromocao: new Date(),
+                        modalidadeUltimaPromocao: data.modalidadePromocao || 'ANTIGUIDADE',
+                    })
                 }
             }));
         }
@@ -109,6 +111,7 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
 
         revalidatePath('/admin/alunos');
         revalidatePath('/admin/promocoes');
+        revalidatePath('/admin/efetivo/antiguidade');
 
         return { success: true, message: `${alunos.length} alunos processados com sucesso.` };
 

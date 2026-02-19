@@ -76,6 +76,7 @@ const menuGroups = [
     links: [
       { href: "/qes", label: "Quadro de Estudo (QES)", icon: CalendarClock },
       { href: "/classification", label: "Classificação Geral", icon: Trophy },
+      { href: "/antiguidade", label: "Antiguidade", icon: Trophy },
       { href: "/regulations", label: "Regulamentos", icon: Scale },
       { href: "/informativos", label: "Informativos", icon: Newspaper },
       { href: "/comunicacoes-internas", label: "Comunicações Internas", icon: Mail },
@@ -257,14 +258,14 @@ export function Header({ user }: { user: User | null }) {
                       <div className="flex items-center gap-3 px-2">
                         <Avatar className="h-10 w-10 border border-border/20">
                           {user.fotoUrl ? (
-                             <AvatarImage 
-                               src={user.fotoUrl} 
-                               alt={user.nome} 
-                               className="object-cover" 
-                             />
+                            <AvatarImage
+                              src={user.fotoUrl}
+                              alt={user.nome}
+                              className="object-cover"
+                            />
                           ) : null}
                           <AvatarFallback className="bg-primary/10 font-bold text-primary">
-                             {user.nome.charAt(0)}
+                            {user.nome.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
 

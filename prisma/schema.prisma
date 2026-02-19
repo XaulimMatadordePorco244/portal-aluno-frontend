@@ -146,6 +146,9 @@ model PerfilAluno {
   conceitoAtual                 String?
   conceitoInicial               String?
   foraDeData                    Boolean              @default(false)
+  dataUltimaPromocao DateTime? 
+  notaDesempatePromocao Float? @default(0)
+  modalidadeUltimaPromocao String?
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
   desempenhosEscolares          DesempenhoEscolar[]
   feedbacks                     Feedback[]
@@ -159,6 +162,11 @@ model PerfilAluno {
   tafs                          TafDesempenho[]
   candidatoCiclos               CandidatoCiclo[]
 
+
+
+
+
+  @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
   @@index([cargoId])
   @@index([funcaoId])
   @@index([companhiaId])
