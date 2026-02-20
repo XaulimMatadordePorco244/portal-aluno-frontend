@@ -2,6 +2,7 @@ import { BarChart3, CalendarDays } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { ClassificacaoTable, ClassificacaoItem } from "@/components/admin/ClassificacaoTable";
 import { Metadata } from "next";
+import { ExtratoButton } from "./extrato-button";
 
 export const metadata: Metadata = {
   title: "Classificação Geral | Admin",
@@ -58,6 +59,7 @@ export default async function ClassificacaoGeralPage() {
       dadosCalculados: {
         id: aluno.id,
         posicao: 0,
+        numero: aluno.numero,
         nome: aluno.usuario.nome,
         nomeDeGuerra: aluno.nomeDeGuerra || "S/N",
         cargo: aluno.cargo?.nome || "Sem Cargo",
@@ -99,9 +101,12 @@ export default async function ClassificacaoGeralPage() {
           <BarChart3 className="w-8 h-8 text-foreground" />
           <h1 className="text-3xl font-bold text-foreground">Classificação Geral</h1>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
-          <CalendarDays className="h-4 w-4" />
-          <span>Atualizado em: {dataAtualizacao}</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
+            <CalendarDays className="h-4 w-4" />
+            <span>Atualizado em: {dataAtualizacao}</span>
+          </div>
+          <ExtratoButton dados={finalData} dataAtualizacao={dataAtualizacao} />
         </div>
       </div>
       

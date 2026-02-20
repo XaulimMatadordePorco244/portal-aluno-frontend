@@ -206,7 +206,7 @@ export class PDFBuilder {
   addFooter(): this {
     const internal = this.doc.internal as unknown as jsPDFInternal;
     const pageCount = internal.getNumberOfPages?.() || 1;
-    const footerStartY = this.pageHeight - 10;
+    const footerStartY = this.pageHeight - 13;
 
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
