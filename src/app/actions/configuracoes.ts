@@ -2,7 +2,7 @@
 
 import  prisma  from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { CampoRequisito, OperadorLogico, Prisma } from "@prisma/client";
+import { CampoRequisito, OperadorLogico } from "@prisma/client";
 
 export interface RegraDinamicaInput {
   cargoOrigemId: string;

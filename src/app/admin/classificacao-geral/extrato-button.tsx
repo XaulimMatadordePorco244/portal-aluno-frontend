@@ -3,8 +3,14 @@
 import { Button } from "@/components/ui/Button";
 import { Printer } from "lucide-react";
 import { ClassificacaoPdfService } from "@/services/pdf/classificacao-pdf.service";
+import { ClassificacaoItem } from "@/components/admin/ClassificacaoTable"; 
 
-export function ExtratoButton({ dados, dataAtualizacao }: { dados: any[], dataAtualizacao: string }) {
+interface ExtratoButtonProps {
+  dados: ClassificacaoItem[];
+  dataAtualizacao: string;
+}
+
+export function ExtratoButton({ dados, dataAtualizacao }: ExtratoButtonProps) {
   const handlePrint = async () => {
     await ClassificacaoPdfService.download(dados, dataAtualizacao, 'extrato-classificacao.pdf');
   };

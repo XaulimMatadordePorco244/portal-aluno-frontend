@@ -2,17 +2,17 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ArrowRight, Search, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button'; // Ajustei o import (minusculo)
+import { Check, Search, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/Input'; // Ajustei o import
+import { Input } from '@/components/ui/Input'; 
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -23,12 +23,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { processarTransicaoEmMassa, TipoTransicao } from '@/app/actions/transicoes';
 
-// --- TIPOS ---
 interface AlunoSimples {
   id: string;
   usuario: { nome: string };
-  nomeDeGuerra?: string | null; // Adicionado
-  conceitoAtual?: string | null; // Adicionado
+  nomeDeGuerra?: string | null; 
+  conceitoAtual?: string | null;
   cargo?: { id: string; nome: string; abreviacao: string; precedencia: number; tipo: string };
 }
 
@@ -39,7 +38,6 @@ interface CargoSimples {
   tipo: string;
 }
 
-// --- CONSTANTES DE MOTIVOS (ENUMS) ---
 const MODALIDADES_PROMOCAO = [
   "ANTIGUIDADE",
   "MERECIMENTO",
@@ -67,17 +65,14 @@ export default function NovaTransicaoForm({
   const [loading, setLoading] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  // Estados do Formulário
   const [tipo, setTipo] = useState<TipoTransicao>('PROMOCAO');
   const [selectedAlunos, setSelectedAlunos] = useState<string[]>([]);
   const [cargoDestinoId, setCargoDestinoId] = useState<string>('');
   
-  // Novos campos de motivo
   const [modalidade, setModalidade] = useState('');
   const [descricao, setDescricao] = useState('');
   const [filtroNome, setFiltroNome] = useState('');
 
-  // --- LÓGICA DE SELEÇÃO E FILTRO ---
   const toggleAluno = (id: string) => {
     setSelectedAlunos(prev => 
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -91,9 +86,7 @@ export default function NovaTransicaoForm({
     );
   }, [alunos, filtroNome]);
 
-  // --- LÓGICA DE CÁLCULO DO NOVO CARGO ---
   const calcularNovoCargo = (aluno: AlunoSimples) => {
-    // 1. Se for Curso, é seleção manual
     if (tipo === 'CURSO') {
       const c = cargos.find(c => c.id === cargoDestinoId);
       return c ? { ...c, nome: c.nome } : null;
@@ -101,36 +94,31 @@ export default function NovaTransicaoForm({
 
     if (!aluno.cargo) return null;
 
-    // Filtra apenas cargos de carreira (pula cursos intermediários)
     const cargosCarreira = cargos.filter(c => c.tipo !== 'CURSO');
     const currentPrecedencia = aluno.cargo.precedencia;
 
-    // 2. Promoção ou Bravura (Lógica +1 nível acima/precedência menor)
     if (tipo === 'PROMOCAO' || tipo === 'BRAVURA') {
       const target = cargosCarreira
         .filter(c => c.precedencia < currentPrecedencia)
-        .sort((a, b) => b.precedencia - a.precedencia)[0]; // Pega o vizinho imediatamente acima
+        .sort((a, b) => b.precedencia - a.precedencia)[0]; 
       
-      return target || null; // Null se já estiver no topo
+      return target || null; 
     }
 
-    // 3. Despromoção (Lógica -1 nível abaixo/precedência maior)
     if (tipo === 'DESPROMOCAO') {
        const target = cargosCarreira
         .filter(c => c.precedencia > currentPrecedencia)
-        .sort((a, b) => a.precedencia - b.precedencia)[0]; // Pega o vizinho imediatamente abaixo
+        .sort((a, b) => a.precedencia - b.precedencia)[0]; 
 
-       return target || null; // Null se já estiver na base
+       return target || null; 
     }
 
     return null;
   };
 
-  // --- HELPERS VISUAIS ---
   const highlightWarName = (fullName: string, warName?: string | null) => {
     if (!warName) return <span className="text-sm font-medium">{fullName}</span>;
 
-    // Escapa caracteres especiais para regex
     const escapedWarName = warName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedWarName})`, 'gi');
     const parts = fullName.split(regex);
@@ -190,7 +178,7 @@ export default function NovaTransicaoForm({
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 space-y-2">
               <Label>Tipo de Ação</Label>
-              <Select value={tipo} onValueChange={(v: any) => {
+              <Select value={tipo} onValueChange={(v: TipoTransicao) => {
                 setTipo(v);
                 setModalidade(''); 
               }}>

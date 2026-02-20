@@ -3,14 +3,7 @@ import prisma from '@/lib/prisma';
 import NovaTransicaoForm from '@/components/admin/promocoes/NovaTransicaoForm';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
-} from '@/components/ui/breadcrumb';
+
 
 export const metadata: Metadata = {
   title: 'Nova Transição em Massa',
@@ -24,7 +17,6 @@ export default async function NovaPromocaoPage() {
     redirect('/dashboard');
   }
 
-  // 1. Buscar dados do banco (Raw Data)
   const alunosDb = await prisma.perfilAluno.findMany({
     where: {
       usuario: {
@@ -34,8 +26,8 @@ export default async function NovaPromocaoPage() {
     },
     select: {
       id: true,
-      nomeDeGuerra: true, // Adicionado para o destaque em negrito
-      conceitoAtual: true, // Adicionado para o modal de confirmação
+      nomeDeGuerra: true, 
+      conceitoAtual: true, 
       usuario: {
         select: { nome: true }
       },

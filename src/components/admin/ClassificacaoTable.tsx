@@ -16,6 +16,7 @@ import { Search } from "lucide-react";
 export interface ClassificacaoItem {
   id: string;
   posicao: number;
+  numero: string | null;
   nome: string; 
   nomeDeGuerra: string;
   cargo: string;

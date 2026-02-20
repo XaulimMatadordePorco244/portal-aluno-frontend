@@ -26,7 +26,19 @@ interface RegraUI {
   requisitos: RequisitoUI[];
 }
 
-export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[], modalidade: string }) {
+interface RequisitoBanco {
+  campo: CampoRequisito;
+  operador: OperadorLogico;
+  valor: string;
+}
+
+interface ParRegra {
+  cargoOrigem: { id: string; abreviacao: string };
+  cargoDestino: { id: string; abreviacao: string };
+  requisitosExistentes?: RequisitoBanco[];
+}
+
+export default function RegrasPromocaoForm({ pares, modalidade }: { pares: ParRegra[], modalidade: string }) {
   
   const [regras, setRegras] = useState<RegraUI[]>(() => {
     return pares.map(par => ({
@@ -34,7 +46,7 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
       cargoDestinoId: par.cargoDestino.id,
       origemNome: par.cargoOrigem.abreviacao,
       destinoNome: par.cargoDestino.abreviacao,
-      requisitos: par.requisitosExistentes?.map((r: any) => ({
+      requisitos: par.requisitosExistentes?.map((r: RequisitoBanco) => ({
         id: Math.random().toString(36).substr(2, 9),
         campo: r.campo,
         operador: r.operador,
@@ -62,11 +74,11 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
     setRegras(novasRegras);
   };
 
-  const updateRequisito = (indexRegra: number, idRequisito: string, field: keyof RequisitoUI, value: string) => {
+const updateRequisito = (indexRegra: number, idRequisito: string, field: keyof RequisitoUI, value: string) => {
     const novasRegras = [...regras];
     const requisito = novasRegras[indexRegra].requisitos.find(r => r.id === idRequisito);
     if (requisito) {
-      // @ts-ignore
+      // @ts-expect-error: O TS reclama da união de tipos, mas os valores do Select são seguros
       requisito[field] = value;
       setRegras(novasRegras);
     }
@@ -92,7 +104,7 @@ export default function RegrasPromocaoForm({ pares, modalidade }: { pares: any[]
       } else {
         toast.error("Erro ao salvar: " + result.error);
       }
-    } catch (e) {
+    } catch  {
       toast.error("Erro de conexão.");
     } finally {
       setSaving(false);

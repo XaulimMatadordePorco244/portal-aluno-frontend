@@ -28,7 +28,6 @@ export async function buildClassificacaoTemplate(
   builder.addHeader();
   builder.addTitle(`CLASSIFICAÇÃO GERAL - ${dataAtualizacao}`, 14, 2);
   
-
   const marginX = 15; 
   const gap = 8; 
   const colWidth = (builder.pageWidth - (marginX * 2) - gap) / 2; 
@@ -119,7 +118,7 @@ export async function buildClassificacaoTemplate(
       }
     });
     
-    const lastY = (builder.doc as any).lastAutoTable?.finalY;
+    const lastY = (builder.doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY;
     currentY = lastY ? lastY + 5 : currentY + estimatedHeight + 5; 
   }
 

@@ -1,10 +1,8 @@
 'use server'
 
-import { simularPromocao } from "@/lib/promo-engine";
+import { simularPromocao, RegraComRequisitos } from "@/lib/promo-engine";
 
-export async function runSimulacao(regras: any) {
-
-  
+export async function runSimulacao(regras: RegraComRequisitos[]) {
   try {
     const report = await simularPromocao("ANTIGUIDADE", regras);
     return { success: true, report };

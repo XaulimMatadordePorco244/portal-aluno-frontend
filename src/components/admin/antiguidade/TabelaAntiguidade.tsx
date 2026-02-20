@@ -3,7 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-const exibirDataBR = (date: any) => {
+const exibirDataBR = (date: string | Date | null | undefined) => {
   if (!date) return '-';
   try {
     if (typeof date === 'string' && date.length === 10 && date.includes('-')) {
@@ -15,13 +15,28 @@ const exibirDataBR = (date: any) => {
     if (isNaN(d.getTime())) return '-';
     
     return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  } catch (error) {
+  } catch {
     return '-';
   }
 };
 
+export interface AlunoAntiguidade {
+  id: string;
+  anoIngresso?: number | null;
+  dataMatricula?: string | Date | null;
+  dataUltimaPromocao?: string | Date | null;
+  nomeDeGuerra?: string | null;
+  modalidadeUltimaPromocao?: string | null;
+  usuario?: {
+    nome: string;
+  } | null;
+  cargo: {
+    nome: string;
+    tipo?: string; 
+  };
+}
 
-export default function TabelaAntiguidade({ dados }: { dados: any[] }) {
+export default function TabelaAntiguidade({ dados }: { dados: AlunoAntiguidade[] }) {
   return (
     <div className="border border-border rounded-lg shadow-sm bg-card text-card-foreground overflow-hidden">
       <div className="overflow-x-auto">
@@ -38,7 +53,8 @@ export default function TabelaAntiguidade({ dados }: { dados: any[] }) {
           </TableHeader>
           <TableBody>
             {dados.map((aluno, index) => {
-              const rowColorClass = (aluno.cargo.tipo, aluno.cargo.nome);
+  
+              const rowColorClass = ""; 
               
               return (
                 <TableRow key={aluno.id} className="hover:bg-muted/50 border-b border-border text-xs sm:text-sm transition-colors">

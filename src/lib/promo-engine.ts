@@ -1,7 +1,6 @@
-import  prisma  from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
-// Tipos para simulação
-type RegraComRequisitos = {
+export type RegraComRequisitos = {
   cargoOrigemId: string;
   cargoDestinoId: string;
   requisitos: {
@@ -11,23 +10,30 @@ type RegraComRequisitos = {
   }[];
 };
 
+interface AlunoSimulacao {
+  nomeDeGuerra: string | null;
+  conceitoAtual: string | null;
+  desempenhosEscolares: { mediaFinal: number | null }[];
+  tafs: { mediaFinal: number | null }[];
+  historicoCargos: { dataInicio: Date }[];
+  anotacoesRecebidas?: unknown[]; 
+}
+
 export async function simularPromocao(modalidade: string, regrasDraft: RegraComRequisitos[]) {
   const resultados = [];
 
-  // 1. Para cada regra definida (ex: Soldado -> Cabo)
   for (const regra of regrasDraft) {
     
-    // 2. Buscar todos os alunos que estão no cargo de origem
     const alunosCandidatos = await prisma.perfilAluno.findMany({
       where: { 
         cargoId: regra.cargoOrigemId,
         usuario: { status: 'ATIVO' }
       },
       include: {
-        desempenhosEscolares: { orderBy: { anoLetivo: 'desc' }, take: 1 }, // Pega nota mais recente
-        tafs: { orderBy: { dataRealizacao: 'desc' }, take: 1 }, // Pega TAF mais recente
-        historicoCargos: { orderBy: { dataInicio: 'desc' }, take: 1 }, // Para calcular interstício
-        anotacoesRecebidas: true // Para contar punições
+        desempenhosEscolares: { orderBy: { anoLetivo: 'desc' }, take: 1 }, 
+        tafs: { orderBy: { dataRealizacao: 'desc' }, take: 1 },
+        historicoCargos: { orderBy: { dataInicio: 'desc' }, take: 1 },
+        anotacoesRecebidas: true 
       }
     });
 
@@ -35,22 +41,21 @@ export async function simularPromocao(modalidade: string, regrasDraft: RegraComR
     let reprovados = 0;
     const detalhesReprovacao: string[] = [];
 
-    // 3. Avaliar cada aluno contra os requisitos dinâmicos
     for (const aluno of alunosCandidatos) {
       let passouEmTudo = true;
 
       for (const req of regra.requisitos) {
-        const valorAluno = extrairValorAluno(aluno, req.campo);
-        const valorMeta = parseFloat(req.valor); // Assume numérico por enquanto
+        const valorAluno = extrairValorAluno(aluno as unknown as AlunoSimulacao, req.campo);
+        const valorMeta = parseFloat(req.valor); 
         
         const atende = comparar(valorAluno, req.operador, valorMeta);
         
         if (!atende) {
           passouEmTudo = false;
-          if (detalhesReprovacao.length < 5) { // Guardar apenas alguns exemplos
+          if (detalhesReprovacao.length < 5) { 
              detalhesReprovacao.push(`Aluno ${aluno.nomeDeGuerra}: Falhou em ${req.campo} (${valorAluno} vs ${req.valor})`);
           }
-          break; // Falhou em um requisito obrigatório, para de verificar
+          break;
         }
       }
 
@@ -71,13 +76,11 @@ export async function simularPromocao(modalidade: string, regrasDraft: RegraComR
   return resultados;
 }
 
-// Helper: Extrai o valor do aluno baseado no campo configurado
-function extrairValorAluno(aluno: any, campo: string): number {
+function extrairValorAluno(aluno: AlunoSimulacao, campo: string): number {
   switch (campo) {
     case 'MEDIA_ESCOLAR':
       return aluno.desempenhosEscolares[0]?.mediaFinal || 0;
     case 'CONCEITO':
-      // Assumindo que conceitoAtual é string numérica no seu banco
       return parseFloat(aluno.conceitoAtual || "0"); 
     case 'TAF':
       return aluno.tafs[0]?.mediaFinal || 0;
@@ -92,7 +95,6 @@ function extrairValorAluno(aluno: any, campo: string): number {
   }
 }
 
-// Helper: Comparador Lógico
 function comparar(valorReal: number, operador: string, valorMeta: number) {
   switch (operador) {
     case 'GTE': return valorReal >= valorMeta;

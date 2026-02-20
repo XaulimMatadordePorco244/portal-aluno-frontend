@@ -1,8 +1,13 @@
-import  prisma  from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import RegrasPromocaoForm from "@/components/admin/configuracoes/RegrasPromocaoForm"; 
 import { CampoRequisito } from "@prisma/client";
 
-const getValor = (requisitos: any[], campo: string, padrao: any = 0) => {
+type RequisitoBasico = {
+  campo: string;
+  valor: string;
+};
+
+const getValor = (requisitos: RequisitoBasico[], campo: string, padrao: number | boolean = 0) => {
   const req = requisitos.find(r => r.campo === campo);
   if (!req) return padrao;
   

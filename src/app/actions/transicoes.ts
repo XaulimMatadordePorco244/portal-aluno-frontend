@@ -38,7 +38,7 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
 
         for (const aluno of alunos) {
             let novoCargoId = null;
-            let conceitoNovo = 7.0;
+            const conceitoNovo = 7.0;
 
             if (data.tipo === 'CURSO' || data.tipo === 'BRAVURA' || data.tipo === 'CORRECAO') {
                 if (!data.cargoDestinoId) throw new Error(`Cargo de destino obrigatório para ${data.tipo}`);
@@ -115,8 +115,9 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
 
         return { success: true, message: `${alunos.length} alunos processados com sucesso.` };
 
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
-        return { success: false, message: error.message || 'Erro ao processar transição.' };
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao processar transição.';
+        return { success: false, message: errorMessage };
     }
 }

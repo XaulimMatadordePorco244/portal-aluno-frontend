@@ -1,5 +1,6 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -21,7 +22,7 @@ export default async function AdminAlunosPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const sort = searchParams.sort || 'nome';
 
-  let orderByClause: any = { nome: 'asc' }; 
+  let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' }; 
 
   if (sort === 'numero') {
     orderByClause = { perfilAluno: { numero: 'asc' } };
@@ -122,7 +123,7 @@ export default async function AdminAlunosPage(props: PageProps) {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <AlunoActions aluno={aluno} />
+                      <AlunoActions aluno={aluno} /> 
                     </TableCell>
                   </TableRow>
                 ))}

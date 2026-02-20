@@ -49,7 +49,7 @@ export async function getAlmanaque() {
     });
 
     return { success: true, data: dados };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Falha ao buscar almanaque" };
   }
 }
@@ -78,7 +78,7 @@ export async function updateAntiguidadeMassa(
 
     revalidatePath("/admin/efetivo/antiguidade");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Falha ao atualizar antiguidade" };
   }
 }
