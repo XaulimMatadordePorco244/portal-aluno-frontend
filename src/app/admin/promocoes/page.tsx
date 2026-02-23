@@ -43,9 +43,10 @@ export const metadata: Metadata = {
 export default async function AdminPromocoesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; tab?: string };
+  searchParams: Promise<{ q?: string; tab?: string }>; 
 }) {
-  const query = searchParams.q || '';
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams?.q || '';
   
   const [alunosForaDeData, alunosPorAntiguidade, historicoRecente] = await Promise.all([
     prisma.perfilAluno.findMany({

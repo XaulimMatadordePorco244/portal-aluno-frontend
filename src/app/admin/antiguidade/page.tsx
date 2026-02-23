@@ -29,11 +29,13 @@ export default async function Page() {
     getAlmanaque()
   ]);
 
-  const efetivo = (efetivoResponse.success && efetivoResponse.data) ? efetivoResponse.data : [];
+  const efetivo = (efetivoResponse.success && efetivoResponse.data)
+    ? efetivoResponse.data.filter((aluno): aluno is typeof aluno & { cargo: NonNullable<typeof aluno.cargo> } => aluno.cargo !== null)
+    : [];
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-8 space-y-6">
-      
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Antiguidade</h1>
@@ -41,16 +43,16 @@ export default async function Page() {
       </div>
 
       <div className="flex flex-col gap-4">
-        
+
         {comandante && (
           <div className="w-full border border-border rounded-lg shadow-sm overflow-hidden">
             <div className="bg-primary py-2 px-2 text-center text-xs sm:text-sm font-bold tracking-[0.2em] text-primary-foreground uppercase border-b border-border">
               Comandante Geral da Tropa
             </div>
-            
+
             <div className="bg-card py-3 px-4 text-center text-xs sm:text-sm font-semibold text-card-foreground flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 uppercase">
               <span>
-                {comandante.numero ? `${comandante.numero} - ` : ''} 
+                {comandante.numero ? `${comandante.numero} - ` : ''}
                 {comandante.cargo?.nome || 'CARGO N/D'} {"GM"} {comandante.nomeDeGuerra || comandante.usuario?.nome}
               </span>
             </div>
@@ -62,10 +64,10 @@ export default async function Page() {
             <div className="bg-primary py-2 px-2 text-center text-xs sm:text-sm font-bold tracking-[0.2em] text-primary-foreground uppercase border-b border-border">
               Sub Comandante Geral da Tropa
             </div>
-            
+
             <div className="bg-card py-3 px-4 text-center text-xs sm:text-sm font-semibold text-card-foreground flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 uppercase">
               <span>
-                {subComandante.numero ? `${subComandante.numero} - ` : ''} 
+                {subComandante.numero ? `${subComandante.numero} - ` : ''}
                 {subComandante.cargo?.nome || 'CARGO N/D'} {"GM"} {subComandante.nomeDeGuerra || subComandante.usuario?.nome}
               </span>
             </div>
@@ -74,7 +76,6 @@ export default async function Page() {
 
       </div>
 
-      {/* Tabela */}
       <TabelaAntiguidade dados={efetivo} />
     </div>
   );

@@ -4,35 +4,14 @@ import { ListaChamada } from './lista-chamada'
 const prisma = new PrismaClient()
 
 export default async function LancamentoFrequenciaPage() {
-  const alunos = await prisma.perfilAluno.findMany({
+const alunos = await prisma.perfilAluno.findMany({
     orderBy: {
       nomeDeGuerra: 'asc'
     },
-    select: {
-      id: true,
-      usuarioId: true,
-      numero: true,
-      conceitoInicial: true,
-      conceitoAtual: true,
-      anoIngresso: true,
-      nomeDeGuerra: true,
-      foraDeData: true,
-      tipagemSanguinea: true,
-      aptidaoFisicaStatus: true,
-      aptidaoFisicaLaudo: true,
-      aptidaoFisicaObs: true,
-      escola: true,
-      serieEscolar: true,
-      endereco: true,
-      termoResponsabilidadeAssinado: true,
-      fazCursoExterno: true,
-      cursoExternoDescricao: true,
-      cargoId: true,
-      funcaoId: true,
-      companhiaId: true,
-      createdAt: true,
-      updatedAt: true,
-      usuario: { select: { nome: true } }
+    include: {
+      usuario: { 
+        select: { nome: true } 
+      }
     }
   })
 

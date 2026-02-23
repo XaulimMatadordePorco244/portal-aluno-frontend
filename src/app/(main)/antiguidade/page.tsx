@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 import { getAlmanaque } from "@/app/actions/antiguidade";
-// Importamos o MESMO componente usado no Admin!
 import TabelaAntiguidade from "@/components/admin/antiguidade/TabelaAntiguidade";
 
 export default async function Page() {
@@ -30,8 +29,10 @@ export default async function Page() {
     getAlmanaque()
   ]);
 
-  const efetivo = (efetivoResponse.success && efetivoResponse.data) ? efetivoResponse.data : [];
-
+const efetivo = (efetivoResponse.success && efetivoResponse.data) 
+    ? efetivoResponse.data.filter((aluno): aluno is typeof aluno & { cargo: NonNullable<typeof aluno.cargo> } => aluno.cargo !== null) 
+    : [];
+    
   return (
     <div className="space-y-6">
       
