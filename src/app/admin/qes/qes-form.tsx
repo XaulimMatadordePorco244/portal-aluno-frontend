@@ -7,8 +7,6 @@ import { createQES } from './actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 function SubmitButton() {
@@ -36,8 +34,10 @@ export default function QESForm() {
   }, [state]);
 
   return (
+    
     <form ref={formRef} action={formAction} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
         <div>
           <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-900 mb-1">
             Data de Início da Semana
@@ -52,11 +52,16 @@ export default function QESForm() {
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dataInicio ? format(dataInicio, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                {dataInicio ? dataInicio.toLocaleDateString('pt-BR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) : <span>Escolha uma data</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
-              <Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} initialFocus locale={ptBR} />
+              <Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} initialFocus />
             </PopoverContent>
           </Popover>
           {dataInicio && <input type="hidden" name="dataInicio" value={dataInicio.toISOString()} />}
@@ -76,11 +81,16 @@ export default function QESForm() {
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dataFim ? format(dataFim, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                {dataFim ? dataFim.toLocaleDateString('pt-BR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) : <span>Escolha uma data</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
-              <Calendar mode="single" selected={dataFim} onSelect={setDataFim} initialFocus locale={ptBR} />
+              <Calendar mode="single" selected={dataFim} onSelect={setDataFim} initialFocus />
             </PopoverContent>
           </Popover>
           {dataFim && <input type="hidden" name="dataFim" value={dataFim.toISOString()} />}

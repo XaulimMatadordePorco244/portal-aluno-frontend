@@ -15,27 +15,30 @@ export async function validateUserByNumber(
   const numero = formData.get("numero") as string;
 
   if (!numero || numero.trim() === '') {
-    return { error: "Por favor, insira um número de matrícula." };
+    return { error: "Por favor, insira o número da matrícula." };
   }
+
+  const numeroLimpo = numero.trim().toUpperCase();
 
   let user;
   try {
-  
-    user = await prisma.user.findUnique({
-      where: { numero: numero.trim() },
+    user = await prisma.usuario.findFirst({
+      where: { 
+        perfilAluno: { numero: numeroLimpo } 
+      },
+      include: {
+        perfilAluno: true 
+      }
     });
 
   } catch (error) {
- 
-    console.error("Erro na busca do banco de dados:", error);
-    return { error: "Ocorreu um erro ao consultar o banco de dados. Tente novamente." };
+    console.error("Erro na validação:", error);
+    return { error: "Erro de conexão. Tente novamente mais tarde." };
   }
 
-
-  if (!user) {
-    return { error: "Aluno não encontrado com este número de matrícula." };
+  if (!user || !user.perfilAluno) {
+    return { error: `Nenhum aluno encontrado com a matrícula "${numeroLimpo}".` };
   }
   
-
-  redirect(`/validar/${user.validationId}`);
+  redirect(`/validar/${user.perfilAluno.id}`);
 }

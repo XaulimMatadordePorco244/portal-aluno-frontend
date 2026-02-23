@@ -1,15 +1,643 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model GmEventoCalendario {
+  id        String     @id @default(uuid())
+  titulo    String
+  descricao String?
+  data      DateTime
+  tipo      TipoEvento
+  createdAt DateTime   @default(now())
+
+  @@map("gm_eventos_calendario")
+}
+
+model Frequencia {
+  id         String           @id @default(uuid())
+  alunoId    String
+  data       DateTime
+  tipo       String           @default("GERAL")
+  status     StatusFrequencia
+  observacao String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  aluno      PerfilAluno      @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+
+  @@unique([alunoId, data, tipo])
+  @@map("gm_frequencia")
+}
+
+model TafTabela {
+  id          String        @id @default(uuid())
+  genero      TafGenero
+  exercicio   String
+  tipoMedida  TafTipoMedida
+  valorMinimo Int
+  valorMaximo Int?
+  nota        Float
+  anoLetivo   Int           @default(2025)
+  createdAt   DateTime      @default(now())
+
+  @@index([genero, exercicio, anoLetivo])
+  @@map("taf_tabela")
+}
+
+model TafDesempenho {
+  id             String      @id @default(uuid())
+  alunoId        String
+  anoLetivo      Int
+  bimestre       Int
+  dataRealizacao DateTime    @default(now())
+  abdominalQtd   Int
+  abdominalNota  Float
+  apoioTipo      String
+  apoioValor     Float
+  apoioNota      Float
+  corridaTempo   Int
+  corridaNota    Float
+  mediaFinal     Float
+  observacoes    String?     @db.Text
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  aluno          PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+
+  @@unique([alunoId, anoLetivo, bimestre])
+  @@map("taf_desempenho")
+}
+
+model PasswordResetAttempt {
+  id         String   @id @default(cuid())
+  ip         String
+  identifier String
+  createdAt  DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([identifier, createdAt])
+}
+
+model Usuario {
+  id                        String               @id @default(cuid())
+  cpf                       String               @unique @db.VarChar(11)
+  password                  String
+  nome                      String
+  email                     String?              @unique
+  fotoUrl                   String?
+  validationId              String               @unique @default(cuid())
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  passwordResetToken        String?              @unique
+  passwordResetExpires      DateTime?
+  status                    StatusUsuario        @default(ATIVO)
+  role                      Role
+  genero                    GeneroUsuario?
+  dataNascimento            DateTime?            @db.Date
+  rg                        String?
+  rgEstadoEmissor           String?
+  telefone                  String?
+  tokenVersion              Int                  @default(1)
+  analisesFeitas            Analise[]
+  anotacoesFeitas           Anotacao[]           @relation("AnotacoesFeitasPeloAutor")
+  etapasResponsavel         EtapaProcesso[]
+  logsAtor                  LogParte[]
+  partesAnalisadas          Parte[]              @relation("ComandanteAnalise")
+  partesCriadas             Parte[]              @relation("AutorParte")
+  partesSobResponsabilidade Parte[]              @relation("ResponsavelParte")
+  investigacoesBravura      ProcessoBravura[]    @relation("OficialBravura")
+  qesCriados                QES[]
+  logsCargoAdmin            CargoLog[]
+  comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
+  escalasCriadas            Escala[]             @relation("EscalasCriadas")
+  informativosCriados       Informativo[]        @relation("InformativosCriados")
+  perfilAluno               PerfilAluno?
+  responsaveis              Responsabilidade[]   @relation("Aluno")
+  dependentes               Responsabilidade[]   @relation("Responsavel")
+  fatosObservados           Anotacao[]           @relation("FatosObservados")
+
+  @@map("usuarios")
+}
+
+model PerfilAluno {
+  id                            String               @id @default(cuid())
+  usuarioId                     String               @unique
+  numero                        String?              @unique
+  anoIngresso                   Int?
+  nomeDeGuerra                  String?
+  tipagemSanguinea              tipagemSanguinea?
+  aptidaoFisicaStatus           AptidaoFisicaStatus?
+  aptidaoFisicaLaudo            Boolean              @default(false)
+  aptidaoFisicaObs              String?              @db.Text
+  escola                        String?
+  serieEscolar                  String?
+  endereco                      String?              @db.Text
+  termoResponsabilidadeAssinado Boolean              @default(false)
+  fazCursoExterno               Boolean              @default(false)
+  cursoExternoDescricao         String?              @db.Text
+  cargoId                       String?
+  funcaoId                      String?
+  companhiaId                   String?
+  createdAt                     DateTime             @default(now())
+  updatedAt                     DateTime             @updatedAt
+  conceitoAtual                 String?
+  conceitoInicial               String?
+  foraDeData                    Boolean              @default(false)
+  dataUltimaPromocao DateTime? 
+  notaDesempatePromocao Float? @default(0)
+  modalidadeUltimaPromocao String?
+  anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
+  desempenhosEscolares          DesempenhoEscolar[]
+  feedbacks                     Feedback[]
+  historicoCargos               CargoHistory[]
+  escalasAtribuidas             EscalaItem[]         @relation("EscalasAtribuidas")
+  frequencias                   Frequencia[]
+  cargo                         Cargo?               @relation(fields: [cargoId], references: [id])
+  companhia                     Companhia?           @relation(fields: [companhiaId], references: [id])
+  funcao                        Funcao?              @relation(fields: [funcaoId], references: [id])
+  usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tafs                          TafDesempenho[]
+  candidatoCiclos               CandidatoCiclo[]
+
+
+
+
+
+  @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
+  @@index([cargoId])
+  @@index([funcaoId])
+  @@index([companhiaId])
+  @@map("perfis_alunos")
+}
+
+model ComunicacaoInterna {
+  id                String   @id @default(cuid())
+  titulo            String
+  assunto           String
+  resumo            String?  @db.Text
+  arquivoUrl        String
+  nomeArquivoGerado String
+  anoReferencia     Int
+  numeroSequencial  Int
+  dataPublicacao    DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  autorId           String
+  autor             Usuario  @relation("CIsCriadas", fields: [autorId], references: [id])
+
+  @@unique([anoReferencia, numeroSequencial])
+  @@index([dataPublicacao])
+  @@index([assunto])
+  @@index([autorId], map: "comunicacoes_internas_autorId_fkey")
+  @@map("comunicacoes_internas")
+}
+
+model DesempenhoEscolar {
+  id                String      @id @default(uuid())
+  alunoId           String
+  anoLetivo         Int
+  escola            String?
+  serie             String?
+  mediaB1           Float?
+  faltasB1          Int         @default(0)
+  mediaB2           Float?
+  faltasB2          Int         @default(0)
+  mediaB3           Float?
+  faltasB3          Int         @default(0)
+  mediaB4           Float?
+  faltasB4          Int         @default(0)
+  qtdNotasVermelhas Int         @default(0)
+  observacoes       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  mediaFinal        Float?
+  situacao          String?
+  totalFaltas       Int         @default(0)
+  aluno             PerfilAluno @relation(fields: [alunoId], references: [id])
+
+  @@unique([alunoId, anoLetivo])
+}
+
+model Responsabilidade {
+  id             String   @id @default(cuid())
+  responsavelId  String
+  alunoId        String
+  tipoParentesco String?
+  createdAt      DateTime @default(now())
+  aluno          Usuario  @relation("Aluno", fields: [alunoId], references: [id], onDelete: Cascade)
+  responsavel    Usuario  @relation("Responsavel", fields: [responsavelId], references: [id], onDelete: Cascade)
+
+  @@unique([responsavelId, alunoId])
+  @@index([responsavelId])
+  @@index([alunoId])
+  @@map("responsabilidades")
+}
+
+model Companhia {
+  id         String        @id @default(cuid())
+  nome       String        @unique
+  abreviacao String?       @unique
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  alunos     PerfilAluno[]
+
+  @@map("companhias")
+}
+
+model Regulamento {
+  id         String   @id @default(cuid())
+  titulo     String
+  arquivoUrl String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  ativo      Boolean  @default(true)
+}
+
+model TipoDeAnotacao {
+  id                String     @id @default(cuid())
+  titulo            String     @unique
+  descricao         String     @db.Text
+  pontos            Float?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  abertoCoordenacao Boolean    @default(false)
+  categoriaAberto   String?
+  registros         Anotacao[]
+}
+
+model Anotacao {
+  id             String         @id @default(cuid())
+  pontos         Float
+  detalhes       String?        @db.Text
+  data           DateTime
+  tipoId         String
+  alunoId        String
+  autorId        String
+  quemAnotouId   String?
+  quemAnotouNome String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  blocoCargoId   String?
+  aluno          PerfilAluno    @relation("AnotacoesDoAluno", fields: [alunoId], references: [id])
+  autor          Usuario        @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
+  blocoCargo     CargoHistory?  @relation(fields: [blocoCargoId], references: [id])
+  tipo           TipoDeAnotacao @relation(fields: [tipoId], references: [id])
+  quemAnotou     Usuario?       @relation("FatosObservados", fields: [quemAnotouId], references: [id])
+
+  @@index([tipoId])
+  @@index([alunoId])
+  @@index([autorId])
+  @@index([blocoCargoId])
+}
+
+model QES {
+  id         String   @id @default(cuid())
+  titulo     String
+  arquivoUrl String
+  autorId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  dataFim    DateTime
+  dataInicio DateTime
+  autor      Usuario  @relation(fields: [autorId], references: [id])
+
+  @@index([autorId])
+}
+
+model CicloPromocao {
+  id             String      @id @default(cuid())
+  nome           String
+  dataReferencia DateTime
+  status         StatusCiclo @default(ABERTO)
+
+  candidatos       CandidatoCiclo[]
+  promocoesGeradas CargoHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ciclos_promocao")
+}
+
+model CandidatoCiclo {
+  id      String @id @default(cuid())
+  cicloId String
+  alunoId String
+
+  mediaEscolarSnapshot  Float
+  conceitoSnapshot      Float
+  tafSnapshot           Float
+  comportamentoSnapshot String?
+
+  resultado        StatusAprovacao @default(PENDENTE)
+  motivoReprovacao String?         @db.Text
+
+  ciclo CicloPromocao @relation(fields: [cicloId], references: [id])
+  aluno PerfilAluno   @relation(fields: [alunoId], references: [id])
+
+  @@unique([cicloId, alunoId])
+  @@map("candidatos_ciclo")
+}
+
+model RegraPromocao {
+  id         String @id @default(cuid())
+  modalidade String
+
+  cargoOrigemId  String
+  cargoDestinoId String
+
+  requisitos RequisitoPromocao[]
+
+  cargoOrigem  Cargo @relation("RegraOrigem", fields: [cargoOrigemId], references: [id])
+  cargoDestino Cargo @relation("RegraDestino", fields: [cargoDestinoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([modalidade, cargoOrigemId, cargoDestinoId])
+  @@map("regras_promocao")
+}
+
+model RequisitoPromocao {
+  id      String @id @default(cuid())
+  regraId String
+
+  campo    CampoRequisito
+  operador OperadorLogico
+  valor    String
+
+  obrigatorio Boolean @default(true)
+
+  regra RegraPromocao @relation(fields: [regraId], references: [id], onDelete: Cascade)
+
+  @@map("requisitos_promocao")
+}
+
+model Cargo {
+  id              String         @id @default(cuid())
+  nome            String         @unique
+  tipo            TipoCargo
+  precedencia     Int            @unique
+  abreviacao      String         @unique
+  classe          ClasseOficial?
+  codigo          Int?
+  categoria       CategoriaCargo
+  divisaUrl       String?
+  historicoCargos CargoHistory[]
+  alunos          PerfilAluno[]
+
+  regrasOrigem  RegraPromocao[] @relation("RegraOrigem")
+  regrasDestino RegraPromocao[] @relation("RegraDestino")
+}
+
+model Funcao {
+  id        String        @id @default(cuid())
+  nome      String        @unique
+  categoria String?
+  alunos    PerfilAluno[]
+}
+
+model Parte {
+  id                 String           @id @default(cuid())
+  assunto            String
+  conteudo           String           @db.Text
+  status             StatusParte      @default(RASCUNHO)
+  autorId            String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  dataEnvio          DateTime?
+  numeroDocumento    String?          @unique
+  tipo               TipoProcesso
+  dataFato           DateTime?
+  responsavelAtualId String?
+  analisadoPorId     String?
+  analiseComando     String?          @db.Text
+  dataAnalise        DateTime?
+  urlPdf             String?
+  analises           Analise[]
+  etapas             EtapaProcesso[]
+  logs               LogParte[]
+  analisadoPor       Usuario?         @relation("ComandanteAnalise", fields: [analisadoPorId], references: [id])
+  autor              Usuario          @relation("AutorParte", fields: [autorId], references: [id])
+  responsavelAtual   Usuario?         @relation("ResponsavelParte", fields: [responsavelAtualId], references: [id])
+  processoBravura    ProcessoBravura?
+
+  @@index([analisadoPorId], map: "Parte_analisadoPorId_fkey")
+  @@index([autorId])
+  @@index([responsavelAtualId], map: "Parte_responsavelAtualId_fkey")
+}
+
+model ProcessoBravura {
+  id                 String   @id @default(cuid())
+  parteId            String   @unique
+  oficialId          String
+  prazoInvestigacao  DateTime
+  parecerOficial     String?  @db.Text
+  parecerCoordenacao String?  @db.Text
+  decisaoFinal       String?
+  oficial            Usuario  @relation("OficialBravura", fields: [oficialId], references: [id])
+  parte              Parte    @relation(fields: [parteId], references: [id])
+
+  @@index([oficialId], map: "ProcessoBravura_oficialId_fkey")
+}
+
+model Analise {
+  id          String           @id @default(cuid())
+  observacoes String?          @db.Text
+  resultado   ResultadoAnalise
+  parteId     String
+  analistaId  String
+  createdAt   DateTime         @default(now())
+  analista    Usuario          @relation(fields: [analistaId], references: [id])
+  parte       Parte            @relation(fields: [parteId], references: [id], onDelete: Cascade)
+
+  @@index([parteId])
+  @@index([analistaId])
+}
+
+model LogParte {
+  id        String   @id @default(cuid())
+  acao      String
+  detalhes  String?
+  parteId   String
+  atorId    String
+  createdAt DateTime @default(now())
+  ator      Usuario  @relation(fields: [atorId], references: [id])
+  parte     Parte    @relation(fields: [parteId], references: [id], onDelete: Cascade)
+
+  @@index([parteId])
+  @@index([atorId])
+}
+
+model Configuracao {
+  id                String @id @default("singleton")
+  ultimaParteNumero Int    @default(0)
+  anoReferencia     Int?   @default(2025)
+}
+
+model EtapaProcesso {
+  id            String      @id @default(cuid())
+  processoId    String
+  titulo        String
+  status        StatusEtapa @default(PENDENTE)
+  responsavelId String?
+  conteudo      String?     @db.Text
+  decisao       String?
+  dataConclusao DateTime?
+  createdAt     DateTime    @default(now())
+  processo      Parte       @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  responsavel   Usuario?    @relation(fields: [responsavelId], references: [id])
+
+  @@index([processoId])
+  @@index([responsavelId])
+}
+
+model Escala {
+  id           String       @id @default(cuid())
+  dataEscala   DateTime     @db.Date
+  tipo         TipoEscala
+  status       StatusEscala @default(RASCUNHO)
+  pdfUrl       String?
+  elaboradoPor String
+  criadoPorId  String
+  fardamento   String?      @db.Text
+  observacoes  String?      @db.Text
+  createdAt    DateTime     @default(now())
+  publishedAt  DateTime?
+  updatedAt    DateTime     @updatedAt
+  itens        EscalaItem[]
+  criadoPor    Usuario      @relation("EscalasCriadas", fields: [criadoPorId], references: [id])
+
+  @@index([criadoPorId])
+  @@map("escalas")
+}
+
+model EscalaItem {
+  id            String        @id @default(cuid())
+  secao         String
+  cargo         String
+  horarioInicio String
+  horarioFim    String
+  observacao    String?
+  escalaId      String
+  alunoId       String
+  bandeira      BandeiraTipo?
+  aluno         PerfilAluno   @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
+  escala        Escala        @relation(fields: [escalaId], references: [id], onDelete: Cascade)
+
+  @@index([escalaId])
+  @@index([alunoId])
+  @@map("escala_itens")
+}
+
+model Informativo {
+  id             String   @id @default(cuid())
+  titulo         String
+  descricao      String?  @db.Text
+  arquivoUrl     String?
+  nomeArquivo    String?
+  dataPublicacao DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  autorId        String
+  autor          Usuario  @relation("InformativosCriados", fields: [autorId], references: [id])
+
+  @@index([dataPublicacao])
+  @@index([autorId], map: "informativos_autorId_fkey")
+  @@map("informativos")
+}
+
+model CargoHistory {
+  id                String             @id @default(cuid())
+  alunoId           String
+  cargoId           String
+  cargoNomeSnapshot String
+  conceitoInicial   Float              @default(7)
+  conceitoAtual     Float              @default(7)
+  dataInicio        DateTime           @default(now())
+  dataFim           DateTime?
+  status            CargoHistoryStatus @default(ATIVO)
+  motivo            String?            @db.Text
+  anotacoes         Anotacao[]
+  aluno             PerfilAluno        @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  cargo             Cargo              @relation(fields: [cargoId], references: [id])
+  logs              CargoLog[]
+
+  cicloId String?
+
+  ciclo        CicloPromocao?      @relation(fields: [cicloId], references: [id])
+  tipoPromocao TipoPromocaoHistory @default(AUTOMATICA)
+
+  @@index([alunoId, dataInicio])
+  @@index([status])
+  @@index([cargoId], map: "cargo_history_cargoId_fkey")
+  @@map("cargo_history")
+}
+
+model CargoLog {
+  id        String       @id @default(cuid())
+  blocoId   String
+  adminId   String
+  tipo      CargoLogTipo
+  motivo    String?      @db.Text
+  metadata  Json?
+  createdAt DateTime     @default(now())
+  admin     Usuario      @relation(fields: [adminId], references: [id])
+  bloco     CargoHistory @relation(fields: [blocoId], references: [id], onDelete: Cascade)
+
+  @@index([blocoId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("cargo_logs")
+}
+
+model GmSessao {
+  id           String   @id @default(uuid())
+  codigo       String
+  responsaveis String
+  atribuicoes  String
+  ordem        Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@map("gm_sessoes")
+}
+
+model GmFuncao {
+  id        String   @id @default(uuid())
+  graduacao String
+  funcao    String
+  ordem     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@map("gm_funcoes")
+}
+
+model Feedback {
+  id           String      @id @default(cuid())
+  assunto      String
+  mensagem     String      @db.Text
+  destinatario String
+  lida         Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  alunoId      String
+  aluno        PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+
+  @@index([alunoId])
 }
 
 enum Role {
   ALUNO
   ADMIN
+  RESPONSAVEL
+}
+
+enum AptidaoFisicaStatus {
+  LIBERADO
+  LIBERADO_COM_RESTRICOES
+  VETADO
 }
 
 enum TipoCargo {
@@ -31,10 +659,13 @@ enum CategoriaCargo {
 
 enum StatusParte {
   RASCUNHO
-  ENVIADA
-  ANALISADA
-  APROVADO
-  REPROVADO
+  AGUARDANDO_COMANDANTE
+  EM_ANALISE_COMANDANTE
+  EM_INVESTIGACAO
+  AGUARDANDO_COORDENACAO
+  DEFERIDO
+  INDEFERIDO
+  ENCAMINHADO
 }
 
 enum ResultadoAnalise {
@@ -66,226 +697,110 @@ enum TipoEscala {
   PERSONALIZADO
   OUTRO
 }
+
 enum BandeiraTipo {
   BR
   MS
   NV
 }
 
-model User {
-  id                   String    @id @default(cuid())
-  cpf                  String    @unique
-  password             String
-  nome                 String
-  numero               String?   @unique
-  companhia            String?
-  conceito             String?
-  anoIngresso          Int?
-  email                String?   @unique
-  status               String    @default("Ativo")
-  fotoUrl              String?
-  validationId         String    @unique @default(cuid())
-  nomeDeGuerra         String?
-  cargoId              String?
-  funcaoId             String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  passwordResetToken   String?   @unique
-  passwordResetExpires DateTime?
-
-  partesCriadas      Parte[]
-  analisesFeitas     Analise[]
-  logsAtor           LogParte[]
-  anotacoesRecebidas Anotacao[]      @relation("AnotacoesDoAluno")
-  anotacoesFeitas    Anotacao[]      @relation("AnotacoesFeitasPeloAutor")
-  funcao             Funcao?         @relation(fields: [funcaoId], references: [id])
-  cargo              Cargo?          @relation(fields: [cargoId], references: [id])
-  escalasCriadas     Escala[]        @relation("EscalasCriadas")
-  escalasAtribuidas  EscalaItem[]    @relation("EscalasAtribuidas")
-  qesCriados         QES[]
-  role               Role            @default(ALUNO)
-  etapasResponsavel  EtapaProcesso[]
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+  SUSPENSO
 }
 
-model Regulamento {
-  id         String  @id @default(cuid())
-  titulo     String
-  arquivoUrl String
-  ativo      Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum StatusEtapa {
+  PENDENTE
+  EM_ANALISE
+  CONCLUIDA
 }
 
-model TipoDeAnotacao {
-  id                String  @id @default(cuid())
-  titulo            String  @unique
-  descricao         String  @db.Text
-  pontos            Float?
-  abertoCoordenacao Boolean @default(false)
-
-  registros Anotacao[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+enum GeneroUsuario {
+  MASCULINO
+  FEMININO
 }
 
-model Anotacao {
-  id       String   @id @default(cuid())
-  pontos   Float
-  detalhes String?  @db.Text
-  data     DateTime
-
-  tipo   TipoDeAnotacao @relation(fields: [tipoId], references: [id])
-  tipoId String
-
-  aluno   User   @relation("AnotacoesDoAluno", fields: [alunoId], references: [id])
-  alunoId String
-
-  autor   User   @relation("AnotacoesFeitasPeloAutor", fields: [autorId], references: [id])
-  autorId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum CargoHistoryStatus {
+  ATIVO
+  FECHADO
+  REVERTIDO
 }
 
-model QES {
-  id         String   @id @default(cuid())
-  titulo     String
-  arquivoUrl String
-  autorId    String
-  autor      User     @relation(fields: [autorId], references: [id])
-  dataInicio DateTime
-  dataFim    DateTime
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum CargoLogTipo {
+  PROMOCAO
+  DESPROMOCAO
+  REVERSAO
 }
 
-model Cargo {
-  id          String         @id @default(cuid())
-  nome        String         @unique
-  abreviacao  String         @unique
-  codigo      Int?
-  categoria   CategoriaCargo
-  tipo        TipoCargo
-  precedencia Int            @unique
-  classe      ClasseOficial?
-  usuarios    User[]
-  divisaUrl   String?
+enum tipagemSanguinea {
+  A_POSITIVO
+  A_NEGATIVO
+  B_POSITIVO
+  B_NEGATIVO
+  AB_POSITIVO
+  AB_NEGATIVO
+  O_POSITIVO
+  O_NEGATIVO
 }
 
-model Funcao {
-  id       String @id @default(cuid())
-  nome     String @unique
-  categoria String?
-  usuarios User[]
+enum TafGenero {
+  MASCULINO
+  FEMININO
 }
 
-model Parte {
-  id              String          @id @default(cuid())
-  assunto         String
-  conteudo        String          @db.Text
-  status          StatusParte     @default(RASCUNHO)
-  numeroDocumento String?         @unique
-  tipo            TipoProcesso    @default(GENERICO)
-  etapas          EtapaProcesso[]
-
-  autorId String
-  autor   User   @relation(fields: [autorId], references: [id])
-
-  analises Analise[]
-  logs     LogParte[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  dataEnvio DateTime?
+enum TafTipoMedida {
+  TEMPO_SEG
+  REPETICOES
 }
 
-model Analise {
-  id          String           @id @default(cuid())
-  observacoes String?          @db.Text
-  resultado   ResultadoAnalise
-
-  parteId String
-  parte   Parte  @relation(fields: [parteId], references: [id])
-
-  analistaId String
-  analista   User   @relation(fields: [analistaId], references: [id])
-
-  createdAt DateTime @default(now())
+enum StatusFrequencia {
+  PRESENTE
+  FALTA
+  JUSTIFICADA
 }
 
-model LogParte {
-  id       String  @id @default(cuid())
-  acao     String
-  detalhes String?
-
-  parteId String
-  parte   Parte  @relation(fields: [parteId], references: [id])
-
-  atorId String
-  ator   User   @relation(fields: [atorId], references: [id])
-
-  createdAt DateTime @default(now())
+enum TipoEvento {
+  FERIADO
+  AULA_EXTRA
+  CANCELADO
+  EVENTO
 }
 
-model Configuracao {
-  id                String @id @default("singleton")
-  ultimaParteNumero Int    @default(0)
+enum StatusCiclo {
+  ABERTO
+  PROCESSANDO
+  FECHADO
+  CANCELADO
 }
 
-model EtapaProcesso {
-  id         String @id @default(cuid())
-  processoId String
-  processo   Parte  @relation(fields: [processoId], references: [id])
-
-  titulo        String
-  status        String
-  responsavelId String?
-  responsavel   User?   @relation(fields: [responsavelId], references: [id])
-
-  conteudo      String?   @db.Text
-  decisao       String?
-  dataConclusao DateTime?
-
-  createdAt DateTime @default(now())
+enum StatusAprovacao {
+  PENDENTE
+  APROVADO
+  REPROVADO
 }
 
-model Escala {
-  id           String       @id @default(cuid())
-  dataEscala   DateTime     @db.Date
-  tipo         TipoEscala
-  status       StatusEscala @default(RASCUNHO)
-  pdfUrl       String?
-  elaboradoPor String
-  fardamento    String? @db.Text
-  observacoes   String? @db.Text
-
-  criadoEm     DateTime  @default(now())
-  atualizadoEm DateTime  @updatedAt
-  publicadoEm  DateTime?
-
-  itens       EscalaItem[]
-  criadoPorId String
-  criadoPor   User         @relation("EscalasCriadas", fields: [criadoPorId], references: [id])
-
-  @@map("escalas")
+enum CampoRequisito {
+  MEDIA_ESCOLAR
+  CONCEITO
+  TAF
+  PUNICOES_GRAVES
+  PUNICOES_MEDIA
+  INTERSTICIO_MESES
+  NOTA_PROVA_TEORICA
+  SEM_NOTA_VERMELHA
 }
 
-model EscalaItem {
-  id            String  @id @default(cuid())
-  secao         String
-  cargo         String
-  horarioInicio String
-  horarioFim    String
-  observacao    String?
-  bandeira      BandeiraTipo?
-
-  escalaId String
-  escala   Escala @relation(fields: [escalaId], references: [id], onDelete: Cascade)
-
-  alunoId String
-  aluno   User   @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
-
-  @@map("escala_itens")
+enum OperadorLogico {
+  GTE
+  LTE
+  EQ
+  NEQ
 }
+
+enum TipoPromocaoHistory {
+  AUTOMATICA
+  MANUAL_OVERRIDE
+  RECLASSIFICACAO
+}
+

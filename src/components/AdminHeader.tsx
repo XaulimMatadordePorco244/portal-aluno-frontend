@@ -1,7 +1,11 @@
 "use client";
 
-import { User } from "lucide-react";
+import { User, Slash } from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/Button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,41 +14,98 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
 
+export function AdminHeader({
+    userName,
+    userImage,
+}: {
+    userName: string;
+    userImage?: string | null;
+}) {
+    const pathname = usePathname();
 
-export function AdminHeader({ userName, userImage }: { userName: string, userImage?: string | null }) {
+    const segments = pathname.split("/").filter(Boolean);
+
+    const labels: Record<string, string> = {
+        admin: "Admin",
+        dashboard: "Dashboard",
+        alunos: "Alunos",
+        instrutores: "Instrutores",
+        novo: "Novo",
+        editar: "Editar",
+    };
+
     return (
-        <header className="sticky top-0 z-40 w-full border-b bg-background">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-                
-            
-                <Link href="/admin" className="flex items-center gap-3">
-                    
-                    <span className="text-lg font-bold hidden sm:inline-block">
-                        Painel Administrativo
-                    </span>
-                </Link>
-                
+        <header className="sticky top-0 z-30 flex h-16 w-full items-center gap-4 border-b bg-background px-6 shadow-sm">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                {segments.map((segment, index) => {
+                    const href = "/" + segments.slice(0, index + 1).join("/");
+                    const isLast = index === segments.length - 1;
+
+                    const label =
+                        labels[segment] ??
+                        segment.charAt(0).toUpperCase() + segment.slice(1);
+
+                    return (
+                        <div key={href} className="flex items-center gap-2">
+                            {!isLast ? (
+                                <Link
+                                    href={href}
+                                    className="hover:text-foreground transition-colors"
+                                >
+                                    {label}
+                                </Link>
+                            ) : (
+                                <span className="text-foreground font-semibold">
+                                    {label}
+                                </span>
+                            )}
+
+                            {!isLast && (
+                                <Slash className="h-4 w-4 text-muted-foreground/50" />
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="ml-auto flex items-center gap-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Avatar className="h-9 w-9 cursor-pointer">
-                            <AvatarImage src={userImage || undefined} alt="Avatar do usuário" />
-                            <AvatarFallback>
-                                <User />
-                            </AvatarFallback>
-                        </Avatar>
+                        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                            <Avatar className="h-9 w-9 border">
+                                <AvatarImage src={userImage || undefined} alt="Avatar" />
+                                <AvatarFallback>
+                                    <User className="h-5 w-5" />
+                                </AvatarFallback>
+                            </Avatar>
+                        </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{userName}</DropdownMenuLabel>
+
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">
+                                    {userName}
+                                </p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                    Conectado
+                                </p>
+                            </div>
+                        </DropdownMenuLabel>
+
                         <DropdownMenuSeparator />
+
                         <DropdownMenuItem asChild>
-                            <Link href="/dashboard">Voltar ao Portal</Link>
+                            <Link href="/dashboard">Voltar ao Portal do Aluno</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
+
+                        <DropdownMenuItem>Configurações</DropdownMenuItem>
+
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            Sair
+
+                        <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                            Sair do Sistema
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

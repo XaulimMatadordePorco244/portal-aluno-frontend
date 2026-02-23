@@ -1,22 +1,81 @@
 import prisma from "@/lib/prisma";
-import AnotacaoForm from "./anotacao-form";
+import AnotacaoForm from "@/components/admin/anotacoes/AnotacaoForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Prisma } from '@prisma/client';
 
-async function getData() {
-  const alunos = await prisma.user.findMany({
-    where: { role: 'ALUNO', status: 'ATIVO' },
-    orderBy: { nome: 'asc' },
+type AlunoWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true,
+        cargo: true
+      }
+    }
+  }
+}>;
+
+type UsuarioWithPerfilCompanhiaCargo = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: {
+      include: {
+        companhia: true, 
+        cargo: true
+      }
+    }
+  }
+}>;
+
+interface NewAnotacaoPageProps {
+  searchParams: Promise<{  
+    alunoId?: string;
+  }>;
+}
+
+export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageProps) {
+  const { alunoId } = await searchParams;  
+
+  const alunos = await prisma.usuario.findMany({
+    where: { 
+      status: 'ATIVO', 
+      role: 'ALUNO' 
+    },
+    include: {
+      perfilAluno: {
+        include: {
+          companhia: true,
+          cargo: true
+        }
+      }
+    },
+    orderBy: {
+      perfilAluno: {
+        nomeDeGuerra: 'asc'
+      }
+    }
+  });
+
+  const usuarios = await prisma.usuario.findMany({
+    where: { 
+      status: 'ATIVO',
+      role: { in: ['ADMIN', 'ALUNO'] }
+    },
+    include: {
+      perfilAluno: {
+        include: {
+          companhia: true,  
+          cargo: true
+        }
+      }
+    },
+    orderBy: { nome: 'asc' }
   });
 
   const tiposDeAnotacao = await prisma.tipoDeAnotacao.findMany({
-    orderBy: { titulo: 'asc' },
+    orderBy: { titulo: 'asc' }
   });
 
-  return { alunos, tiposDeAnotacao };
-}
-
-export default async function NewAnotacaoPage() {
-  const { alunos, tiposDeAnotacao } = await getData();
+  const alunosWithRelations = alunos as AlunoWithPerfilCompanhiaCargo[];
+  const usuariosWithRelations = usuarios as UsuarioWithPerfilCompanhiaCargo[]; 
 
   return (
     <div className="container mx-auto py-10">
@@ -24,11 +83,16 @@ export default async function NewAnotacaoPage() {
         <CardHeader>
           <CardTitle>Lançar Nova Anotação</CardTitle>
           <CardDescription>
-            Selecione o aluno, o tipo de anotação e preencha os detalhes.
+            Selecione o aluno, o tipo de anotação e defina quem observou o fato.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AnotacaoForm alunos={alunos} tiposDeAnotacao={tiposDeAnotacao} />
+          <AnotacaoForm 
+            alunos={alunosWithRelations}
+            usuarios={usuariosWithRelations}
+            tiposDeAnotacao={tiposDeAnotacao}
+            preSelectedAlunoId={alunoId}  
+          />
         </CardContent>
       </Card>
     </div>

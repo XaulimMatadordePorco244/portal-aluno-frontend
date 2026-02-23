@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    images: {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+  images: {
     remotePatterns: [
       {
         protocol: 'https',
@@ -18,4 +23,3 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 
 
- 

@@ -1,156 +1,272 @@
 "use client";
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button'; 
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { createAluno } from '../actions';
-import Link from 'next/link';
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from 'lucide-react';
+import { AvatarUpload } from '@/components/admin/avatar-upload'; 
+
+interface AlunoFormProps {
+  cargos: { id: string, nome: string }[];
+  companhias: { id: string, nome: string }[];
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Salvando...' : 'Salvar Aluno'}
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? 'Salvando...' : 'Cadastrar Aluno'}
     </Button>
   );
 }
 
-export default function AlunoForm() {
+function ErrorMsg({ error }: { error?: string[] }) {
+    if (!error || error.length === 0) return null;
+    return <p className="text-xs text-destructive mt-1">{error[0]}</p>;
+}
+
+export default function AlunoForm({ cargos, companhias }: AlunoFormProps) {
   const [state, formAction] = useActionState(createAluno, undefined);
-  const [selectedCargo, setSelectedCargo] = useState("");
+  const [cursoExterno, setCursoExterno] = useState(false);
+  
+  const [profilePic, setProfilePic] = useState<File | null>(null);
+
+  const handleSubmit = (formData: FormData) => {
+    if (profilePic) {
+      formData.append("fotoPerfil", profilePic);
+    }
+    formAction(formData);
+  };
 
   return (
-    <form action={formAction} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="nome">Nome Completo</Label>
-        <Input id="nome" name="nome" required />
-        {state?.errors?.nome && <p className="text-sm text-red-500 mt-1">{state.errors.nome[0]}</p>}
-      </div>
+    <form action={handleSubmit} className="space-y-8 bg-card text-card-foreground">
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
-          <Input id="nomeDeGuerra" name="nomeDeGuerra" required />
-          {state?.errors?.nomeDeGuerra && <p className="text-sm text-red-500 mt-1">{state.errors.nomeDeGuerra[0]}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cpf">CPF (apenas números)</Label>
-          <Input id="cpf" name="cpf" required maxLength={11} />
-          {state?.errors?.cpf && <p className="text-sm text-red-500 mt-1">{state.errors.cpf[0]}</p>}
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="numero">Número do Aluno</Label>
-          <Input id="numero" name="numero" required />
-          {state?.errors?.numero && <p className="text-sm text-red-500 mt-1">{state.errors.numero[0]}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="companhia">Companhia</Label>
-          <Select name="companhia" required>
-            <SelectTrigger><SelectValue placeholder="Selecione a companhia" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1ª Companhia">1ª Companhia</SelectItem>
-              <SelectItem value="2ª Companhia">2ª Companhia</SelectItem>
-              <SelectItem value="3ª Companhia">3ª Companhia</SelectItem>
-              <SelectItem value="4ª Companhia">4ª Companhia</SelectItem>
-              <SelectItem value="5ª Companhia">5ª Companhia</SelectItem>
-            </SelectContent>
-          </Select>
-          {state?.errors?.companhia && <p className="text-sm text-red-500 mt-1">{state.errors.companhia[0]}</p>}
-        </div>
-      </div>
+      <section className="space-y-6">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
+            Dados Pessoais
+        </h3>
 
-      <div className="space-y-2">
-        <Label htmlFor="cargo">Cargo</Label>
-        <Select name="cargo" required onValueChange={setSelectedCargo}>
-          <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Praças</SelectLabel>
-              <SelectItem value="ALUNO SOLDADO">ALUNO SOLDADO</SelectItem>
-              <SelectItem value="SOLDADO">SOLDADO</SelectItem>
-              <SelectItem value="CABO">CABO</SelectItem>
-              <SelectItem value="3º SARGENTO">3º SARGENTO</SelectItem>
-              <SelectItem value="2º SARGENTO">2º SARGENTO</SelectItem>
-              <SelectItem value="1º SARGENTO">1º SARGENTO</SelectItem>
-              <SelectItem value="SUB TENENTE">SUB TENENTE</SelectItem>
-              <SelectItem value="ASPIRANTE">ASPIRANTE</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Oficiais</SelectLabel>
-              <SelectItem value="2º TENENTE">2º TENENTE</SelectItem>
-              <SelectItem value="1º TENENTE">1º TENENTE</SelectItem>
-              <SelectItem value="CAPITÃO">CAPITÃO</SelectItem>
-              <SelectItem value="MAJOR">MAJOR</SelectItem>
-              <SelectItem value="TENENTE CORONEL">TENENTE CORONEL</SelectItem>
-              <SelectItem value="CORONEL">CORONEL</SelectItem>
-            </SelectGroup>
-            <SelectItem value="OUTRO">OUTRO</SelectItem>
-          </SelectContent>
-        </Select>
-        {state?.errors?.cargoNome && <p className="text-sm text-red-500 mt-1">{state.errors.cargoNome[0]}</p>}
-      </div>
+        <div className="flex justify-center pb-4">
+            <AvatarUpload onFileSelect={setProfilePic} />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="space-y-2">
+             <Label htmlFor="nome">Nome Completo</Label>
+             <Input id="nome" name="nome" placeholder="Nome completo do aluno" required />
+             <ErrorMsg error={state?.errors?.nome} />
+           </div>
+           <div className="space-y-2">
+             <Label htmlFor="cpf">CPF</Label>
+             <Input id="cpf" name="cpf" placeholder="000.000.000-00" required maxLength={14} />
+             <ErrorMsg error={state?.errors?.cpf} />
+           </div>
+        </div>
 
-      {selectedCargo === 'OUTRO' && (
-        <div className="space-y-2 animate-in fade-in">
-          <Label htmlFor="cargoOutro">Especifique o Cargo</Label>
-          <Input id="cargoOutro" name="cargoOutro" placeholder="Ex: Diretor Presidente" />
-          {state?.errors?.cargoOutro && <p className="text-sm text-red-500 mt-1">{state.errors.cargoOutro[0]}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+               <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+               <Input id="dataNascimento" name="dataNascimento" type="date" />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="rg">RG</Label>
+               <Input id="rg" name="rg" placeholder="Registro Geral" />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="rgEstadoEmissor">Órgão/UF</Label>
+               <Input id="rgEstadoEmissor" name="rgEstadoEmissor" placeholder="Ex: SSP/MS" />
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+               <Label>Gênero</Label>
+               <Select name="genero">
+                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="MASCULINO">Masculino</SelectItem>
+                   <SelectItem value="FEMININO">Feminino</SelectItem>
+                 </SelectContent>
+               </Select>
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="telefone">Telefone / Celular</Label>
+               <Input id="telefone" name="telefone" placeholder="(00) 00000-0000" />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="email">Email</Label>
+               <Input id="email" name="email" type="email" placeholder="aluno@exemplo.com" />
+               <ErrorMsg error={state?.errors?.email} />
+            </div>
+        </div>
+
+        <div className="space-y-2">
+           <Label htmlFor="endereco">Endereço Completo</Label>
+           <Textarea 
+             id="endereco" 
+             name="endereco" 
+             placeholder="Rua, Número, Bairro, CEP..." 
+             className="h-20 resize-none" 
+           />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
+            Dados Institucionais
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+               <Label htmlFor="numero">Número (Matrícula)</Label>
+               <Input id="numero" name="numero" placeholder="Ex: 502" required />
+               <ErrorMsg error={state?.errors?.numero} />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
+               <Input id="nomeDeGuerra" name="nomeDeGuerra" placeholder="Ex: Sd. Silva" required />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="password">Senha Inicial</Label>
+               <Input id="password" name="password" type="password" placeholder="Mínimo 6 caracteres" />
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+               <Label>Cargo / Graduação</Label>
+               <Select name="cargoId">
+                 <SelectTrigger><SelectValue placeholder="Selecione o Cargo" /></SelectTrigger>
+                 <SelectContent>
+                   {cargos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+            </div>
+            <div className="space-y-2">
+               <Label>Companhia</Label>
+               <Select name="companhiaId">
+                 <SelectTrigger><SelectValue placeholder="Selecione a Companhia" /></SelectTrigger>
+                 <SelectContent>
+                   {companhias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+            </div>
+        </div>
+
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
+           <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" />
+           <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Ingresso fora de data (Matrícula tardia)</Label>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span>
+            Saúde e Aptidão
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+               <Label>Tipagem Sanguínea</Label>
+               <Select name="tipagemSanguinea">
+                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="A_POSITIVO">A+</SelectItem>
+                   <SelectItem value="A_NEGATIVO">A-</SelectItem>
+                   <SelectItem value="B_POSITIVO">B+</SelectItem>
+                   <SelectItem value="B_NEGATIVO">B-</SelectItem>
+                   <SelectItem value="AB_POSITIVO">AB+</SelectItem>
+                   <SelectItem value="AB_NEGATIVO">AB-</SelectItem>
+                   <SelectItem value="O_POSITIVO">O+</SelectItem>
+                   <SelectItem value="O_NEGATIVO">O-</SelectItem>
+                 </SelectContent>
+               </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Aptidão Física</Label>
+                <Select name="aptidaoFisicaStatus" defaultValue="LIBERADO">
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                     <SelectItem value="LIBERADO">Liberado</SelectItem>
+                     <SelectItem value="LIBERADO_COM_RESTRICOES">Com Restrições</SelectItem>
+                     <SelectItem value="VETADO">Vetado</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+        </div>
+
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
+           <Checkbox id="aptidaoFisicaLaudo" name="aptidaoFisicaLaudo" />
+           <Label htmlFor="aptidaoFisicaLaudo" className="font-medium cursor-pointer">Possui laudo médico entregue?</Label>
+        </div>
+
+        <div className="space-y-2">
+           <Label htmlFor="aptidaoFisicaObs">Observações Médicas / Restrições</Label>
+           <Textarea 
+             id="aptidaoFisicaObs" 
+             name="aptidaoFisicaObs" 
+             placeholder="Ex: Alergia a picada de insetos..." 
+             className="h-20 resize-none" 
+           />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">4</span>
+            Dados Escolares e Extras
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="escola">Escola</Label>
+              <Input id="escola" name="escola" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="serieEscolar">Série / Ano</Label>
+              <Input id="serieEscolar" name="serieEscolar" />
+            </div>
+        </div>
+
+        <div className="space-y-2 border border-border p-4 rounded-md bg-muted/10">
+           <div className="flex items-center space-x-2 mb-2">
+              <Checkbox 
+                id="fazCursoExterno" 
+                name="fazCursoExterno" 
+                onCheckedChange={(checked) => setCursoExterno(checked === true)} 
+              />
+              <Label htmlFor="fazCursoExterno" className="font-medium cursor-pointer">Faz algum curso externo?</Label>
+           </div>
+           
+           {cursoExterno && (
+             <Input name="cursoExternoDescricao" placeholder="Qual curso e onde?" className="mt-2 bg-background" />
+           )}
+        </div>
+
+        <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
+           <Checkbox id="termoResponsabilidadeAssinado" name="termoResponsabilidadeAssinado" />
+           <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
+        </div>
+      </section>
+
+      {state?.message && (
+        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20 flex items-center">
+          <span className="mr-2">⚠️</span> {state.message}
         </div>
       )}
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email (Opcional)</Label>
-        <Input id="email" name="email" type="email" />
-        {state?.errors?.email && <p className="text-sm text-red-500 mt-1">{state.errors.email[0]}</p>}
-      </div>
 
-      <div className="flex items-center space-x-2 pt-2">
-        <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" />
-        <label
-          htmlFor="ingressoForaDeData"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Ingresso fora de data (conceito inicial 6.0)
-        </label>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha Provisória</Label>
-          <Input id="password" name="password" type="password" required />
-          {state?.errors?.password && <p className="text-sm text-red-500 mt-1">{state.errors.password[0]}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="fotoUrl">Foto do Aluno (Opcional)</Label>
-          <Input id="fotoUrl" name="fotoUrl" type="file" accept="image/*" />
-          {state?.errors?.fotoUrl && <p className="text-sm text-red-500 mt-1">{state.errors.fotoUrl[0]}</p>}
-        </div>
-      </div>
-      
-      {state?.message && <p className="text-sm text-red-500">{state.message}</p>}
-      
-      <div className="flex gap-2 pt-4">
-        <SubmitButton />
-        <Button variant="outline" asChild>
-          <Link href="/admin/alunos">Cancelar</Link>
-        </Button>
-      </div>
+      <SubmitButton />
     </form>
   );
 }

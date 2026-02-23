@@ -61,7 +61,7 @@ export default function NovaPartePage() {
     };
 
     return (
-        <div className="container mx-auto py-10 max-w-3xl">
+        <div >
             <div className="mb-4">
                 <Link href="/partes" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="mr-2 h-4 w-4" />

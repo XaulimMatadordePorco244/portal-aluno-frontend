@@ -22,7 +22,7 @@ export async function PUT(
 
     const etapa = await prisma.etapaProcesso.findUnique({ where: { id: etapaId } });
 
-    if (!etapa || etapa.responsavelId !== user.userId || etapa.status !== 'Pendente') {
+    if (!etapa || etapa.responsavelId !== user.userId || etapa.status !== 'PENDENTE') {
         return NextResponse.json({ error: 'Você não tem permissão para submeter um parecer para esta etapa ou ela não está pendente.' }, { status: 403 });
     }
     
@@ -31,7 +31,7 @@ export async function PUT(
         data: {
             conteudo,
             decisao,
-            status: "Concluído",
+            status: "CONCLUIDA",
             dataConclusao: new Date(),
         }
     });
@@ -39,10 +39,10 @@ export async function PUT(
     await prisma.etapaProcesso.updateMany({
         where: {
             processoId: etapa.processoId,
-            status: "Aguardando Etapa Anterior"
+            status: "EM_ANALISE"
         },
         data: {
-            status: "Pendente"
+            status: "PENDENTE"
         }
     });
 

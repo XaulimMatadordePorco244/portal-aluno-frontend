@@ -3,65 +3,27 @@ import { notFound } from "next/navigation";
 import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
-import { Cargo, Funcao, User, Escala, EscalaItem } from "@prisma/client";
+import { Cargo, Funcao, Usuario, Escala, EscalaItem, PerfilAluno } from "@prisma/client";
 
-export type UserComCargoEFuncao = User & {
-  funcao: Funcao | null;
-  cargo: Cargo | null;
+export type UserComCargoEFuncao = Usuario & {
+  perfilAluno: (PerfilAluno & {
+    funcao: Funcao | null;
+    cargo: Cargo | null;
+  }) | null;
 };
 
-
 export type EscalaItemCompleto = EscalaItem & {
-  aluno: User;
-  funcaoId: string | null; 
+  aluno: PerfilAluno & {
+    usuario: Usuario;
+    funcao: Funcao | null;
+  };
+  funcaoId: string | null;
 };
 
 export type EscalaCompleta = Escala & {
-  itens: EscalaItemCompleto[]; 
-  criadoPor: User;
+  itens: EscalaItemCompleto[];
+  criadoPor: Usuario;
 };
-
-async function getEscalaDetails(id: string): Promise<EscalaCompleta | null> {
-  const escala = await prisma.escala.findUnique({
-    where: { id },
-    include: {
-      itens: {
-        include: {
-          aluno: true,
-        },
-        orderBy: {
-          secao: 'asc',
-        },
-      },
-      criadoPor: true,
-    },
-  });
-
-
-  if (!escala) return null;
-
-
-  const itensComFuncao = await Promise.all(
-    escala.itens.map(async (item) => {
-
-      const alunoComFuncao = await prisma.user.findUnique({
-        where: { id: item.alunoId },
-        include: { funcao: true }
-      });
-
-      return {
-        ...item,
-        funcaoId: alunoComFuncao?.funcao?.id || null
-      };
-    })
-  );
-
-  return {
-    ...escala,
-    itens: itensComFuncao
-  };
-}
-
 
 async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
@@ -71,8 +33,9 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
         include: {
           aluno: {
             include: {
-              funcao: true
-            }
+              usuario: true,
+              funcao: true,
+            },
           },
         },
         orderBy: {
@@ -85,11 +48,11 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
 
   if (!escala) return null;
 
- 
   return {
     ...escala,
     itens: escala.itens.map(item => ({
       ...item,
+      alunoId: item.aluno.usuarioId,
       funcaoId: item.aluno.funcao?.id || null
     }))
   };
@@ -97,24 +60,34 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
 
 async function getFormData() {
   const [alunos, admins, funcoes] = await Promise.all([
-    prisma.user.findMany({
+    prisma.usuario.findMany({
       where: { role: 'ALUNO', status: 'ATIVO' },
       include: {
-        funcao: true,
-        cargo: true
+        perfilAluno: {
+          include: {
+            funcao: true,
+            cargo: true
+          }
+        }
       },
       orderBy: {
-        cargo: { precedencia: 'asc' }
+        perfilAluno: {
+          cargo: { precedencia: 'asc' }
+        }
       }
     }),
-    prisma.user.findMany({
+    prisma.usuario.findMany({
       where: { role: 'ADMIN' },
       include: {
-        funcao: true,
-        cargo: true
+        perfilAluno: {
+          include: {
+            funcao: true,
+            cargo: true
+          }
+        }
       },
       orderBy: {
-        cargo: { precedencia: 'asc' }
+        nome: 'asc'
       }
     }),
     prisma.funcao.findMany({
@@ -132,14 +105,14 @@ async function getFormData() {
 }
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function DetalheEscalaPage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = await params;
 
-  const [escala, formData, currentUser] = await Promise.all([
-    getEscalaDetailsSimple(id), 
+  const [escala, formData] = await Promise.all([
+    getEscalaDetailsSimple(id),
     getFormData(),
     getCurrentUser()
   ]);

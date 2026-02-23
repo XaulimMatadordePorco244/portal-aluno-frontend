@@ -13,7 +13,7 @@ async function getMinhasTarefas() {
     const tarefas = await prisma.etapaProcesso.findMany({
         where: {
             responsavelId: user.userId,
-            status: "Pendente", 
+            status: "PENDENTE", 
         },
         include: {
             processo: true, 
@@ -29,7 +29,7 @@ export default async function MinhasTarefasPage() {
     const tarefas = await getMinhasTarefas();
 
     return (
-        <div className="container mx-auto py-10 max-w-5xl">
+        <div>
             <div className="flex items-center gap-3 mb-8">
                 <ListTodo className="w-8 h-8 text-foreground" />
                 <h1 className="text-3xl font-bold text-foreground">Minhas Tarefas</h1>

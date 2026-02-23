@@ -1,117 +1,165 @@
 "use client";
 
-import { useState, useMemo } from 'react';
-import { Button } from "@/components/ui/Button"; 
+import { useState } from 'react';
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
-import { UserCircle, Save } from 'lucide-react';
-import { User, Cargo } from '@prisma/client';
+import { UserCircle} from 'lucide-react'; 
+import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
+import Image from 'next/image';
+import { formatDate } from '@/lib/utils';
 
-type UserWithCargo = User & {
-  cargo?: Cargo | null;
+type UserWithRelations = Usuario & {
+  perfilAluno: (PerfilAluno & {
+    cargo: Cargo | null;
+    companhia: Companhia | null;
+  }) | null;
 };
 
-const InfoField = ({ label, value }: { label: string; value: string | number | null | undefined; }) => (
-  <div className="border-b py-3">
-    <p className="text-sm font-medium text-muted-foreground">{label}</p>
-    <p className="text-md font-semibold text-foreground">{value || 'Não informado'}</p>
+const InfoRow = ({ label, value, className = "" }: { label: string, value: React.ReactNode, className?: string }) => (
+  <div className={`py-3 border-b border-border/50 last:border-0 ${className}`}>
+    <span className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+      {label}
+    </span>
+    <span className="text-sm md:text-base text-foreground font-medium">
+      {value || <span className="text-muted-foreground italic font-normal">Não informado</span>}
+    </span>
   </div>
 );
 
-export default function ProfileClient({ user }: { user: UserWithCargo }) {
+export default function ProfileClient({ user }: { user: UserWithRelations }) {
   const [email, setEmail] = useState(user.email || '');
-  const [isLoading, setIsLoading] = useState(false);
+  const [,setIsLoading] = useState(false);
 
-  const nameParts = useMemo(() => {
-    const fullName = user.nome;
-    const warName = user.nomeDeGuerra;
+  const perfil = user.perfilAluno;
 
-    if (!fullName) {
-      return { before: '', match: warName || 'Perfil', after: '' };
-    }
-    if (!warName) {
-      return { before: fullName, match: '', after: '' };
-    }
-
-    const index = fullName.indexOf(warName);
-
-    if (index === -1) {
-      return { before: fullName, match: '', after: '' };
-    }
-
-    return {
-      before: fullName.substring(0, index),
-      match: warName,
-      after: fullName.substring(index + warName.length),
-    };
-  }, [user.nome, user.nomeDeGuerra]);
-
-  const handleSave = (event: React.FormEvent) => {
+  const handleSaveEmail = (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    
     setTimeout(() => {
-      console.log('Novo e-mail para salvar:', email);
-      alert('E-mail de recuperação atualizado com sucesso! (Simulação)');
+      alert('E-mail atualizado!');
       setIsLoading(false);
-    }, 1500);
+    }, 1000);
   };
 
+
+
   return (
-    <div className="container mx-auto py-8">
-      <div className="bg-card rounded-xl shadow-lg p-8 max-w-4xl mx-auto border">
-        
-        <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b">
-          <UserCircle className="w-24 h-24 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl text-foreground font-light uppercase">
-              {nameParts.before}
-              <strong className="font-bold">{nameParts.match.toUpperCase()}</strong>
-              {nameParts.after}
-            </h1>
-            <p className="text-md text-muted-foreground">Nº: {user.numero || 'N/A'}</p>
-          </div>
+    <div className="space-y-6">
+      
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pb-6 border-b  border-border">
+        <div className="shrink-0">
+          {user.fotoUrl ? (
+            <Image 
+              src={user.fotoUrl} 
+              alt="Foto" 
+              width={100} 
+              height={100} 
+              className="rounded-full object-cover w-24 h-24 border border-border shadow-sm"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border border-border">
+              <UserCircle className="w-12 h-12 text-muted-foreground/50" />
+            </div>
+          )}
         </div>
 
-        <form onSubmit={handleSave}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-            
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-foreground mb-2">Dados Institucionais</h2>
-              <InfoField label="Companhia" value={user.companhia} />
-              <InfoField label="Graduação/Posto" value={user.cargo?.nome} />
-              <InfoField label="Ano de Ingresso" value={user.anoIngresso} />
-              <InfoField label="Conceito" value={user.conceito} />
-            </div>
+        <div className="text-center md:text-left space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            {user.nome}
+          </h1>
+          
+          <p className="text-lg font-medium text-primary">
+            {perfil?.cargo?.nome || 'Sem Cargo'} 
+            {perfil?.companhia && <span className="text-muted-foreground font-normal"> • {perfil.companhia.nome}</span>}
+          </p>
 
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-foreground mb-2">Informações de Acesso</h2>
-              <div className="p-3 bg-accent border rounded-md">
-                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
-                  E-mail de Recuperação
-                </Label>
-                <Input 
-                  id="email" 
-                  type="email"
-                  value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  className="mt-1"
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Este e-mail será usado para recuperar sua senha. Mantenha-o sempre atualizado.
-                </p>
+          <p className="text-sm text-muted-foreground">
+            Nome de Guerra: <strong className="text-foreground">{perfil?.nomeDeGuerra}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div className="space-y-8">
+          
+          <section>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Dados Institucionais</h3>
+            <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
+              <InfoRow label="Número" value={perfil?.numero} />
+              <InfoRow label="Ano de Ingresso" value={perfil?.anoIngresso} />
+              
+              <InfoRow 
+                label="Conceito Atual" 
+                value={perfil?.conceitoAtual ? Number(perfil.conceitoAtual).toFixed(2).replace('.', ',') : null} 
+              />
+              
+              <InfoRow label="Situação" value={perfil?.foraDeData ? "Ingresso fora de data" : "Regular"} />
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Dados Pessoais</h3>
+            <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
+              <InfoRow label="CPF" value={user.cpf} />
+              <InfoRow label="RG" value={`${user.rg || ''} ${user.rgEstadoEmissor ? `(${user.rgEstadoEmissor})` : ''}`} />
+              <InfoRow label="Data de Nascimento" value={formatDate(user.dataNascimento)} />
+              <InfoRow label="Endereço" value={perfil?.endereco} />
+            </div>
+          </section>
+
+        </div>
+
+        <div className="space-y-8">
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Saúde e Aptidão</h3>
+            <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <InfoRow label="Tipo Sanguíneo" value={perfil?.tipagemSanguinea?.replace('_', ' ').replace('POSITIVO', '+').replace('NEGATIVO', '-')} />
+                <InfoRow label="Gênero" value={user.genero === 'MASCULINO' ? 'Masculino' : user.genero === 'FEMININO' ? 'Feminino' : user.genero} />
               </div>
+              <InfoRow label="Status de Aptidão Física" value={perfil?.aptidaoFisicaStatus?.replace(/_/g, ' ')} />
+              {perfil?.aptidaoFisicaObs && (
+                 <InfoRow label="Observações Médicas" value={perfil.aptidaoFisicaObs} />
+              )}
             </div>
-          </div>
+          </section>
 
-          <div className="mt-8 pt-6 border-t flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-              <Save className="mr-2 h-4 w-4" />
-              {isLoading ? 'Salvando...' : 'Salvar E-mail'}
-            </Button>
-          </div>
-        </form>
+          <section>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Escolaridade</h3>
+            <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
+              <InfoRow label="Escola" value={perfil?.escola} />
+              <InfoRow label="Série / Ano Escolar" value={perfil?.serieEscolar} />
+              {perfil?.fazCursoExterno && (
+                <InfoRow label="Curso Externo" value={perfil.cursoExternoDescricao} />
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Configurações de Acesso</h3>
+            <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
+              <form onSubmit={handleSaveEmail} className="space-y-3">
+                <Label htmlFor="email" className="text-xs uppercase font-semibold text-muted-foreground">E-mail de Recuperação</Label>
+                <div className="flex gap-3">
+                  <Input 
+                    id="email" 
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-background"
+                    required
+                    disabled
+
+                  />
+              
+                </div>
+              </form>
+            </div>
+          </section>
+
+        </div>
       </div>
     </div>
   );
