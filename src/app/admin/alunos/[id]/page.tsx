@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
+import { formatDate } from '@/lib/utils';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -94,7 +95,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
 
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
   const formatDoc = (value: string | null) => value || <span className="text-muted-foreground italic">Não informado</span>;
-  const formatDate = (date: Date | null) => date ? new Date(date).toLocaleDateString('pt-BR') : '-';
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">

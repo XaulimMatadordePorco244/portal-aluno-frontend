@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import prisma from '@/lib/prisma'
 import { getCurrentUserWithRelations } from '@/lib/auth'
-import { FrequenciaDashboard } from '@/components/frequencia/frequencia-dashboard'
+import { FrequenciaDashboard } from '@/components/frequencia/frequencia-dashboard' 
 
 export const metadata: Metadata = { title: 'Minha Frequência' }
 
@@ -11,6 +11,7 @@ export default async function AlunoFrequenciaPage() {
 
   const frequencias = await prisma.frequencia.findMany({
     where: { alunoId: user.perfilAluno.id },
+    orderBy: { data: 'desc' } 
   })
 
   const eventos = await prisma.gmEventoCalendario.findMany()
@@ -22,7 +23,7 @@ export default async function AlunoFrequenciaPage() {
       data: f.data,
       status: f.status,
       tipoAula: f.tipo,
-      observacao: f.observacao
+      observacao: f.observacao 
     })),
     ...eventos.map(e => ({
       tipoOrigem: 'INSTITUCIONAL' as const,
@@ -35,8 +36,8 @@ export default async function AlunoFrequenciaPage() {
   ]
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-2 ">
         <div>
            <h1 className="text-3xl font-bold tracking-tight">Painel de Frequência</h1>
            <p className="text-muted-foreground">Histórico pessoal e calendário de atividades da Guarda Mirim.</p>

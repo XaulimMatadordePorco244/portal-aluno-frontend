@@ -2,11 +2,14 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+
 import { SendButton } from './SendButton';
 import { DownloadButton } from './DownloadButton';
+import { DeleteButton } from '@/components/partes/DeleteButton'; 
 
 async function getParteDetails(id: string) {
   const user = await getCurrentUser();
@@ -17,7 +20,8 @@ async function getParteDetails(id: string) {
         include: {
           perfilAluno: {
             include: {
-              cargo: true
+              cargo: true,
+              companhia: true,
             }
           }
         }
@@ -28,7 +32,8 @@ async function getParteDetails(id: string) {
             include: {
               perfilAluno: {
                 include: {
-                  cargo: true
+                  cargo: true,
+                  companhia: true,
                 }
               }
             }
@@ -41,13 +46,15 @@ async function getParteDetails(id: string) {
             include: {
               perfilAluno: {
                 include: {
-                  cargo: true
+                  cargo: true,
+                  companhia: true,
                 }
               }
             }
           } 
         } 
       },
+      logs: true,
     },
   });
 
@@ -76,7 +83,7 @@ export default async function Page({
   }`;
 
   return (
-    <div className="container mx-auto py-10 max-w-3xl">
+    <div>
       <div className="mb-4">
         <Link
           href="/partes"
@@ -99,23 +106,37 @@ export default async function Page({
             <div className="flex items-center gap-2">
               <Badge variant={parte.status === 'RASCUNHO' ? 'outline' : 'default'}>
                 {parte.status.charAt(0).toUpperCase() +
-                  parte.status.slice(1).toLowerCase()}
+                  parte.status.slice(1).toLowerCase().replace('_', ' ')}
               </Badge>
               <DownloadButton parteData={parte} />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+          <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap min-h-[100px]">
             {parte.conteudo}
           </div>
 
           {parte.status === 'RASCUNHO' && (
-            <div className="mt-8 border-t pt-6 flex flex-col items-center text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Revise sua parte com atenção. Após o envio, ela não poderá mais ser editada.
-              </p>
-              <SendButton parteId={parte.id} />
+            <div className="mt-8 border-t pt-6">
+              <div className="flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Este documento ainda é um rascunho. Revise, edite se necessário, ou envie para análise.
+                </p>
+                
+                <div className="flex flex-wrap justify-center gap-3 w-full">
+                  <Link href={`/partes/${parte.id}/editar`}>
+                    <Button variant="outline">
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Button>
+                  </Link>
+
+                  <DeleteButton parteId={parte.id} />
+
+                  <SendButton parte={parte} />
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

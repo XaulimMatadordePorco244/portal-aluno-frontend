@@ -17,7 +17,7 @@ export default async function AdminQESPage() {
   const qesList = await getQESList();
 
   return (
-    <div className="container mx-auto py-10 space-y-8 max-w-7xl">
+    <div className="container mx-auto space-y-8 ">
       <Card>
         <CardHeader>
           <CardTitle>Enviar Novo QES</CardTitle>

@@ -84,3 +84,12 @@ export function canAccessAdminArea(user: UserWithRelations | null): boolean {
   }
   return user.role === 'ADMIN';
 }
+export async function assertAdmin() {
+  const user = await getCurrentUser();
+  
+  if (!user || user.role !== 'ADMIN') {
+    return { authorized: false, user: null };
+  }
+  
+  return { authorized: true, user };
+}

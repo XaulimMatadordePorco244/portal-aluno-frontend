@@ -11,18 +11,19 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Users, 
-  TrendingUp, 
+  Users,
+  TrendingUp,
   Megaphone,
-  CalendarCheck, 
-  GraduationCap, 
-  Briefcase, 
-  Calendar, 
-  FileSpreadsheet, 
+  CalendarCheck,
+  GraduationCap,
+  Briefcase,
+  Calendar,
+  FileSpreadsheet,
   Activity,
   MessageSquare,
-  Medal, 
-  ScrollText
+  Medal,
+  ScrollText,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
@@ -52,7 +53,7 @@ const NavLink = ({ link, pathname, isCollapsed }: NavLinkProps) => (
     title={link.label}
   >
     <link.icon className={cn("h-5 w-5 shrink-0 transition-all", isCollapsed ? "h-6 w-6" : "")} />
-    <span className={cn("whitespace-nowrap transition-all duration-300 origin-left", 
+    <span className={cn("whitespace-nowrap transition-all duration-300 origin-left",
       isCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100"
     )}>
       {link.label}
@@ -82,8 +83,10 @@ export function AdminSidebar() {
     { href: "/admin/alunos", label: "Alunos", icon: Users },
     { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Medal },
     { href: "/admin/regulamentos", label: "Regulamentos", icon: BookOpen },
-    { href: "/admin/alunos/cargos", label: "Promoções", icon: TrendingUp },
+    { href: "/admin/promocoes", label: "Promoções", icon: TrendingUp },
     { href: "/admin/comunicacoes-internas", label: "Comunicação Interna", icon: Megaphone },
+    { href: "/admin/classificacao-geral", label: "Classificação Geral", icon: TrendingUp },
+    { href: "/admin/antiguidade", label: "Antiguidade", icon: TrendingUp },
     { href: "/admin/frequencia", label: "Frequência", icon: CalendarCheck },
     { href: "/admin/nota-escolar", label: "Nota Escolar", icon: GraduationCap },
     { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
@@ -92,6 +95,7 @@ export function AdminSidebar() {
     { href: "/admin/qes", label: "QES", icon: ScrollText },
     { href: "/admin/taf", label: "TAF", icon: Activity },
     { href: "/admin/qpe", label: "QPE", icon: FileSpreadsheet },
+    { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
     { href: "/admin/feedback", label: "Feedback", icon: MessageSquare },
   ];
 
@@ -112,7 +116,7 @@ export function AdminSidebar() {
       </Button>
 
       <div className="flex flex-col h-full overflow-y-auto py-4 px-2 scrollbar-hide">
-        
+
         <div className={cn(
           "flex items-center gap-2 px-2 mb-6 transition-all",
           isCollapsed ? "justify-center" : ""
@@ -125,8 +129,8 @@ export function AdminSidebar() {
             className="rounded-full w-8 h-8 object-contain shrink-0"
           />
           <div className={cn("flex flex-col overflow-hidden", isCollapsed && "hidden")}>
-             <span className="font-bold text-sm whitespace-nowrap">Administração</span>
-             <span className="text-xs text-muted-foreground whitespace-nowrap">Guarda Mirim</span>
+            <span className="font-bold text-sm whitespace-nowrap">Administração</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Guarda Mirim</span>
           </div>
         </div>
 
@@ -143,7 +147,7 @@ export function AdminSidebar() {
             <NavLink key={link.href} link={link} pathname={pathname} isCollapsed={isCollapsed} />
           ))}
         </nav>
-        
+
         <div className="h-8 shrink-0" />
       </div>
     </aside>

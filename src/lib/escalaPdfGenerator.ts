@@ -3,7 +3,7 @@ import autoTable, { UserOptions, CellHookData, RowInput } from 'jspdf-autotable'
 import { EscalaCompleta } from '@/app/admin/escalas/[id]/page'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { PDFBuilder } from '@/lib/pdfUtils'
+import { PDFBuilder } from '@/lib/pdf/pdfUtils'
 import fs from 'fs'
 import path from 'path'
 

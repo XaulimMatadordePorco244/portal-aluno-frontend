@@ -33,14 +33,20 @@ const getStatusVariant = (status: StatusParte): { variant: BadgeVariant, text: s
     switch (status) {
         case 'RASCUNHO':
             return { variant: 'outline', text: 'Rascunho' };
-        case 'ENVIADA':
-            return { variant: 'default', text: 'Enviada' };
-        case 'ANALISADA':
-            return { variant: 'secondary', text: 'Analisada' };
-                case 'APROVADO':
-            return { variant: 'success', text: 'Aprovado' }; 
-        case 'REPROVADO':
-            return { variant: 'destructive', text: 'Reprovado' };
+        case 'AGUARDANDO_COMANDANTE':
+            return { variant: 'secondary', text: 'Aguardando Comandante' };
+        case 'EM_ANALISE_COMANDANTE':
+            return { variant: 'default', text: 'Em Análise (Cmt)' };
+        case 'EM_INVESTIGACAO':
+            return { variant: 'default', text: 'Em Investigação' };
+        case 'AGUARDANDO_COORDENACAO':
+            return { variant: 'secondary', text: 'Aguardando Coordenação' };
+        case 'DEFERIDO':
+            return { variant: 'success', text: 'Deferido' }; 
+        case 'INDEFERIDO':
+            return { variant: 'destructive', text: 'Indeferido' };
+        case 'ENCAMINHADO':
+            return { variant: 'outline', text: 'Encaminhado' };
         default:
             return { variant: 'outline', text: 'Desconhecido' };
     }
@@ -50,7 +56,7 @@ export default async function MinhasPartesPage() {
     const minhasPartes = await getMinhasPartes();
 
     return (
-        <div className="container mx-auto py-10 max-w-5xl">
+        <div >
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                     <FileText className="w-8 h-8 text-foreground" />

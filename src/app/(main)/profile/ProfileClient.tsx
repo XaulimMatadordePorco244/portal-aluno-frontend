@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { UserCircle} from 'lucide-react'; 
 import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
 import Image from 'next/image';
+import { formatDate } from '@/lib/utils';
 
 type UserWithRelations = Usuario & {
   perfilAluno: (PerfilAluno & {
@@ -40,15 +41,12 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
     }, 1000);
   };
 
-  const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
+
 
   return (
-    <div className="container mx-auto py-10 max-w-4xl space-y-8">
+    <div className="space-y-6">
       
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pb-6 border-b border-border">
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pb-6 border-b  border-border">
         <div className="shrink-0">
           {user.fotoUrl ? (
             <Image 
@@ -90,7 +88,12 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
             <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
               <InfoRow label="Número" value={perfil?.numero} />
               <InfoRow label="Ano de Ingresso" value={perfil?.anoIngresso} />
-              <InfoRow label="Conceito Atual" value={perfil?.conceitoAtual} />
+              
+              <InfoRow 
+                label="Conceito Atual" 
+                value={perfil?.conceitoAtual ? Number(perfil.conceitoAtual).toFixed(2).replace('.', ',') : null} 
+              />
+              
               <InfoRow label="Situação" value={perfil?.foraDeData ? "Ingresso fora de data" : "Regular"} />
             </div>
           </section>

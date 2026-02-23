@@ -30,7 +30,7 @@ export default async function CIListPage(props: Props) {
   const { data, total, totalPages } = await getComunicacoes(query, dateFrom, dateTo, currentPage)
 
   return (
-    <div className="container mx-auto py-10 px-4 space-y-6">
+    <div className="container mx-auto px-4 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Comunicações Internas</h1>

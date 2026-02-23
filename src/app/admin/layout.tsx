@@ -3,6 +3,8 @@ import { getCurrentUserWithRelations, canAccessAdminArea } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
 import { Metadata } from "next";
+import { Container } from "@/components/layout/Container";
+
 
 export const metadata: Metadata = {
   title: "Portal do Admin - Guarda Mirim",
@@ -35,7 +37,9 @@ export default async function AdminLayout({
       <div className="grow flex-col flex-1">
         <AdminHeader userName={displayName} userImage={user.fotoUrl} />
         <main className="flex-1 p-6 md:p-8 overflow-auto">
-          {children}
+          <Container>
+            {children}
+          </Container>
         </main>
       </div>
     </div>

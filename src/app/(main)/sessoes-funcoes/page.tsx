@@ -8,15 +8,14 @@ export const metadata: Metadata = { title: 'Sessões e Funções' }
 
 export default async function AlunoOrganizacaoPage() {
     const sessoes = await prisma.gmSessao.findMany({ orderBy: { ordem: 'asc' } })
-    const funcoes = await prisma.gmFuncao.findMany({ orderBy: { ordem: 'desc' } })
 
     return (
-        <div className="p-4 md:p-8 max-w-[1400px] mx-auto space-y-10">
+        <div >
 
             <section className="space-y-6">
                 <div className="flex items-center gap-3 mb-6 border-b pb-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Sessões</h2>
+                        <h2 className="text-4xl font-bold tracking-tight">Sessões</h2>
                     </div>
                 </div>
 
@@ -57,29 +56,6 @@ export default async function AlunoOrganizacaoPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    ))}
-                </div>
-            </section>
-
-            <section className="space-y-6 pt-4">
-                <div className="flex items-center gap-3 mb-6 border-b pb-4">
-                    
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Funções</h2>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {funcoes.map((f) => (
-                        <div key={f.id} className="flex items-center p-4 gap-4 bg-card border rounded-xl shadow-sm hover:border-emerald-500/50 transition-colors">
-                            <div className="flex h-14 w-16 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold text-lg border border-emerald-100 dark:border-emerald-900">
-                                {f.graduacao}
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Dever do Graduado</p>
-                                <p className="font-semibold text-sm md:text-base leading-tight">{f.funcao}</p>
-                            </div>
-                        </div>
                     ))}
                 </div>
             </section>

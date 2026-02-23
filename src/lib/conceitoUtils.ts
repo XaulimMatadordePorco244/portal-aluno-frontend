@@ -1,6 +1,6 @@
 import prisma  from "@/lib/prisma" 
 
-export async function recalcularConceitoAluno(perfilAlunoId: string) {
+export async function recalcularConceitoAluno(perfilAlunoId: string): Promise<number> {
    const perfil = await prisma.perfilAluno.findUnique({
     where: { id: perfilAlunoId },
     include: {
@@ -11,7 +11,6 @@ export async function recalcularConceitoAluno(perfilAlunoId: string) {
   if (!perfil) {
     throw new Error("Perfil do aluno não encontrado")
   }
-
 
   const pontuacaoInicial = Number(perfil.conceitoInicial) || 7
   

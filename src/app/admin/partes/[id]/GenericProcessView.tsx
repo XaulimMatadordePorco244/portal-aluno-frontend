@@ -8,7 +8,7 @@ export function GenericProcessView({ processo }: { processo: ProcessoCompleto })
     const ultimaAnalise = processo.analises[0];
 
    
-    if (processo.status === 'ANALISADA' && ultimaAnalise) {
+    if (processo.status === 'DEFERIDO' || processo.status === 'INDEFERIDO') {
         return (
             <Card className="bg-muted/50">
                 <CardHeader>

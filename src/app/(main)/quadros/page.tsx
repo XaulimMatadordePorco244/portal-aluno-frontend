@@ -20,8 +20,8 @@ export default async function HierarquiaPage() {
     const pracas = todosCargos.filter(c => c.tipo === 'GRADUACAO');
 
     return (
-        <div className="container mx-auto py-10 max-w-7xl">
-            <div className="mb-8">
+        <div >
+            <div className="mb-6">
                 <h1 className="text-3xl font-bold tracking-tight">Hierarquia e Divisas</h1>
                 <p className="text-muted-foreground">Consulte a hierarquia, abreviações e divisas dos cargos da Guarda Mirim.</p>
             </div>

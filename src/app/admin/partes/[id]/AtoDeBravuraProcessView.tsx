@@ -103,7 +103,7 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
 
 export function AtoDeBravuraProcessView({ processo }: { processo: ProcessoCompleto }) {
 
-    if (processo.etapas.length === 0 && processo.status === 'ENVIADA') {
+    if (processo.etapas.length === 0 && processo.status === 'ENCAMINHADO') {
         return <InitialActions processoId={processo.id} />;
     }
 

@@ -37,7 +37,6 @@ export function AdminHeader({
 
     return (
         <header className="sticky top-0 z-30 flex h-16 w-full items-center gap-4 border-b bg-background px-6 shadow-sm">
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                 {segments.map((segment, index) => {
                     const href = "/" + segments.slice(0, index + 1).join("/");
@@ -70,7 +69,6 @@ export function AdminHeader({
                 })}
             </div>
 
-            {/* User menu */}
             <div className="ml-auto flex items-center gap-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
