@@ -89,10 +89,7 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
           {alunos.map(aluno => (
             <tr key={aluno.id} className="hover:bg-muted/5 group border-b last:border-0">
               <td className="p-3 font-medium border-r sticky left-0 bg-background group-hover:bg-muted/5 z-20 whitespace-nowrap shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
-                <span className="text-muted-foreground text-xs mr-2 font-bold bg-muted px-1.5 py-0.5 rounded">
-                  {aluno.graduacao}
-                </span>
-                {aluno.nomeDeGuerra}
+                                 {aluno.graduacao} GM {aluno.nomeDeGuerra}
               </td>
 
               {datas.map(d => {
