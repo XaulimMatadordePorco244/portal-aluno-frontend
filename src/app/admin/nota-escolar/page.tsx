@@ -1,20 +1,17 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
-import { 
-  Card, CardContent, CardHeader, CardTitle 
-} from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/Button';
-import { AlertTriangle, TrendingUp, FileEdit } from 'lucide-react';
+import { FileEdit } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import BoletimFiltros from './boletim-filtros'; 
+import BoletimFiltros from './boletim-filtros';
 
 export const metadata: Metadata = {
   title: 'Admin - Monitoramento Escolar',
@@ -24,8 +21,8 @@ const NotaBadge = ({ nota }: { nota: number | null | undefined }) => {
   if (nota === null || nota === undefined) {
     return <span className="text-muted-foreground text-xs">-</span>;
   }
-  const colorClass = nota < 6 
-    ? "text-red-600 font-bold bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded" 
+  const colorClass = nota < 6
+    ? "text-red-600 font-bold bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded"
     : "text-blue-600 dark:text-blue-400 font-medium";
 
   return <span className={colorClass}>{nota.toFixed(1)}</span>;
@@ -51,20 +48,25 @@ export default async function NotasEscolaresPage({
 
   const alunos = await prisma.perfilAluno.findMany({
     where: {
-      companhiaId: ciaFilter, 
+      companhiaId: ciaFilter,
       usuario: {
         status: 'ATIVO',
-        nome: { contains: busca } 
+        nome: { contains: busca }
       },
     },
     include: {
       usuario: true,
       companhia: true,
+      cargo: true,
       desempenhosEscolares: {
         where: { anoLetivo: anoAtual }
       }
     },
-    orderBy: { usuario: { nome: 'asc' } }
+    orderBy: [
+      { cargo: { precedencia: 'asc' } },
+      { dataUltimaPromocao: 'asc' },
+      { numero: 'asc' }
+    ]
   });
 
   let totalComVermelha = 0;
@@ -73,8 +75,8 @@ export default async function NotasEscolaresPage({
   let countMedias = 0;
 
   const dadosProcessados = alunos.map(aluno => {
-    const boletim = aluno.desempenhosEscolares[0]; 
-    
+    const boletim = aluno.desempenhosEscolares[0];
+
     if (boletim) {
       if (boletim.qtdNotasVermelhas > 0) totalComVermelha++;
       if (boletim.situacao === 'APROVADO') totalAprovados++;
@@ -84,73 +86,30 @@ export default async function NotasEscolaresPage({
       }
     }
 
-    return { 
-      usuario: aluno.usuario, 
-      companhia: aluno.companhia, 
-      boletim, 
-      id: aluno.id, 
-      nomeDeGuerra: aluno.nomeDeGuerra 
+    return {
+      usuario: aluno.usuario,
+      companhia: aluno.companhia,
+      cargo: aluno.cargo,
+      boletim,
+      id: aluno.id,
+      nomeDeGuerra: aluno.nomeDeGuerra
     };
   });
 
-  const mediaGeral = countMedias > 0 ? (somaMedias / countMedias).toFixed(1) : '-';
 
   return (
-    <div className=" mx-auto space-y-6">
-      
+    <div className="mx-auto space-y-6">
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight">Monitoramento Escolar</h1>
-            <p className="text-muted-foreground">Acompanhamento de desempenho acadêmico - Ano {anoAtual}</p>
+          <h1 className="text-3xl font-bold tracking-tight">Monitoramento Escolar</h1>
+          <p className="text-muted-foreground">Acompanhamento de desempenho acadêmico - Ano {anoAtual}</p>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-         <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Média Geral</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{mediaGeral}</div>
-            </CardContent>
-         </Card>
-         
-         <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Alunos em Risco</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold text-red-600">{totalComVermelha}</div>
-                <p className="text-xs text-muted-foreground">Notas vermelhas presentes.</p>
-            </CardContent>
-         </Card>
-
-         <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
-                <div className="h-4 w-4 rounded-full bg-green-500/20" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold text-green-600">{totalAprovados}</div>
-            </CardContent>
-         </Card>
-
-         <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium">Boletins Ativos</CardTitle>
-                <FileEdit className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{countMedias} / {alunos.length}</div>
-            </CardContent>
-         </Card>
       </div>
 
       <BoletimFiltros companhias={companhias} />
 
-      <div className="border rounded-lg bg-card shadow-sm overflow-hidden">
+      <div className="border rounded-lg bg-card shadow-sm pb-2">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -167,68 +126,86 @@ export default async function NotasEscolaresPage({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {dadosProcessados.map(({ usuario, companhia, boletim, id, nomeDeGuerra }) => (
+            {dadosProcessados.map(({ usuario, companhia, cargo, boletim, id, nomeDeGuerra }) => (
               <TableRow key={id} className="hover:bg-muted/5">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={usuario.fotoUrl || undefined} />
-                      <AvatarFallback>{usuario.nome.substring(0,2)}</AvatarFallback>
-                    </Avatar>
+
+                    <div className="relative group/foto cursor-pointer">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={usuario.fotoUrl || undefined} />
+                        <AvatarFallback>{usuario.nome.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+
+                      {usuario.fotoUrl && (
+                        <div className="absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover/foto:block">
+                          <div className="w-32 h-44 md:w-48 md:h-64 rounded-md border-2 border-primary shadow-2xl bg-muted overflow-hidden">
+                            <img
+                              src={usuario.fotoUrl}
+                              alt={`Foto de ${usuario.nome}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">{nomeDeGuerra || usuario.nome}</span>
+                      <span className="font-medium text-sm flex items-center gap-1.5">
+                        {nomeDeGuerra ? `${cargo?.abreviacao || 'AL'} GM ${nomeDeGuerra}` : usuario.nome}                      </span>
                       <span className="text-xs text-muted-foreground truncate max-w-[150px]">{usuario.nome}</span>
                     </div>
                   </div>
                 </TableCell>
+
                 <TableCell>
-                   <Badge variant="outline" className="text-xs font-normal">
-                      {companhia?.abreviacao || '-'}
-                   </Badge>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {companhia?.abreviacao || '-'}
+                  </Badge>
                 </TableCell>
-                
+
                 <TableCell className="text-center border-l"><NotaBadge nota={boletim?.mediaB1} /></TableCell>
                 <TableCell className="text-center border-l"><NotaBadge nota={boletim?.mediaB2} /></TableCell>
                 <TableCell className="text-center border-l"><NotaBadge nota={boletim?.mediaB3} /></TableCell>
                 <TableCell className="text-center border-l"><NotaBadge nota={boletim?.mediaB4} /></TableCell>
-                
+
                 <TableCell className="text-center border-l bg-muted/10 font-bold text-base">
-                    <NotaBadge nota={boletim?.mediaFinal} />
+                  <NotaBadge nota={boletim?.mediaFinal} />
                 </TableCell>
 
                 <TableCell className="text-center text-muted-foreground text-sm">
-                    {boletim?.totalFaltas || 0}
+                  {boletim?.totalFaltas || 0}
                 </TableCell>
 
                 <TableCell className="text-center">
-                    {boletim ? (
-                        <Badge className="text-[10px]" variant={
-                            boletim.situacao === 'APROVADO' ? 'default' : 
-                            boletim.situacao === 'REPROVADO' ? 'destructive' : 'secondary'
-                        }>
-                            {boletim.situacao}
-                        </Badge>
-                    ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                    )}
+                  {boletim ? (
+                    <Badge className="text-[10px]" variant={
+                      boletim.situacao === 'APROVADO' ? 'default' :
+                        boletim.situacao === 'REPROVADO' ? 'destructive' : 'secondary'
+                    }>
+                      {boletim.situacao}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">-</span>
+                  )}
                 </TableCell>
 
                 <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                        <Link href={`/admin/alunos/${id}/boletim`}>
-                            <FileEdit className="h-4 w-4 text-primary" />
-                        </Link>
-                    </Button>
+                  <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                    <Link href={`/admin/alunos/${id}/boletim`}>
+                      <FileEdit className="h-4 w-4 text-primary" />
+                    </Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
-            
+
             {dadosProcessados.length === 0 && (
-                <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
-                        Nenhum aluno encontrado com os filtros atuais.
-                    </TableCell>
-                </TableRow>
+              <TableRow>
+                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
+                  Nenhum aluno encontrado com os filtros atuais.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
