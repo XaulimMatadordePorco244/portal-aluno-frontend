@@ -5,8 +5,7 @@ import {
   Users, 
   Clock, 
   GraduationCap, 
-  Star,
-  Settings
+  Star
 } from 'lucide-react';
 
 export default function ConfiguracoesPage() {
@@ -19,44 +18,10 @@ export default function ConfiguracoesPage() {
       
       <div className="space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Settings className="h-5 w-5" /> Cadastros Gerais
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link href="/admin/cargos">
-            <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                    <Award className="h-5 w-5 text-blue-500" />
-                    Cargos e Patentes
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                Gerencie a hierarquia, precedência e nomes dos postos.
-                </CardContent>
-            </Card>
-            </Link>
-
-            <Link href="/admin/companhias">
-            <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                    <Users className="h-5 w-5 text-green-500" />
-                    Companhias e Pelotões
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                Estrutura organizacional do efetivo.
-                </CardContent>
-            </Card>
-            </Link>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
             <Award className="h-5 w-5" /> Regras de Promoção
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             <Link href="/admin/configuracoes/regras/antiguidade">
                 <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full border-l-4 border-l-slate-500">
@@ -99,6 +64,21 @@ export default function ConfiguracoesPage() {
                     </CardHeader>
                     <CardContent className="text-xs text-muted-foreground">
                         Configurar pontuação para alunos que se destacam acima da média da tropa.
+                    </CardContent>
+                </Card>
+            </Link>
+
+            <Link href="/admin/configuracoes/vagas">
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full border-l-4 border-l-emerald-500">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Users className="h-5 w-5" />
+                            Quadro de Vagas
+                        </CardTitle>
+                        <CardDescription>Limites por patente</CardDescription>
+                    </CardHeader>
+                    <CardContent className="text-xs text-muted-foreground">
+                        Controle o número máximo de vagas disponíveis para promoção por antiguidade.
                     </CardContent>
                 </Card>
             </Link>

@@ -628,6 +628,23 @@ model Feedback {
   @@index([alunoId])
 }
 
+model QuadroVagasAntiguidade {
+  id             String   @id @default("singleton")
+  
+  superiores     Int      @default(3)
+  intermediarios Int      @default(3)
+  subalternos    Int      @default(9)
+  
+  subtenentes    Int      @default(3)
+  sargentos      Int      @default(8)
+  cabos          Int      @default(4)
+  soldados       Int      @default(30)
+  
+  updatedAt      DateTime @updatedAt
+
+  @@map("quadro_vagas_antiguidade")
+}
+
 enum Role {
   ALUNO
   ADMIN
