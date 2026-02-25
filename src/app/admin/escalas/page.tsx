@@ -53,7 +53,6 @@ export default async function EscalasPage() {
     <>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-3">
-          <Scale className="w-8 h-8 text-foreground" />
           <h1 className="text-3xl font-bold text-foreground">Gerenciamento de Escalas</h1>
         </div>
         <Link href="/admin/escalas/new">
