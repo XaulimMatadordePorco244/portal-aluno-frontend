@@ -112,6 +112,8 @@ model Usuario {
   investigacoesBravura      ProcessoBravura[]    @relation("OficialBravura")
   qesCriados                QES[]
   logsCargoAdmin            CargoLog[]
+  notificacoes Notificacao[] 
+  pushSubscriptions PushSubscription[]
   comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
   escalasCriadas            Escala[]             @relation("EscalasCriadas")
   informativosCriados       Informativo[]        @relation("InformativosCriados")
@@ -653,6 +655,34 @@ model FuncaoAdmin {
   usuarios Usuario[]
 
   @@map("funcoes_admin")
+}
+
+model Notificacao {
+  id        String   @id @default(cuid())
+  usuarioId String
+  titulo    String
+  mensagem  String
+  link      String?  // Opcional: link para onde ir ao clicar
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+}
+
+// Guarda os dados do navegador/celular do aluno para o Push
+model PushSubscription {
+  id        String   @id @default(cuid())
+  usuarioId String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 enum Role {

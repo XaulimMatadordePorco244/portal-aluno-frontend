@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { Metadata } from "next";
 import React from "react";
 import { Container } from "@/components/layout/Container";
+import { PushNotificationManager } from "@/components/PushNotificationManager";
+
 
 export const metadata: Metadata = {
   title: "Portal do Aluno - Guarda Mirim",
@@ -52,6 +54,7 @@ return (
     <main className="grow   py-8">
       <Container>
         {children}
+        <PushNotificationManager />
       </Container>
     </main>
   </div>
