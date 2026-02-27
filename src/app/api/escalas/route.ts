@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { z } from 'zod';
 import { StatusEscala, TipoEscala } from '@prisma/client';
-
+import { notificarTodosAlunosEscala } from '@/actions/push-actions';
 
 const escalaItemSchema = z.object({
   secao: z.string().min(1, "A seção é obrigatória."),
@@ -12,9 +12,7 @@ const escalaItemSchema = z.object({
   horarioFim: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)."),
   alunoId: z.string().cuid("ID de usuário inválido."),
   observacao: z.string().nullable().optional(),
-
 });
-
 
 const createEscalaSchema = z.object({
   dataEscala: z.string().datetime("Formato de data inválido."),
@@ -42,10 +40,8 @@ export async function POST(request: Request) {
     );
   }
 
-
   const validation = createEscalaSchema.safeParse(body);
   if (!validation.success) {
-
     console.error("Erro de validação Zod:", JSON.stringify(validation.error.format(), null, 2));
     return NextResponse.json({ error: 'Dados inválidos', details: validation.error.format() }, { status: 400 });
   }
@@ -66,7 +62,6 @@ export async function POST(request: Request) {
         },
       });
 
-
       const itensParaCriar = itens.map(item => ({
         secao: item.secao,
         cargo: item.cargo,
@@ -84,6 +79,20 @@ export async function POST(request: Request) {
       return escala;
     });
 
+
+    try {
+      const dataFormatada = new Date(dataEscala).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      
+      notificarTodosAlunosEscala({
+        titulo: "⚠️ Nova Escala Publicada!",
+        mensagem: `Uma nova escala para o dia ${dataFormatada} acabou de ser publicada. Verifique o portal!`,
+        url: "/escalas",
+        tag: "nova-escala"
+      });
+    } catch (notifError) {
+      console.error("A escala foi salva, mas falhou ao enviar notificações de push:", notifError);
+    }
+
     return NextResponse.json(novaEscala, { status: 201 });
 
   } catch (error) {
@@ -94,4 +103,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }
 }
-//gdgdgd

@@ -90,6 +90,7 @@ export function AdminSidebar() {
     { href: "/admin/frequencia", label: "Frequência", icon: CalendarCheck },
     { href: "/admin/nota-escolar", label: "Nota Escolar", icon: GraduationCap },
     { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
+        { href: "/admin/escalas", label: "Escalas", icon: ClipboardList },
     { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: Briefcase },
     { href: "/admin/calendario", label: "Calendário", icon: Calendar },
     { href: "/admin/qes", label: "QES", icon: ScrollText },

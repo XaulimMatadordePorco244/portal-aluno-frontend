@@ -7,6 +7,9 @@ import { getCurrentUserWithRelations } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { recalcularConceitoAluno } from "@/lib/conceitoUtils";
 
+import { criarNotificacao } from "@/actions/notificacoes"; 
+import { enviarNotificacaoPush } from "@/actions/push-actions";
+
 export interface FormState {
   errors?: {
     alunoIds?: string[];
@@ -79,6 +82,8 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
 
     const { tipoId, data, pontos: pontosFormulario, detalhes, quemAnotouId, quemAnotouNome } = validatedFields.data;
 
+    const usuariosParaNotificar: string[] = [];
+
     for (const alunoId of alunoIds) {
       const alunoInfo = await prisma.perfilAluno.findUnique({
         where: { id: alunoId },
@@ -86,6 +91,10 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
       });
 
       if (!alunoInfo) continue;
+
+      if (alunoInfo.usuario?.id) {
+        usuariosParaNotificar.push(alunoInfo.usuario.id);
+      }
 
       const ultimaPromocao = await prisma.cargoHistory.findFirst({
         where: { alunoId: alunoId },
@@ -133,7 +142,7 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
           dataInicio: { lte: data }, 
           OR: [
             { dataFim: { gte: data } },
-            { dataFim: null }           
+            { dataFim: null }          
           ]
         },
         select: { id: true } 
@@ -161,6 +170,44 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
     await Promise.allSettled(
       alunoIds.map(id => recalcularConceitoAluno(id))
     );
+
+    try {
+      const linkNotif = "/anotacoes"; 
+
+      for (const usuarioId of usuariosParaNotificar) {
+        await criarNotificacao(
+          usuarioId, 
+          "Nova Anotação", 
+          `Foi registada uma nova anotação (${tipoAnotacao.titulo}) no seu histórico.`, 
+          linkNotif
+        );
+        
+        const naoLidasCount = await prisma.notificacao.count({
+          where: { 
+            usuarioId: usuarioId, 
+            lida: false, 
+            titulo: "Nova Anotação" 
+          }
+        });
+
+        let pushTitulo = "Nova Anotação";
+        let pushMensagem = `Foi registada uma nova anotação (${tipoAnotacao.titulo}).`;
+
+        if (naoLidasCount > 1) {
+          pushTitulo = `${naoLidasCount} Novas Anotações`;
+          pushMensagem = `Você possui ${naoLidasCount} anotações não lidas no portal. Clique para ver os detalhes.`;
+        }
+
+        await enviarNotificacaoPush(usuarioId, {
+          titulo: pushTitulo,
+          mensagem: pushMensagem,
+          url: linkNotif,
+          tag: "alerta-anotacao"
+        });
+      }
+    } catch (notifError) {
+      console.error("Anotação salva, mas erro ao enviar notificações:", notifError);
+    }
 
   } catch (error) {
     console.error(error);
@@ -257,7 +304,30 @@ export async function deleteAnotacao(anotacaoId: string, alunoId?: string) {
         where: { id: anotacaoId }
     });
 
+
     if (targetAlunoId) {
+        const aluno = await prisma.perfilAluno.findUnique({ 
+          where: { id: targetAlunoId }, 
+          select: { usuarioId: true } 
+        });
+
+        if (aluno?.usuarioId) {
+          const ultimaNotificacaoAnotacao = await prisma.notificacao.findFirst({
+            where: { 
+              usuarioId: aluno.usuarioId, 
+              titulo: "Nova Anotação", 
+              lida: false 
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+
+          if (ultimaNotificacaoAnotacao) {
+             await prisma.notificacao.delete({ 
+               where: { id: ultimaNotificacaoAnotacao.id } 
+             });
+          }
+        }
+
         await recalcularConceitoAluno(targetAlunoId);
         revalidatePath(`/admin/alunos/${targetAlunoId}`);
     }

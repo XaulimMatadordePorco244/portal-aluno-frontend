@@ -47,6 +47,7 @@ import { Button } from "./ui/Button";
 import { Separator } from "./ui/separator";
 import { LogoutButton } from "./LogoutButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { NotificacoesDropdown } from "@/components/NotificacoesDropdown";
 
 interface User {
   nome: string;
@@ -160,9 +161,11 @@ export function Header({ user }: { user: User | null }) {
             </DropdownMenu>
           )}
         </nav>
+        
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
+          {user && <NotificacoesDropdown />}
 
           <div className="hidden md:block">
             {user ? (
