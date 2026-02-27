@@ -122,6 +122,8 @@ model Usuario {
   dependentes               Responsabilidade[]   @relation("Responsavel")
   fatosObservados           Anotacao[]           @relation("FatosObservados")
   funcaoAdmin               FuncaoAdmin?         @relation(fields: [funcaoAdminId], references: [id])
+  atividadesCriadas    Atividade[]       @relation("AtividadesCriadas")
+  atividadesRecebidas  AtividadeAluno[]  @relation("AtividadesRecebidas")
 
   @@map("usuarios")
 }
@@ -684,6 +686,46 @@ model PushSubscription {
   @@index([usuarioId])
 }
 
+model Atividade {
+  id          String   @id @default(cuid())
+  titulo      String
+  descricao   String   @db.Text
+  tipo        TipoAtividade @default(OUTRO)
+  
+  prazoEntrega DateTime? 
+  prazoEncerrado    Boolean   @default(false)
+  
+  criadoPorId String
+  criadoPor   Usuario  @relation("AtividadesCriadas", fields: [criadoPorId], references: [id])
+
+  destinatarios AtividadeAluno[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AtividadeAluno {
+  id            String   @id @default(cuid())
+  
+  atividadeId   String
+  atividade     Atividade @relation(fields: [atividadeId], references: [id], onDelete: Cascade)
+  
+  alunoId       String
+  aluno         Usuario   @relation("AtividadesRecebidas", fields: [alunoId], references: [id], onDelete: Cascade)
+
+  status        StatusAtividade @default(PENDENTE)
+  
+  visualizadoEm DateTime? 
+  concluidoEm   DateTime?
+  
+  feedback      String?   @db.Text
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([atividadeId, alunoId])
+}
+
 enum Role {
   ALUNO
   ADMIN
@@ -858,4 +900,18 @@ enum TipoPromocaoHistory {
   AUTOMATICA
   MANUAL_OVERRIDE
   RECLASSIFICACAO
+}
+
+enum StatusAtividade {
+  PENDENTE
+  VISUALIZADO
+  REALIZADO
+  NAO_REALIZADO
+}
+
+enum TipoAtividade {
+  COPIA_HINO
+  REDACAO
+  LEITURA
+  OUTRO
 }
