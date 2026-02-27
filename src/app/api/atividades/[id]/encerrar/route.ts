@@ -30,7 +30,7 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro ao encerrar atividade" }, { status: 500 });
   }
 }

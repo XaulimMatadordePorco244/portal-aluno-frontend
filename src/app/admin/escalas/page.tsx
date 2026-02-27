@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { PlusCircle, Scale, Eye } from "lucide-react";
+import { PlusCircle, Eye } from "lucide-react";
 import { StatusEscala } from "@prisma/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

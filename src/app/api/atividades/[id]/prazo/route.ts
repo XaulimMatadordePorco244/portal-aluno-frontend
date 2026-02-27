@@ -22,7 +22,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro ao atualizar prazo" }, { status: 500 });
   }
 }

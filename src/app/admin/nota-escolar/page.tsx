@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image'; 
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
@@ -69,22 +70,9 @@ export default async function NotasEscolaresPage({
     ]
   });
 
-  let totalComVermelha = 0;
-  let totalAprovados = 0;
-  let somaMedias = 0;
-  let countMedias = 0;
 
   const dadosProcessados = alunos.map(aluno => {
     const boletim = aluno.desempenhosEscolares[0];
-
-    if (boletim) {
-      if (boletim.qtdNotasVermelhas > 0) totalComVermelha++;
-      if (boletim.situacao === 'APROVADO') totalAprovados++;
-      if (boletim.mediaFinal) {
-        somaMedias += boletim.mediaFinal;
-        countMedias++;
-      }
-    }
 
     return {
       usuario: aluno.usuario,
@@ -139,11 +127,13 @@ export default async function NotasEscolaresPage({
 
                       {usuario.fotoUrl && (
                         <div className="absolute left-12 top-1/2 -translate-y-1/2 z-50 hidden group-hover/foto:block">
-                          <div className="w-32 h-44 md:w-48 md:h-64 rounded-md border-2 border-primary shadow-2xl bg-muted overflow-hidden">
-                            <img
+                          <div className="relative w-32 h-44 md:w-48 md:h-64 rounded-md border-2 border-primary shadow-2xl bg-muted overflow-hidden">
+                            <Image
                               src={usuario.fotoUrl}
                               alt={`Foto de ${usuario.nome}`}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="(max-width: 768px) 128px, 192px"
+                              className="object-cover"
                             />
                           </div>
                         </div>
@@ -152,7 +142,8 @@ export default async function NotasEscolaresPage({
 
                     <div className="flex flex-col">
                       <span className="font-medium text-sm flex items-center gap-1.5">
-                        {nomeDeGuerra ? `${cargo?.abreviacao || 'AL'} GM ${nomeDeGuerra}` : usuario.nome}                      </span>
+                        {nomeDeGuerra ? `${cargo?.abreviacao || 'AL'} GM ${nomeDeGuerra}` : usuario.nome}
+                      </span>
                       <span className="text-xs text-muted-foreground truncate max-w-[150px]">{usuario.nome}</span>
                     </div>
                   </div>

@@ -13,7 +13,7 @@ export async function PATCH(request: Request) {
       data: { status }
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erro ao atualizar' }, { status: 500 });
   }
 }

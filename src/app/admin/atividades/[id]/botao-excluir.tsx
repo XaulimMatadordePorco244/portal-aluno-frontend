@@ -26,7 +26,7 @@ export function BotaoExcluirAtividade({ id }: { id: string }) {
       toast.success("Atividade excluída com sucesso!");
       router.push('/admin/atividades');
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Erro ao excluir atividade.");
       setIsDeleting(false);
     }

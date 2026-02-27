@@ -10,10 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { StatusAtividade } from "@prisma/client";
 
+type VinculoAtividadeType = {
+  id: string;
+  status: StatusAtividade;
+  visualizadoEm: Date | string | null;
+  aluno: {
+    nome: string;
+    perfilAluno: {
+      nomeDeGuerra: string | null;
+      cargo: {
+        abreviacao: string;
+      } | null;
+    } | null;
+  };
+};
+
 export function LinhaAlunoAtividade({ 
   vinculo 
 }: { 
-  vinculo: any 
+  vinculo: VinculoAtividadeType 
 }) {
   const [status, setStatus] = useState<StatusAtividade>(vinculo.status);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -35,7 +50,7 @@ export function LinhaAlunoAtividade({
       if (!res.ok) throw new Error("Erro");
       setStatus(novoStatus);
       toast.success("Status atualizado!");
-    } catch (e) {
+    } catch {
       toast.error("Falha ao atualizar status.");
     } finally {
       setIsUpdating(false);

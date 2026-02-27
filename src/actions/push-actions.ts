@@ -10,7 +10,16 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY as string
 );
 
-export async function salvarSubscricao(subscription: any) {
+export type PushSubscriptionType = {
+  endpoint: string;
+  expirationTime?: number | null;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+};
+
+export async function salvarSubscricao(subscription: PushSubscriptionType) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error("Não autorizado");
@@ -73,8 +82,6 @@ export async function enviarNotificacaoPush(userId: string, payload: { titulo: s
     console.error("Erro ao enviar push:", error);
   }
 }
-
-
 
 export async function notificarTodosAlunosEscala(payload: { titulo: string; mensagem: string; url?: string; tag?: string }) {
   try {

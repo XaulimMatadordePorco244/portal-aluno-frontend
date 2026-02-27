@@ -7,8 +7,8 @@ import { startOfDay, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/Button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Eye, CheckCircle2, BookOpen, AlertCircle, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, CheckCircle2, BookOpen, AlertCircle } from "lucide-react";
 import { StatusAtividade, TipoAtividade } from "@prisma/client";
 
 export const formatDate = (date: Date | string | null | undefined) => {
