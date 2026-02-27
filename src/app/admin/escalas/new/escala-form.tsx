@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -21,7 +21,6 @@ type ItemState = {
   horarioFim: string;
   userId: string;
   tema: string;
-  cargoPersonalizado: string;
   auxiliarUserId: string;
 };
 
@@ -35,29 +34,67 @@ type SecaoState = {
   itens: ItemState[];
 };
 
+type FuncaoAdminType = {
+  id: string;
+  nome: string;
+  setor: string | null;
+};
 
 type UserComDados = Usuario & {
   perfilAluno: (PerfilAluno & {
     funcao: Funcao | null;
     cargo: Cargo | null;
   }) | null;
+  funcaoAdmin?: FuncaoAdminType | null; 
+  funcaoAdminId?: string | null;
 };
 
 export const GABARITO_COLABORACAO = {
   fardamento: "- OS COMANDOS: COMPARECER FARDADOS.\n- OS ESCALADOS PARA LIMPEZA: COMPARECER DE TFM.\n- OS DEMAIS ALUNOS SE APRESETAR DE UNIFORME 1.",
   observacoes: "- O HASTEAMENTO DO PAVILHÃO NACIONAL: 13:25H.\n- SUSPENSÃO (-4 PONTOS): ...\n- A PALESTRA DEVERÁ TER O TEMPO DE 3MIN À 5MIN.",
   secoes: [
-    { nome: 'DIRETOR', total: 1, categoriaEsperada: 'ADMIN', permiteMultiplosItens: false, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["PRESIDENTE"] },
-    { nome: 'COORDENAÇÃO', total: 3, categoriaEsperada: 'ADMIN', permiteMultiplosItens: true, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["COORDENADOR", "AUXILIAR ADM.", "AUXILIAR ADM."] },
-    { nome: 'COMANDOS', total: 4, categoriaEsperada: 'COMANDOS', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["COMANDANTE DA TROPA", "SUB COMANDANTE", "COMP. EQUIPE – G4", "COMP. EQUIPE"] },
-    { nome: 'CHEFE DE TURMA', total: 3, categoriaEsperada: 'CHEFE_TURMA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["CHEFE DE TURMA – 1ª CIA", "CHEFE DE TURMA – 2ª CIA", "CHEFE DE TURMA – 3ª CIA"] },
-    { nome: 'GUARDA BANDEIRA', total: 3, categoriaEsperada: 'GUARDA_BANDEIRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["GUARDA BANDEIRA - BR", "GUARDA BANDEIRA - MS", "GUARDA BANDEIRA - NV"] },
-    { nome: 'PALESTRANTE', total: 3, categoriaEsperada: '', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: true, itemFuncoes: [] },
-    { nome: 'ESCALA EXTRA', total: 5, categoriaEsperada: 'ESCALA_EXTRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["LANCHE", "LANCHE", "LIMPEZA EXTERNA E INTERNA", "LIMPEZA EXTERNA E INTERNA", "LIMPEZA EXTERNA E INTERNA"] },
+    { nome: 'DIRETORIA', total: 1, categoriaEsperada: 'ADMIN', permiteMultiplosItens: false, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["PRESIDENTE"], inicio: '13:00', fim: '17:45' },
+    { nome: 'COORDENAÇÃO', total: 3, categoriaEsperada: 'ADMIN', permiteMultiplosItens: true, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["COORDENADOR", "AUXILIAR ADM.", "AUXILIAR ADM."], inicio: '13:00', fim: '17:45' },
+    { nome: 'COMANDO GERAL', total: 1, categoriaEsperada: 'COMANDO_GERAL', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["COMANDANTE GERAL"], inicio: '13:25', fim: '17:45' },
+    { nome: 'COMANDOS', total: 4, categoriaEsperada: 'COMANDOS', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["COMANDANTE", "SUB COMANDANTE", "COMP. EQUIPE", "COMP. EQUIPE"], inicio: '13:00', fim: '17:45' },
+    { nome: 'CHEFE DE TURMA', total: 3, categoriaEsperada: 'CHEFE_TURMA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["CHEFE DE TURMA - 1ª CIA", "CHEFE DE TURMA - 2ª CIA", "CHEFE DE TURMA - 3ª CIA"], inicio: '13:00', fim: '17:45' },
+    { nome: 'GUARDA BANDEIRA', total: 3, categoriaEsperada: 'GUARDA_BANDEIRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["GUARDA BANDEIRA - MS", "GUARDA BANDEIRA - NV", "GUARDA BANDEIRA - BR"], inicio: '13:00', fim: '17:45' },
+    { nome: 'PALESTRANTE', total: 1, categoriaEsperada: '', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: true, itemFuncoes: [], inicio: '13:00', fim: '17:45' },
+    { nome: 'ESCALA EXTRA', total: 5, categoriaEsperada: 'ESCALA_EXTRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["AUXILIAR", "AUXILIAR", "AUXILIAR", "AUXILIAR", "AUXILIAR"], inicio: '13:00', fim: '17:45' },
   ]
 };
 
-export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alunos: UserComDados[], admins: UserComDados[], funcoes: (Funcao & { categoria: string | null })[], elaboradorPadrao: string }) {
+export const GABARITO_SABADO = {
+  fardamento: "- OS ESCALADOS DEVEM COMPARECER DE TFM.",
+  observacoes: "- SUSPENSÃO (-4 PONTOS): SERÁ APLICADA AO ALUNO QUE SE AUSENTAR...\n- NÃO SERÁ SERVIDO LANCHE AOS ALUNOS, VENHAM ALIMENTADOS.",
+  secoes: [
+    { nome: 'COORDENAÇÃO', total: 1, categoriaEsperada: 'ADMIN', permiteMultiplosItens: true, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["AUXILIAR ADM."], inicio: '07:30', fim: '11:00' },
+    { nome: 'ESCALA EXTRA', total: 6, categoriaEsperada: 'ESCALA_EXTRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: ["COMANDANTE DO DIA", "COMP. EQUIPE", "COMP. EQUIPE", "COMP. EQUIPE", "COMP. EQUIPE", "COMP. EQUIPE"], inicio: '07:30', fim: '11:00' },
+  ]
+};
+
+export const GABARITO_EVENTOS = {
+  fardamento: "- OS ESCALADOS COMPARECER DE UNIFORME 1.",
+  observacoes: "- AUTORIZADO O USO DO AGASALHO EM CASO DE MAU TEMPO...\n- SUSPENSÃO (-4 PONTOS)...",
+  secoes: [
+    { nome: 'COORDENAÇÃO', total: 1, categoriaEsperada: 'ADMIN', permiteMultiplosItens: true, isSecaoAdmin: true, isSecaoPalestrante: false, itemFuncoes: ["AUXILIAR ADM."], inicio: '18:45', fim: '21:45' },
+    { nome: 'ESCALA EXTRA', total: 9, categoriaEsperada: 'ESCALA_EXTRA', permiteMultiplosItens: true, isSecaoAdmin: false, isSecaoPalestrante: false, itemFuncoes: Array(9).fill("AUXILIAR"), inicio: '18:45', fim: '21:45' },
+  ]
+};
+
+export function EscalaForm({ 
+  alunos, 
+  admins, 
+  funcoes, 
+  funcoesAdmin,
+  elaboradorPadrao 
+}: { 
+  alunos: UserComDados[], 
+  admins: UserComDados[], 
+  funcoes: (Funcao & { categoria: string | null })[], 
+  funcoesAdmin: FuncaoAdminType[],
+  elaboradorPadrao: string 
+}) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tipoEscala, setTipoEscala] = useState<TipoEscala | ''>('');
@@ -66,48 +103,91 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
   const [secoes, setSecoes] = useState<SecaoState[]>([]);
   const [fardamento, setFardamento] = useState('');
   const [observacoes, setObservacoes] = useState('');
-  const funcaoOutroId = useMemo(() => funcoes.find(f => f.nome.toUpperCase() === 'OUTRO')?.id || '', [funcoes]);
 
   useEffect(() => {
-    if (tipoEscala === 'COLABORACAO') {
-      const gabarito = GABARITO_COLABORACAO;
+    let gabarito = null;
+
+    if (tipoEscala === 'COLABORACAO') gabarito = GABARITO_COLABORACAO;
+    else if (tipoEscala === 'ESPECIAL') gabarito = GABARITO_SABADO;
+    else if (tipoEscala === 'EVENTO') gabarito = GABARITO_EVENTOS;
+
+    if (gabarito) {
       setFardamento(gabarito.fardamento);
       setObservacoes(gabarito.observacoes);
+
+      const adminsJaAlocados = new Set<string>();
+
       const secoesDoGabarito = gabarito.secoes.map(secaoTemplate => {
         const itens = Array.from({ length: secaoTemplate.total }, (v, i): ItemState => {
           const funcaoNome = secaoTemplate.itemFuncoes[i]?.toUpperCase() || '';
-          const funcaoPredefinida = funcoes.find(f => f.nome.toUpperCase() === funcaoNome);
-
+          
+          let funcaoPredefinidaId = ''; 
           let userIdPreenchido = '';
 
+          if (secaoTemplate.isSecaoAdmin) {
+            const fAdmin = funcoesAdmin.find(f => f.nome.toUpperCase() === funcaoNome);
+            if (fAdmin) {
+              funcaoPredefinidaId = fAdmin.id;
 
-          if (secaoTemplate.isSecaoAdmin && funcaoPredefinida) {
-            const adminComFuncao = admins.find(a => a.perfilAluno?.funcaoId === funcaoPredefinida.id);
-            if (adminComFuncao) userIdPreenchido = adminComFuncao.id;
+              const adminCorrespondente = admins.find(a => 
+                (a.funcaoAdminId === fAdmin.id || a.funcaoAdmin?.id === fAdmin.id) && 
+                !adminsJaAlocados.has(a.id)
+              );
+
+              if (adminCorrespondente) {
+                userIdPreenchido = adminCorrespondente.id;
+                adminsJaAlocados.add(adminCorrespondente.id);
+              }
+            }
+          } else {
+            const fAluno = funcoes.find(f => f.nome.toUpperCase() === funcaoNome);
+            if (fAluno) {
+              funcaoPredefinidaId = fAluno.id;
+              
+              const alunoCorrespondente = alunos.find(a => a.perfilAluno?.funcao?.id === fAluno.id);
+              
+              if (alunoCorrespondente) {
+                userIdPreenchido = alunoCorrespondente.id;
+              }
+            }
           }
 
           return {
             id: `item-${Math.random()}`,
-            funcaoId: funcaoPredefinida?.id || '',
-            horarioInicio: '13:00',
-            horarioFim: '17:45',
+            funcaoId: funcaoPredefinidaId,
+            horarioInicio: secaoTemplate.inicio,
+            horarioFim: secaoTemplate.fim,
             userId: userIdPreenchido,
             tema: '',
-            cargoPersonalizado: '',
             auxiliarUserId: '',
           };
         });
         return { ...secaoTemplate, id: `secao-${Math.random()}`, itens };
       });
       setSecoes(secoesDoGabarito);
-    } else { }
-  }, [tipoEscala, funcoes, admins]);
+    } else if (tipoEscala === 'PERSONALIZADO') {
+      setSecoes([]);
+      setFardamento('');
+      setObservacoes('');
+    }
+  }, [tipoEscala, funcoes, funcoesAdmin, admins, alunos]);
 
   const handleAddItem = (secaoIndex: number) => {
     const novasSecoes = [...secoes];
     const secao = novasSecoes[secaoIndex];
     const ultimaFuncaoId = secao.itens[secao.itens.length - 1]?.funcaoId || '';
-    secao.itens.push({ id: `item-${Math.random()}`, funcaoId: ultimaFuncaoId, cargoPersonalizado: '', horarioInicio: '13:00', horarioFim: '17:45', userId: '', tema: '', auxiliarUserId: '' });
+    const ultimoInicio = secao.itens[secao.itens.length - 1]?.horarioInicio || '13:00';
+    const ultimoFim = secao.itens[secao.itens.length - 1]?.horarioFim || '17:45';
+    
+    secao.itens.push({ 
+      id: `item-${Math.random()}`, 
+      funcaoId: ultimaFuncaoId, 
+      horarioInicio: ultimoInicio, 
+      horarioFim: ultimoFim, 
+      userId: '', 
+      tema: '', 
+      auxiliarUserId: '' 
+    });
     setSecoes(novasSecoes);
   };
 
@@ -121,7 +201,7 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
         setSecoes(novasSecoes);
       }
     } else {
-      toast.info("A seção deve ter pelo menos um item.");
+      toast.info("A secção deve ter pelo menos um item.");
     }
   };
 
@@ -137,7 +217,6 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
 
     const todosItens = secoes.flatMap(secao =>
       secao.itens.map(item => {
-        const funcao = funcoes.find(f => f.id === item.funcaoId);
         let cargoFinal = '';
         let observacaoFinal = null;
 
@@ -148,10 +227,10 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
             const nomeAuxiliar = auxiliar.perfilAluno?.nomeDeGuerra || auxiliar.nome;
             observacaoFinal = `AUXILIAR - ${nomeAuxiliar}`;
           }
-        } else if (funcao?.id === funcaoOutroId) {
-          cargoFinal = item.cargoPersonalizado;
         } else {
-          cargoFinal = funcao?.nome || '';
+          const baseDeBusca = secao.isSecaoAdmin ? funcoesAdmin : funcoes;
+          const funcaoEncontrada = baseDeBusca.find(f => f.id === item.funcaoId);
+          cargoFinal = funcaoEncontrada?.nome || '';
         }
 
         return {
@@ -166,7 +245,7 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
     ).filter(item => item.alunoId && item.cargo);
 
     if (todosItens.length === 0) {
-      toast.error("Formulário incompleto", { description: "Adicione pelo menos um item válido com usuário e cargo/tema." });
+      toast.error("Formulário incompleto", { description: "Adicione pelo menos um utilizador válido e garanta que todas as funções estão preenchidas." });
       setIsSubmitting(false);
       return;
     }
@@ -184,23 +263,14 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
           observacoes
         })
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorDetails = errorData?.details ? JSON.stringify(errorData.details, null, 2) : '';
-        throw new Error(errorData?.error || `Falha ao criar a escala. ${errorDetails}`);
-      }
-      toast.success("Sucesso!", { description: "Escala criada como rascunho." });
+      if (!response.ok) throw new Error("Falha ao criar a escala.");
+      
+      toast.success("Sucesso!", { description: "Escala guardada na base de dados." });
       router.push('/admin/escalas');
       router.refresh();
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error("Erro ao criar escala", {
-          description: error.message.length > 300 ? error.message.substring(0, 300) + '...' : error.message
-        });
-      } else {
-        toast.error("Erro desconhecido ao criar escala.");
-      }
-      console.error("Erro detalhado:", error);
+      toast.error("Erro ao criar escala.");
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -211,9 +281,26 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
       <Card>
         <CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div><Label htmlFor="dataEscala">Data da Escala</Label><Input id="dataEscala" type="date" value={dataEscala} onChange={e => setDataEscala(e.target.value)} required /></div>
-          <div><Label htmlFor="tipo">Tipo da Escala</Label><Select value={tipoEscala} onValueChange={(v: TipoEscala) => setTipoEscala(v)} required><SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger><SelectContent><SelectItem value="COLABORACAO">Colaboração (Gabarito)</SelectItem><SelectItem value="PERSONALIZADO">Personalizado</SelectItem><SelectItem value="ESPECIAL">Especial</SelectItem><SelectItem value="EVENTO">Evento</SelectItem><SelectItem value="OUTRO">Outro</SelectItem></SelectContent></Select></div>
-          <div><Label htmlFor="elaboradoPor">Elaborado Por</Label><Input id="elaboradoPor" value={elaboradoPor} onChange={e => setElaboradoPor(e.target.value)} required /></div>
+          <div>
+            <Label htmlFor="dataEscala">Data da Escala</Label>
+            <Input id="dataEscala" type="date" value={dataEscala} onChange={e => setDataEscala(e.target.value)} required />
+          </div>
+          <div>
+            <Label htmlFor="tipo">Tipo da Escala</Label>
+            <Select value={tipoEscala} onValueChange={(v: TipoEscala) => setTipoEscala(v)} required>
+              <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="COLABORACAO">Colaboração</SelectItem>
+                <SelectItem value="ESPECIAL">Especial</SelectItem>
+                <SelectItem value="EVENTO">Evento</SelectItem>
+                <SelectItem value="PERSONALIZADO">Personalizado </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="elaboradoPor">Elaborado Por</Label>
+            <Input id="elaboradoPor" value={elaboradoPor} onChange={e => setElaboradoPor(e.target.value)} required />
+          </div>
         </CardContent>
       </Card>
 
@@ -222,41 +309,96 @@ export function EscalaForm({ alunos, admins, funcoes, elaboradorPadrao }: { alun
           <CardHeader><CardTitle>{secao.nome}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {secao.itens.map((item, itemIndex) => {
-              const funcoesFiltradas = funcoes.filter(f => f.categoria === secao.categoriaEsperada || f.id === funcaoOutroId);
-              const isOutroSelecionado = item.funcaoId === funcaoOutroId;
+              
+              const opcoesDeFuncao = secao.isSecaoAdmin 
+                ? funcoesAdmin 
+                : funcoes.filter(f => f.categoria === secao.categoriaEsperada || !secao.categoriaEsperada);
+              
               const podeRemover = secao.permiteMultiplosItens || secao.itens.length > 1;
+
               return (
-                <div key={item.id} className="grid grid-cols-12 gap-x-4 gap-y-2 border p-3 rounded-md relative">
+                <div key={item.id} className="grid grid-cols-12 gap-x-4 gap-y-2 border p-3 rounded-md relative bg-background hover:bg-muted/10 transition-colors">
                   {secao.isSecaoPalestrante ? (
                     <>
-                      <div className="col-span-12 md:col-span-4 space-y-2"><Label>Tema da Palestra</Label><Input placeholder="Tema..." value={item.tema} onChange={e => handleItemChange(secaoIndex, itemIndex, 'tema', e.target.value)} /></div>
-                      <div className="col-span-12 md:col-span-4 space-y-2"><Label>Palestrante (Aluno)</Label><UserCombobox users={alunos} value={item.userId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'userId', userId)} /></div>
-                      <div className="col-span-12 md:col-span-4 space-y-2"><Label>Auxiliar (Aluno)</Label><UserCombobox users={alunos} value={item.auxiliarUserId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'auxiliarUserId', userId)} /></div>
+                      <div className="col-span-12 md:col-span-4 space-y-2">
+                        <Label>Tema da Palestra</Label>
+                        <Input placeholder="Tema..." value={item.tema} onChange={e => handleItemChange(secaoIndex, itemIndex, 'tema', e.target.value)} />
+                      </div>
+                      <div className="col-span-12 md:col-span-4 space-y-2 min-w-0">
+                        <Label>Palestrante</Label>
+                        <UserCombobox users={alunos} value={item.userId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'userId', userId)} />
+                      </div>
+                      <div className="col-span-12 md:col-span-4 space-y-2 min-w-0">
+                        <Label>Auxiliar</Label>
+                        <UserCombobox users={alunos} value={item.auxiliarUserId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'auxiliarUserId', userId)} />
+                      </div>
                     </>
                   ) : (
                     <>
-                      <div className={`col-span-12 ${isOutroSelecionado ? 'md:col-span-2' : 'md:col-span-3'} space-y-2`}><Label>Função</Label><Select value={item.funcaoId} onValueChange={value => handleItemChange(secaoIndex, itemIndex, 'funcaoId', value)}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{funcoesFiltradas.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent></Select></div>
-                      {isOutroSelecionado && <div className="col-span-12 md:col-span-2 space-y-2"><Label>Função (Outro)</Label><Input placeholder="Digite a função..." value={item.cargoPersonalizado} onChange={e => handleItemChange(secaoIndex, itemIndex, 'cargoPersonalizado', e.target.value)} /></div>}
-                      <div className="col-span-12 md:col-span-3 space-y-2"><Label>Usuário</Label><UserCombobox users={secao.isSecaoAdmin ? admins : alunos} value={item.userId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'userId', userId)} /></div>
+                      <div className="col-span-12 md:col-span-4 space-y-2 min-w-0">
+                        <Label>Função</Label>
+                        <Select value={item.funcaoId} onValueChange={value => handleItemChange(secaoIndex, itemIndex, 'funcaoId', value)}>
+                          <SelectTrigger className="w-full [&>span]:truncate">
+                            <SelectValue placeholder="Selecione a função..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {opcoesDeFuncao.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="col-span-12 md:col-span-4 space-y-2 min-w-0">
+                        <Label>{secao.isSecaoAdmin ? "Admin" : "Aluno"}</Label>
+                        <UserCombobox users={secao.isSecaoAdmin ? admins : alunos} value={item.userId} onChange={userId => handleItemChange(secaoIndex, itemIndex, 'userId', userId)} />
+                      </div>
                     </>
                   )}
-                  <div className="col-span-6 md:col-span-2 space-y-2"><Label>Início</Label><Input type="time" value={item.horarioInicio} onChange={e => handleItemChange(secaoIndex, itemIndex, 'horarioInicio', e.target.value)} /></div>
-                  <div className="col-span-6 md:col-span-1 space-y-2"><Label>Fim</Label><Input type="time" value={item.horarioFim} onChange={e => handleItemChange(secaoIndex, itemIndex, 'horarioFim', e.target.value)} /></div>
-                  {podeRemover && <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1" onClick={() => handleRemoveItem(secaoIndex, itemIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                  
+                  <div className="col-span-6 md:col-span-2 space-y-2">
+                    <Label>Início</Label>
+                    <Input type="time" value={item.horarioInicio} onChange={e => handleItemChange(secaoIndex, itemIndex, 'horarioInicio', e.target.value)} />
+                  </div>
+                  <div className="col-span-6 md:col-span-1 space-y-2">
+                    <Label>Fim</Label>
+                    <Input type="time" value={item.horarioFim} onChange={e => handleItemChange(secaoIndex, itemIndex, 'horarioFim', e.target.value)} />
+                  </div>
+                  
+                  {podeRemover && (
+                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 opacity-50 hover:opacity-100 hover:bg-destructive/10" onClick={() => handleRemoveItem(secaoIndex, itemIndex)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
                 </div>
               );
             })}
-            {secao.permiteMultiplosItens && <Button type="button" variant="outline" onClick={() => handleAddItem(secaoIndex)} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar em {secao.nome}</Button>}
+            {secao.permiteMultiplosItens && (
+              <Button type="button" variant="outline" size="sm" onClick={() => handleAddItem(secaoIndex)} className="w-full border-dashed">
+                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar vaga em {secao.nome}
+              </Button>
+            )}
           </CardContent>
         </Card>
       ))}
 
-      {tipoEscala === 'COLABORACAO' && <>
-        <Card><CardHeader><CardTitle>Fardamento</CardTitle></CardHeader><CardContent><Textarea value={fardamento} onChange={(e) => setFardamento(e.target.value)} rows={4} /></CardContent></Card>
-        <Card><CardHeader><CardTitle>Observações</CardTitle></CardHeader><CardContent><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={6} /></CardContent></Card>
-      </>}
+      {tipoEscala !== 'PERSONALIZADO' && secoes.length > 0 && (
+        <>
+          <Card>
+            <CardHeader><CardTitle>Fardamento</CardTitle></CardHeader>
+            <CardContent><Textarea value={fardamento} onChange={(e) => setFardamento(e.target.value)} rows={3} /></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Observações</CardTitle></CardHeader>
+            <CardContent><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={5} /></CardContent>
+          </Card>
+        </>
+      )}
 
-      <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}><Save className="mr-2 h-4 w-4" />{isSubmitting ? "Salvando..." : "Salvar Rascunho"}</Button></div>
+      <div className="flex justify-end pt-4 pb-12">
+        <Button type="submit" disabled={isSubmitting} size="lg">
+          <Save className="mr-2 h-4 w-4" />
+          {isSubmitting ? "A Guardar..." : "Guardar Escala"}
+        </Button>
+      </div>
     </form>
   );
 }
@@ -276,8 +418,8 @@ function UserCombobox({ users, value, onChange }: { users: UserComDados[], value
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-          {selectedUser ? formatUserDisplay(selectedUser) : "Selecione..."}
+        <Button variant="outline" role="combobox" className="w-full justify-between font-normal [&>span]:truncate min-w-0">
+          <span>{selectedUser ? formatUserDisplay(selectedUser) : "Selecione..."}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -285,14 +427,10 @@ function UserCombobox({ users, value, onChange }: { users: UserComDados[], value
         <Command>
           <CommandInput placeholder="Buscar..." />
           <CommandList>
-            <CommandEmpty>Nenhum usuário.</CommandEmpty>
+            <CommandEmpty>Nenhum utilizador.</CommandEmpty>
             <CommandGroup>
               {users.map(user => (
-                <CommandItem
-                  key={user.id}
-                  value={formatUserDisplay(user)}
-                  onSelect={() => { onChange(user.id); setOpen(false); }}
-                >
+                <CommandItem key={user.id} value={formatUserDisplay(user)} onSelect={() => { onChange(user.id); setOpen(false); }}>
                   {formatUserDisplay(user)}
                 </CommandItem>
               ))}

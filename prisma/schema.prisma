@@ -93,6 +93,7 @@ model Usuario {
   updatedAt                 DateTime             @updatedAt
   passwordResetToken        String?              @unique
   passwordResetExpires      DateTime?
+  funcaoAdminId             String?
   status                    StatusUsuario        @default(ATIVO)
   role                      Role
   genero                    GeneroUsuario?
@@ -111,6 +112,8 @@ model Usuario {
   investigacoesBravura      ProcessoBravura[]    @relation("OficialBravura")
   qesCriados                QES[]
   logsCargoAdmin            CargoLog[]
+  notificacoes Notificacao[] 
+  pushSubscriptions PushSubscription[]
   comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
   escalasCriadas            Escala[]             @relation("EscalasCriadas")
   informativosCriados       Informativo[]        @relation("InformativosCriados")
@@ -118,6 +121,9 @@ model Usuario {
   responsaveis              Responsabilidade[]   @relation("Aluno")
   dependentes               Responsabilidade[]   @relation("Responsavel")
   fatosObservados           Anotacao[]           @relation("FatosObservados")
+  funcaoAdmin               FuncaoAdmin?         @relation(fields: [funcaoAdminId], references: [id])
+  atividadesCriadas    Atividade[]       @relation("AtividadesCriadas")
+  atividadesRecebidas  AtividadeAluno[]  @relation("AtividadesRecebidas")
 
   @@map("usuarios")
 }
@@ -146,9 +152,9 @@ model PerfilAluno {
   conceitoAtual                 String?
   conceitoInicial               String?
   foraDeData                    Boolean              @default(false)
-  dataUltimaPromocao DateTime? 
-  notaDesempatePromocao Float? @default(0)
-  modalidadeUltimaPromocao String?
+  dataUltimaPromocao            DateTime?
+  notaDesempatePromocao         Float?               @default(0)
+  modalidadeUltimaPromocao      String?
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
   desempenhosEscolares          DesempenhoEscolar[]
   feedbacks                     Feedback[]
@@ -161,10 +167,6 @@ model PerfilAluno {
   usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
   candidatoCiclos               CandidatoCiclo[]
-
-
-
-
 
   @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
   @@index([cargoId])
@@ -628,6 +630,102 @@ model Feedback {
   @@index([alunoId])
 }
 
+model QuadroVagasAntiguidade {
+  id String @id @default("singleton")
+
+  superiores     Int @default(3)
+  intermediarios Int @default(3)
+  subalternos    Int @default(9)
+
+  subtenentes Int @default(3)
+  sargentos   Int @default(8)
+  cabos       Int @default(4)
+  soldados    Int @default(30)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("quadro_vagas_antiguidade")
+}
+
+model FuncaoAdmin {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  setor     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios Usuario[]
+
+  @@map("funcoes_admin")
+}
+
+model Notificacao {
+  id        String   @id @default(cuid())
+  usuarioId String
+  titulo    String
+  mensagem  String
+  link      String?  
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  usuarioId String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+}
+
+model Atividade {
+  id          String   @id @default(cuid())
+  titulo      String
+  descricao   String   @db.Text
+  tipo        TipoAtividade @default(OUTRO)
+  
+  prazoEntrega DateTime? 
+  prazoEncerrado    Boolean   @default(false)
+  
+  criadoPorId String
+  criadoPor   Usuario  @relation("AtividadesCriadas", fields: [criadoPorId], references: [id])
+
+  destinatarios AtividadeAluno[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AtividadeAluno {
+  id            String   @id @default(cuid())
+  
+  atividadeId   String
+  atividade     Atividade @relation(fields: [atividadeId], references: [id], onDelete: Cascade)
+  
+  alunoId       String
+  aluno         Usuario   @relation("AtividadesRecebidas", fields: [alunoId], references: [id], onDelete: Cascade)
+
+  status        StatusAtividade @default(PENDENTE)
+  
+  visualizadoEm DateTime? 
+  concluidoEm   DateTime?
+  
+  feedback      String?   @db.Text
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([atividadeId, alunoId])
+}
+
 enum Role {
   ALUNO
   ADMIN
@@ -804,3 +902,16 @@ enum TipoPromocaoHistory {
   RECLASSIFICACAO
 }
 
+enum StatusAtividade {
+  PENDENTE
+  VISUALIZADO
+  REALIZADO
+  NAO_REALIZADO
+}
+
+enum TipoAtividade {
+  COPIA_HINO
+  REDACAO
+  LEITURA
+  OUTRO
+}

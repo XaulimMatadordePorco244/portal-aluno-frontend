@@ -15,6 +15,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AdminNotificacoesDropdown } from "@/components/AdminNotificacoesDropdown"; 
+
 export function AdminHeader({
     userName,
     userImage,
@@ -23,7 +26,6 @@ export function AdminHeader({
     userImage?: string | null;
 }) {
     const pathname = usePathname();
-
     const segments = pathname.split("/").filter(Boolean);
 
     const labels: Record<string, string> = {
@@ -70,6 +72,11 @@ export function AdminHeader({
             </div>
 
             <div className="ml-auto flex items-center gap-4">
+                
+                <ThemeToggle />
+
+                <AdminNotificacoesDropdown />
+
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -89,7 +96,7 @@ export function AdminHeader({
                                     {userName}
                                 </p>
                                 <p className="text-xs leading-none text-muted-foreground">
-                                    Conectado
+                                    Conectado como Admin
                                 </p>
                             </div>
                         </DropdownMenuLabel>
