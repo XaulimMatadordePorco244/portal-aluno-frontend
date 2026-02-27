@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Check } from "lucide-react";
+import { Bell, Check, BellRing } from "lucide-react"; 
 import { Button } from "@/components/ui/Button";
 import {
   Popover,
@@ -19,6 +19,85 @@ type Notificacao = {
   lida: boolean;
   createdAt: string;
 };
+
+
+function BotaoAtivarNotificacoes() {
+  const [status, setStatus] = useState<"loading" | "inscrito" | "desativado" | "bloqueado" | "nao-suportado">("loading");
+
+  useEffect(() => {
+    const verificarInscricao = async () => {
+      if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+        setStatus("nao-suportado");
+        return;
+      }
+
+      if (Notification.permission === "denied") {
+        setStatus("bloqueado");
+        return;
+      }
+
+      if (Notification.permission === "granted") {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+              setStatus("inscrito"); 
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao verificar subscrição:", error);
+        }
+      }
+
+      setStatus("desativado");
+    };
+
+    verificarInscricao();
+
+    window.addEventListener("push-inscricao-sucesso", verificarInscricao);
+    return () => window.removeEventListener("push-inscricao-sucesso", verificarInscricao);
+  }, []);
+
+  if (status === "loading" || status === "inscrito" || status === "nao-suportado") {
+    return null;
+  }
+
+  if (status === "bloqueado") {
+    return (
+      <div className="p-3 bg-red-50 border-b border-red-100 flex flex-col gap-2 items-center text-center">
+        <p className="text-xs text-red-800 font-medium">
+          Notificações bloqueadas no navegador.
+        </p>
+        <button 
+          onClick={() => alert("Para receber notificações, clique no ícone de cadeado na barra de endereços do seu navegador e altere a permissão de Notificações para 'Permitir'.")}
+          className="text-[11px] bg-red-100 hover:bg-red-200 text-red-800 py-1.5 px-3 rounded-md transition-colors"
+        >
+          Como desbloquear?
+        </button>
+      </div>
+    );
+  }
+
+  const ativarNoCelular = async () => {
+    window.dispatchEvent(new Event("forcar-inscricao-push"));
+  };
+
+  return (
+    <div className="p-3 bg-blue-50 border-b border-blue-100 dark:bg-blue-950/30 dark:border-blue-900 flex flex-col gap-2 items-center text-center">
+ 
+      <button 
+        onClick={ativarNoCelular}
+        className="text-[11px] bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors"
+      >
+        <BellRing className="w-3.5 h-3.5" />
+        Ativar Notificações no Dispositivo
+      </button>
+    </div>
+  );
+}
+
 
 export function NotificacoesDropdown() {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
@@ -75,6 +154,9 @@ export function NotificacoesDropdown() {
             </Button>
           )}
         </div>
+        
+        <BotaoAtivarNotificacoes />
+
         <ScrollArea className="h-[300px]">
           {notificacoes.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">

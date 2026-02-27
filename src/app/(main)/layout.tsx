@@ -6,7 +6,6 @@ import React from "react";
 import { Container } from "@/components/layout/Container";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
 
-
 export const metadata: Metadata = {
   title: "Portal do Aluno - Guarda Mirim",
   description: "Portal do aluno Guarda Mirim de Naviraí-MS",
@@ -47,17 +46,18 @@ export default async function MainLayout({
       };
     }
   }
-return (
-  <div className="flex flex-col min-h-screen">
-    <Header user={userForHeader} />
 
-    <main className="grow   py-8">
-      <Container>
-        {children}
-        <PushNotificationManager />
-      </Container>
-    </main>
-  </div>
-);
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header user={userForHeader} />
+      
+      <PushNotificationManager />
 
+      <main className="grow py-8">
+        <Container>
+          {children}
+        </Container>
+      </main>
+    </div>
+  );
 }

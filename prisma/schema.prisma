@@ -662,7 +662,7 @@ model Notificacao {
   usuarioId String
   titulo    String
   mensagem  String
-  link      String?  // Opcional: link para onde ir ao clicar
+  link      String?  
   lida      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -671,7 +671,6 @@ model Notificacao {
   @@index([usuarioId])
 }
 
-// Guarda os dados do navegador/celular do aluno para o Push
 model PushSubscription {
   id        String   @id @default(cuid())
   usuarioId String
