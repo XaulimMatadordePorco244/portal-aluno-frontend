@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
 import { EscalaForm } from "./escala-form";
 import { getCurrentUser } from "@/lib/auth";
-import { Scale } from "lucide-react";
 
 async function getFormData() {
   const [alunos, admins, funcoes, funcoesAdmin] = await Promise.all([

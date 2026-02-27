@@ -104,7 +104,7 @@ export function PushNotificationManager() {
         <div className="flex-1 space-y-1">
           <h3 className="font-semibold text-sm">Ativar notificações?</h3>
           <p className="text-xs text-primary-foreground/80 leading-relaxed">
-            Receba alertas de novas escalas, feedbacks e atualizações importantes diretamente no seu ecrã.
+            Receba atualizações importantes diretamente no seu ecrã.
           </p>
           <div className="flex gap-2 pt-2">
             <Button size="sm" variant="secondary" className="w-full text-xs font-semibold text-primary" onClick={requestPermission} disabled={isSubscribing}>
