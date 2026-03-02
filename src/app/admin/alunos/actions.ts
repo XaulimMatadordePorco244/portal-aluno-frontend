@@ -264,7 +264,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
   redirect("/admin/alunos");
 }
 
-export async function deleteAluno(id: string): Promise<DeleteAlunoResult> {
+export async function inativarAluno(id: string): Promise<DeleteAlunoResult> {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { success: false, message: "Acesso negado." };
@@ -285,38 +285,31 @@ export async function deleteAluno(id: string): Promise<DeleteAlunoResult> {
     }
 
     await prisma.$transaction(async (tx) => {
-        if (usuarioAlvo.fotoUrl) {
-           del(usuarioAlvo.fotoUrl).catch(console.error);
-        }
+        await tx.usuario.update({
+            where: { id },
+            data: { status: StatusUsuario.INATIVO }
+        });
 
         if (usuarioAlvo.perfilAluno) {
-            const perfilId = usuarioAlvo.perfilAluno.id;
-            await tx.anotacao.deleteMany({ where: { alunoId: perfilId } });
-            await tx.escalaItem.deleteMany({ where: { alunoId: perfilId } });
-            await tx.feedback.deleteMany({ where: { alunoId: perfilId } });
+            await tx.cargoHistory.updateMany({
+                where: { 
+                    alunoId: usuarioAlvo.perfilAluno.id,
+                    status: CargoHistoryStatus.ATIVO
+                },
+                data: { 
+                    status: CargoHistoryStatus.FECHADO,
+                    dataFim: new Date(),
+                    motivo: "Desligamento / Inativação da Instituição"
+                }
+            });
         }
-
-        await tx.usuario.delete({
-            where: { id }
-        });
     });
 
     revalidatePath("/admin/alunos");
-    return { success: true, message: "Aluno excluído com sucesso." };
+    return { success: true, message: "Aluno desligado e bloco de anotações encerrado com sucesso." };
 
   } catch (error: unknown) {
-    console.error("Erro ao deletar aluno:", error);
-    
-    if (typeof error === 'object' && error !== null && 'code' in error) {
-      const prismaError = error as { code: string };
-      if (prismaError.code === 'P2003') {
-        return { 
-          success: false, 
-          message: "Não é possível excluir: O aluno possui registros vinculados (ex: Responsável, CIs, etc)." 
-        };
-      }
-    }
-    
-    return { success: false, message: "Erro ao excluir o aluno." };
+    console.error("Erro ao inativar aluno:", error);
+    return { success: false, message: "Erro ao inativar o aluno." };
   }
 }

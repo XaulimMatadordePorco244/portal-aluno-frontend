@@ -11,15 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Edit, MoreHorizontal, Trash2, UserCircle } from "lucide-react";
 import Link from "next/link";
-import { deleteAluno } from "./actions";
+import { inativarAluno } from "./actions";
 import { toast } from "sonner"; 
 
 export function AlunoActions({ aluno }: { aluno: Usuario }) {
   
   const handleDelete = async () => {
-    if (confirm(`Tem certeza que deseja apagar o aluno "${aluno.nome}"? Esta ação não pode ser desfeita e apagará todo o histórico dele.`)) {
+    if (confirm(`Tem certeza que deseja inativar o aluno "${aluno.nome}"? Esta ação não pode ser desfeita.`)) {
       
-      const resultado = await deleteAluno(aluno.id);
+      const resultado = await inativarAluno(aluno.id);
 
       if (resultado.success) {
         toast.success(resultado.message);
