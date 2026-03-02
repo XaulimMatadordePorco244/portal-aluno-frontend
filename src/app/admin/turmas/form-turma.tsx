@@ -7,9 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { createTurma } from "./actions";
 
-// Tipagem baseada no que vamos mandar da página principal
 type AlunoSemTurma = {
-  id: string; // ID do Usuário
+  id: string; 
   nome: string;
   perfilAluno: { id: string; anoIngresso: number | null } | null;
 };
@@ -18,22 +17,16 @@ export function FormTurma({ alunosSemTurma }: { alunosSemTurma: AlunoSemTurma[] 
   const [isPending, setIsPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   
-  // Guardamos o ano digitado para reagir a ele
   const [anoTurma, setAnoTurma] = useState<number>(new Date().getFullYear());
   
-  // Guardamos os IDs dos perfis dos alunos selecionados
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // LÓGICA DE PRÉ-SELEÇÃO INTELIGENTE
   useEffect(() => {
-    // Quando o ano muda, procuramos os alunos que entraram naquele ano
     const alunosDoAno = alunosSemTurma.filter(
       (aluno) => aluno.perfilAluno?.anoIngresso === anoTurma
     );
-    // Pegamos os IDs do perfil desses alunos
     const idsPreSelecionados = alunosDoAno.map((a) => a.perfilAluno!.id);
     
-    // Atualizamos as checkboxes automaticamente
     setSelectedIds(idsPreSelecionados);
   }, [anoTurma, alunosSemTurma]);
 
@@ -47,7 +40,6 @@ export function FormTurma({ alunosSemTurma }: { alunosSemTurma: AlunoSemTurma[] 
 
   async function onSubmit(formData: FormData) {
     setIsPending(true);
-    // Injetamos os IDs dos alunos selecionados no FormData antes de enviar
     selectedIds.forEach(id => formData.append("alunosIds", id));
     
     const res = await createTurma(formData);
@@ -56,7 +48,7 @@ export function FormTurma({ alunosSemTurma }: { alunosSemTurma: AlunoSemTurma[] 
     if (res.success) {
       toast.success(`Turma criada com ${selectedIds.length} alunos vinculados!`);
       formRef.current?.reset();
-      setSelectedIds([]); // Limpa a seleção
+      setSelectedIds([]); 
     } else {
       toast.error(res.error || "Erro ao criar turma");
     }
@@ -87,7 +79,6 @@ export function FormTurma({ alunosSemTurma }: { alunosSemTurma: AlunoSemTurma[] 
           <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded">Pré-seleção automática ativada</span>
         </div>
         
-        {/* LISTA DE ALUNOS SEM TURMA */}
         <div className="h-[200px] overflow-y-auto border rounded-md p-3 space-y-3 bg-muted/10">
           {alunosSemTurma.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Nenhum aluno sem turma disponível.</p>

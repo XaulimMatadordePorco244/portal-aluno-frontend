@@ -7,7 +7,6 @@ export async function createTurma(formData: FormData) {
   const nome = formData.get("nome") as string;
   const ano = parseInt(formData.get("ano") as string);
   
-  // Pegamos todos os IDs de alunos que o form enviou (checkboxes marcadas)
   const alunosIds = formData.getAll("alunosIds") as string[];
 
   if (!nome || !ano) {
@@ -15,13 +14,11 @@ export async function createTurma(formData: FormData) {
   }
 
   try {
-    // Usamos uma transação para garantir que cria a turma e vincula os alunos ao mesmo tempo
     await prisma.$transaction(async (tx) => {
       const turma = await tx.turma.create({
         data: { nome, ano },
       });
 
-      // Se o admin selecionou alunos, vinculamos a turma ao perfil deles
       if (alunosIds.length > 0) {
         await tx.perfilAluno.updateMany({
           where: { id: { in: alunosIds } },

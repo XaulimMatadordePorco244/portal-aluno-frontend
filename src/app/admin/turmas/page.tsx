@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FormTurma } from "./form-turma";
 
 export default async function TurmasPage() {
-  // Busca as turmas e conta quantos alunos estão em cada uma
   const turmas = await prisma.turma.findMany({
     orderBy: { ano: 'desc' },
     include: {
@@ -14,13 +13,12 @@ export default async function TurmasPage() {
     }
   });
 
-  // Busca apenas alunos ativos que AINDA NÃO têm turma associada
   const alunosSemTurma = await prisma.usuario.findMany({
     where: {
       role: 'ALUNO',
       status: 'ATIVO',
       perfilAluno: {
-        turmaId: null // O Segredo está aqui!
+        turmaId: null 
       }
     },
     select: {
@@ -45,7 +43,6 @@ export default async function TurmasPage() {
 
       <div className="grid md:grid-cols-3 gap-6">
         
-        {/* COLUNA ESQUERDA: Formulário de Criação com Lista de Alunos */}
         <Card className="md:col-span-1 h-fit border-primary/20 shadow-sm">
           <CardHeader className="bg-muted/30 pb-4">
             <CardTitle className="text-lg">Nova Turma</CardTitle>
@@ -55,7 +52,6 @@ export default async function TurmasPage() {
           </CardContent>
         </Card>
 
-        {/* COLUNA DIREITA: Listagem de Turmas */}
         <Card className="md:col-span-2 shadow-sm">
           <CardHeader className="bg-muted/30 pb-4">
             <CardTitle className="text-lg">Turmas Registadas</CardTitle>
