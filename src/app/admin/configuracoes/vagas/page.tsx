@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import prisma from '@/lib/prisma'
 
 import { EditarVagasDialog } from './editar-vagas-dialog'
-import { VisualizarAlunosDialog } from './visualizar-alunos' 
+import { VisualizarAlunosDialog } from './visualizar-alunos'
 
 export default async function QuadroVagasPage() {
   const vagasDefinidas = await prisma.quadroVagasAntiguidade.findUnique({
@@ -20,14 +20,16 @@ export default async function QuadroVagasPage() {
       usuario: { status: 'ATIVO' },
       modalidadeUltimaPromocao: 'ANTIGUIDADE'
     },
-    include: { 
-        cargo: true,
-        companhia: true, 
-        usuario: { select: { nome: true, fotoUrl: true } } 
+    include: {
+      cargo: true,
+      companhia: true,
+      usuario: { select: { nome: true, fotoUrl: true } }
     }
   })
 
-  const grupos: Record<string, any[]> = {
+  type AlunoComRelacoes = typeof alunosAntiguidade[number]
+
+  const grupos: Record<string, AlunoComRelacoes[]> = {
     superiores: [], intermediarios: [], subalternos: [],
     subtenentes: [], sargentos: [], cabos: [], soldados: []
   }
@@ -39,11 +41,11 @@ export default async function QuadroVagasPage() {
     if (cargo.classe === 'SUPERIOR') grupos.superiores.push(aluno)
     else if (cargo.classe === 'INTERMEDIARIO') grupos.intermediarios.push(aluno)
     else if (cargo.classe === 'SUBALTERNO') grupos.subalternos.push(aluno)
-    
+
     else if (cargo.abreviacao === 'ST') grupos.subtenentes.push(aluno)
     else if (['1º SGT', '2º SGT', '3º SGT'].includes(cargo.abreviacao)) grupos.sargentos.push(aluno)
     else if (cargo.abreviacao === 'CB') grupos.cabos.push(aluno)
-    else if (['SD', 'SD 1C', 'SD 2C'].includes(cargo.abreviacao)) grupos.soldados.push(aluno) 
+    else if (['SD', 'SD 1C', 'SD 2C'].includes(cargo.abreviacao)) grupos.soldados.push(aluno)
   })
 
   const renderRow = (categoria: string, chave: string, limite: number) => {
@@ -67,7 +69,7 @@ export default async function QuadroVagasPage() {
           )}
         </TableCell>
         <TableCell className="text-right">
-            <VisualizarAlunosDialog titulo={categoria} alunos={listaAlunos} />
+          <VisualizarAlunosDialog titulo={categoria} alunos={listaAlunos} />
         </TableCell>
       </TableRow>
     )
@@ -75,13 +77,13 @@ export default async function QuadroVagasPage() {
 
   return (
     <div className="space-y-6">
-      
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Quadro de Vagas - Antiguidade</h1>
           <p className="text-muted-foreground">Controle de limites para promoções por critério de antiguidade.</p>
         </div>
-        
+
         <EditarVagasDialog vagasAtuais={vagasDefinidas} />
       </div>
 

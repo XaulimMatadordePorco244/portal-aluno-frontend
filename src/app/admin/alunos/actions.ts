@@ -52,10 +52,6 @@ export type AlunoState = {
   message?: string;
 } | undefined;
 
-interface DeleteAlunoResult {
-  success: boolean;
-  message: string;
-}
 
 export async function createAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const user = await getCurrentUserWithRelations();

@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, UserCheck, UserMinus, ShieldAlert, ArrowDownAZ, Hash, Medal, Filter } from "lucide-react";
+import { Plus, Users, UserCheck, UserMinus, ShieldAlert, ArrowDownAZ, Hash, Medal } from "lucide-react";
 import { AlunoActions } from "./aluno-actions";
 import { Badge } from "@/components/ui/badge";
 import { AlunoFiltros } from "./aluno-filtros";
