@@ -264,14 +264,10 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
   redirect("/admin/alunos");
 }
 
-export async function deleteAluno(id: string): Promise<DeleteAlunoResult> {
+export async function inativarAluno(id: string) {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') {
     return { success: false, message: "Acesso negado." };
-  }
-
-  if (!id) {
-    return { success: false, message: "ID do aluno não fornecido." };
   }
 
   try {
@@ -285,38 +281,119 @@ export async function deleteAluno(id: string): Promise<DeleteAlunoResult> {
     }
 
     await prisma.$transaction(async (tx) => {
-        if (usuarioAlvo.fotoUrl) {
-           del(usuarioAlvo.fotoUrl).catch(console.error);
-        }
+        await tx.usuario.update({
+            where: { id },
+            data: { status: StatusUsuario.INATIVO }
+        });
 
         if (usuarioAlvo.perfilAluno) {
-            const perfilId = usuarioAlvo.perfilAluno.id;
-            await tx.anotacao.deleteMany({ where: { alunoId: perfilId } });
-            await tx.escalaItem.deleteMany({ where: { alunoId: perfilId } });
-            await tx.feedback.deleteMany({ where: { alunoId: perfilId } });
+            await tx.cargoHistory.updateMany({
+                where: { 
+                    alunoId: usuarioAlvo.perfilAluno.id,
+                    status: CargoHistoryStatus.ATIVO
+                },
+                data: { 
+                    status: CargoHistoryStatus.FECHADO,
+                    dataFim: new Date(),
+                    motivo: "Desligamento / Inativação da Instituição"
+                }
+            });
         }
-
-        await tx.usuario.delete({
-            where: { id }
-        });
     });
 
     revalidatePath("/admin/alunos");
-    return { success: true, message: "Aluno excluído com sucesso." };
+    return { success: true, message: "Aluno desligado e histórico preservado com sucesso." };
 
   } catch (error: unknown) {
-    console.error("Erro ao deletar aluno:", error);
-    
-    if (typeof error === 'object' && error !== null && 'code' in error) {
-      const prismaError = error as { code: string };
-      if (prismaError.code === 'P2003') {
-        return { 
-          success: false, 
-          message: "Não é possível excluir: O aluno possui registros vinculados (ex: Responsável, CIs, etc)." 
-        };
-      }
+    console.error("Erro ao inativar aluno:", error);
+    return { success: false, message: "Erro interno ao tentar inativar o aluno." };
+  }
+}
+
+export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
+  const user = await getCurrentUserWithRelations();
+  if (!user || user.role !== 'ADMIN') {
+    return { success: false, message: "Acesso negado." };
+  }
+
+  try {
+    const usuarioAlvo = await prisma.usuario.findUnique({
+      where: { id },
+      include: { perfilAluno: true }
+    });
+
+    if (!usuarioAlvo || !usuarioAlvo.perfilAluno) {
+      return { success: false, message: "Aluno não encontrado." };
     }
-    
-    return { success: false, message: "Erro ao excluir o aluno." };
+
+    const perfilId = usuarioAlvo.perfilAluno.id;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.usuario.update({
+        where: { id },
+        data: { status: StatusUsuario.ATIVO }
+      });
+
+      if (modo === 'RESTAURAR') {
+        const ultimoBloco = await tx.cargoHistory.findFirst({
+          where: { alunoId: perfilId, status: CargoHistoryStatus.FECHADO },
+          orderBy: { dataInicio: 'desc' }
+        });
+
+        if (ultimoBloco) {
+          await tx.cargoHistory.update({
+            where: { id: ultimoBloco.id },
+            data: {
+              status: CargoHistoryStatus.ATIVO,
+              dataFim: null,
+              motivo: ultimoBloco.motivo ? ultimoBloco.motivo + " | Reativado" : "Reativado"
+            }
+          });
+          
+          await tx.perfilAluno.update({
+            where: { id: perfilId },
+            data: { cargoId: ultimoBloco.cargoId }
+          });
+        }
+      } 
+      else if (modo === 'ZERAR') {
+        const cargoBase = await tx.cargo.findFirst({
+          orderBy: { precedencia: 'asc' }
+        });
+
+        if (cargoBase) {
+          await tx.cargoHistory.create({
+            data: {
+              alunoId: perfilId,
+              cargoId: cargoBase.id,
+              cargoNomeSnapshot: cargoBase.nome,
+              conceitoInicial: 7.0,
+              conceitoAtual: 7.0,
+              status: CargoHistoryStatus.ATIVO,
+              motivo: "Reativado (Reinício de Carreira)"
+            }
+          });
+
+          await tx.perfilAluno.update({
+            where: { id: perfilId },
+            data: { 
+              cargoId: cargoBase.id,
+              conceitoInicial: "7.0",
+              conceitoAtual: "7.0"
+            }
+          });
+        }
+      }
+    });
+
+    revalidatePath("/admin/alunos");
+    return { 
+      success: true, 
+      message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).` 
+    };
+
+  } catch (error) {
+    console.error("Erro ao reativar aluno:", error);
+    return { success: false, message: "Erro interno ao tentar reativar o aluno." };
   }
 }
