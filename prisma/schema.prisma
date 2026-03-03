@@ -12,6 +12,7 @@ model GmEventoCalendario {
   titulo    String
   descricao String?
   data      DateTime
+  dataFim   DateTime?
   tipo      TipoEvento
   createdAt DateTime   @default(now())
 

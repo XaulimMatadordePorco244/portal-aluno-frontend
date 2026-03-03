@@ -28,9 +28,7 @@ import {
 } from '@/components/ui/card';
 import { 
   AlertCircle, 
-  ArrowUpCircle, 
-  CheckCircle2, 
-  Filter
+  CheckCircle2
 } from 'lucide-react';
 
 import { SearchAlunos } from '@/components/aluno/search-alunos';
@@ -112,7 +110,6 @@ export default async function AdminPromocoesPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ArrowUpCircle className="h-8 w-8 text-primary" />
             Gerenciador de Promoções
           </h1>
           <p className="text-muted-foreground">
