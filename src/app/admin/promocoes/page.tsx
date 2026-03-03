@@ -30,10 +30,10 @@ import {
   AlertCircle, 
   ArrowUpCircle, 
   CheckCircle2, 
-  Search,
   Filter
 } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
+
+import { SearchAlunos } from '@/components/aluno/search-alunos';
 
 export const metadata: Metadata = {
   title: 'Gerenciar Promoções',
@@ -68,7 +68,6 @@ export default async function AdminPromocoesPage({
         }
       }
     }),
-
 
     prisma.perfilAluno.findMany({
       where: { 
@@ -121,15 +120,9 @@ export default async function AdminPromocoesPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-           <div className="relative">
-             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-             <Input 
-                type="search" 
-                placeholder="Buscar aluno..." 
-                className="pl-8 w-[250px] bg-background" 
-             />
-           </div>
-           <Button variant="outline"><Filter className="h-4 w-4 mr-2"/> Filtros</Button>
+           
+           <SearchAlunos />
+           
         </div>
       </div>
 
