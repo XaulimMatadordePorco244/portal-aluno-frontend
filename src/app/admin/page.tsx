@@ -1,367 +1,305 @@
 import { getCurrentUserWithRelations, canAccessAdminArea } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileSearch, Users, Activity, AlertTriangle, BrainCircuit, TrendingUp, Clock, AlertCircle } from "lucide-react";
-import Link from "next/link";
-import prisma from "@/lib/prisma";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TipoDeAnotacao } from "@prisma/client";
+import { 
+    Users, AlertTriangle, GraduationCap, 
+    Megaphone, FileText, Medal, Cake, 
+    ClipboardCheck, Activity, ArrowRight, FileBadge
+} from "lucide-react";
 
-type AnotacaoWithRelations = {
-    id: string;
-    pontos: number;
-    createdAt: Date;
-    tipo: TipoDeAnotacao;
-    autor: {
-        id: string;
-        nome: string;
-        perfilAluno?: {
-            nomeDeGuerra: string | null;
-            cargo: {
-                abreviacao: string;
-            } | null;
-        } | null;
-    };
-    aluno: {
-        id: string;
-        nomeDeGuerra: string | null;
-        cargo: {
-            abreviacao: string;
-        } | null;
-        usuario: {
-            nome: string;
-        } | null;
-    } | null;
-};
-
-type PunicaoWithRelations = {
-    id: string;
-    pontos: number;
-    createdAt: Date;
-    tipo: TipoDeAnotacao;
-    aluno: {
-        id: string;
-        nomeDeGuerra: string | null;
-        cargo: {
-            abreviacao: string;
-        } | null;
-        usuario: {
-            nome: string;
-        } | null;
-    } | null;
-};
-
-type DashboardStats = {
-    partesPendentes: number;
-    totalAlunos: number;
-    ocorrenciasHoje: number;
-    ultimasAnotacoes: AnotacaoWithRelations[];
-    ultimasPunicoes: PunicaoWithRelations[];
-};
-
-async function getDashboardStats(): Promise<DashboardStats> {
+async function getDashboardStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const anoAtual = new Date().getFullYear();
+    const mesAtual = today.getMonth(); // 0 a 11
 
+    // 1. Buscas Paralelas Iniciais
     const [
-        partesPendentes,
         totalAlunos,
-        ocorrenciasHoje,
-        ultimasAnotacoes,
-        ultimasPunicoes
+        faltasHoje,
+        ciclosAbertos,
+        riscoEscolar,
+        processosAtivos,
+        promocoesPendentes,
+        todosUsuarios
     ] = await prisma.$transaction([
-
-        prisma.parte.count({ where: { status: 'AGUARDANDO_COORDENACAO' } }),
-        
         prisma.usuario.count({ where: { role: 'ALUNO', status: 'ATIVO' } }),
-        
-        prisma.anotacao.count({ 
-            where: { 
-                createdAt: { gte: today } 
-            } 
-        }),
-
-        prisma.anotacao.findMany({
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                tipo: true,
-                autor: { 
-                    include: { 
-                        perfilAluno: { include: { cargo: true } } 
-                    } 
-                },
-                aluno: {
-                    include: { 
-                        usuario: true, 
-                        cargo: true 
-                    } 
-                }  
-            }
-        }),
-
-        prisma.anotacao.findMany({
-            take: 5,
-            where: { pontos: { lt: 0 } },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                tipo: true,
-                aluno: { 
-                    include: { 
-                        usuario: true, 
-                        cargo: true 
-                    } 
-                }
+        prisma.frequencia.count({ where: { data: { gte: today }, status: 'FALTA' } }),
+        prisma.cicloPromocao.count({ where: { status: 'ABERTO' } }),
+        prisma.desempenhoEscolar.count({ where: { anoLetivo: anoAtual, qtdNotasVermelhas: { gt: 0 } } }),
+        // Substituindo as Partes Pendentes por Processos Ativos Gerais
+        prisma.parte.count({ where: { status: { notIn: ['DEFERIDO', 'INDEFERIDO', 'RASCUNHO'] } } }),
+        // Promocoes aguardando aprovação
+        prisma.candidatoCiclo.count({ where: { resultado: 'PENDENTE' } }),
+        // Pegamos todos os usuários ativos com data de nascimento para filtrar os aniversariantes
+        prisma.usuario.findMany({
+            where: { status: 'ATIVO', dataNascimento: { not: null } },
+            select: {
+                id: true, nome: true, fotoUrl: true, dataNascimento: true,
+                perfilAluno: { select: { nomeDeGuerra: true, cargo: { select: { abreviacao: true } } } }
             }
         })
     ]);
 
+    // 2. Lógica para Pendências de TAF e Boletim
+    // Alunos que já têm TAF no ano
+    const tafsRegistrados = await prisma.tafDesempenho.groupBy({
+        by: ['alunoId'],
+        where: { anoLetivo: anoAtual }
+    });
+    const tafsPendentes = Math.max(0, totalAlunos - tafsRegistrados.length);
+
+    // Alunos que já têm Boletim no ano
+    const notasRegistradas = await prisma.desempenhoEscolar.count({
+        where: { anoLetivo: anoAtual }
+    });
+    const notasPendentes = Math.max(0, totalAlunos - notasRegistradas);
+
+    // 3. Filtrar Aniversariantes do Mês Atual
+    const aniversariantesMes = todosUsuarios
+        .filter(u => u.dataNascimento?.getMonth() === mesAtual)
+        .sort((a, b) => (a.dataNascimento?.getDate() || 0) - (b.dataNascimento?.getDate() || 0));
+
     return { 
-        partesPendentes, 
-        totalAlunos, 
-        ocorrenciasHoje, 
-        ultimasAnotacoes: ultimasAnotacoes as AnotacaoWithRelations[], 
-        ultimasPunicoes: ultimasPunicoes as PunicaoWithRelations[] 
+        totalAlunos, faltasHoje, ciclosAbertos, riscoEscolar, 
+        processosAtivos, tafsPendentes, notasPendentes, promocoesPendentes,
+        aniversariantesMes: aniversariantesMes.slice(0, 6) // Mostra os próximos 6
     };
 }
 
-const formatarNomeGuerra = (
-    perfil: {
-        nomeDeGuerra?: string | null;
-        cargo?: { abreviacao: string } | null;
-    } | null | undefined,
-    nomeUsuario: string
-): string => {
-    if (perfil?.cargo?.abreviacao && perfil?.nomeDeGuerra) {
-        return `${perfil.cargo.abreviacao} ${perfil.nomeDeGuerra}`;
-    }
-    return nomeUsuario.split(' ')[0];
-};
-
 export default async function AdminDashboardPage() {
     const user = await getCurrentUserWithRelations();
-
-    if (!canAccessAdminArea(user)) {
-        redirect('/');
-    }
+    if (!canAccessAdminArea(user)) redirect('/');
 
     const stats = await getDashboardStats();
+    const nomeMesAtual = format(new Date(), "MMMM", { locale: ptBR });
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+            {/* CABEÇALHO & LINKS RÁPIDOS */}
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Painel Operacional</h1>
                     <p className="text-muted-foreground">
-                        Visão geral do dia {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}.
+                        Resumo administrativo — {format(new Date(), "dd 'de' MMMM, yyyy", { locale: ptBR })}
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Link href="/admin/anotacoes/new">
-                        <Button>Lançar Ocorrência</Button>
-                    </Link>
+                {/* Meus Links Rápidos solicitados */}
+                <div className="flex gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/admin/comunicacoes/new"><Megaphone className="w-4 h-4 mr-2"/> Publicar CI</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/admin/escalas/new"><ClipboardCheck className="w-4 h-4 mr-2"/> Nova Escala</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/admin/qes/new"><FileBadge className="w-4 h-4 mr-2"/> Publicar QES</Link>
+                    </Button>
+                    <Button size="sm" asChild>
+                        <Link href="/admin/classificacao-geral"><Medal className="w-4 h-4 mr-2"/> Extrato Classificação</Link>
+                    </Button>
                 </div>
             </div>
 
+            {/* KPIs - 4 CARDS NO TOPO */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {/* 1. Processos em Andamento (Substituiu Partes Pendentes) */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Partes Pendentes</CardTitle>
-                        <FileSearch className="h-4 w-4 text-orange-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.partesPendentes}</div>
-                        <p className="text-xs text-muted-foreground">Requerem sua análise</p>
-                        {stats.partesPendentes > 0 && (
-                             <Link href="/admin/partes" className="text-xs text-primary hover:underline mt-1 block">Resolver agora &rarr;</Link>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Ocorrências Hoje</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Processos Ativos</CardTitle>
                         <Activity className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.ocorrenciasHoje}</div>
-                        <p className="text-xs text-muted-foreground">Registros nas últimas 24h</p>
+                        <div className="text-2xl font-bold">{stats.processosAtivos}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Partes em andamento geral</p>
                     </CardContent>
                 </Card>
 
+                {/* 2. Efetivo Faltoso */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Efetivo de Alunos</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Efetivo Faltoso (Hoje)</CardTitle>
+                        <Users className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalAlunos}</div>
-                        <p className="text-xs text-muted-foreground">Alunos ativos no sistema</p>
+                        <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                            {stats.faltasHoje} <span className="text-sm text-muted-foreground font-normal">/ {stats.totalAlunos}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Ausências confirmadas</p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-linear-to-br from-primary/5 to-primary/10 border-primary/20">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-primary">Status do Sistema</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-primary" />
+                {/* 3. Ciclos de Promoção */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Ciclos de Promoção</CardTitle>
+                        <GraduationCap className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-sm font-bold text-primary">Operacional</div>
-                        <p className="text-xs text-muted-foreground">Todas as funções ativas</p>
+                        <div className="text-2xl font-bold">{stats.ciclosAbertos}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Ciclos abertos no sistema</p>
+                    </CardContent>
+                </Card>
+
+                {/* 4. Risco Escolar */}
+                <Card className={stats.riscoEscolar > 0 ? "border-yellow-500/30 bg-yellow-500/5" : ""}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Risco Escolar</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.riscoEscolar}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Alunos com notas vermelhas</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            {/* SESSÕES PRINCIPAIS */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 
-                <Card className="lg:col-span-4 h-full flex flex-col">
-                    <CardHeader>
-                        <CardTitle>Últimas Ocorrências</CardTitle>
-                        <CardDescription>Movimentações recentes registradas no batalhão.</CardDescription>
+                {/* COLUNA ESQUERDA & CENTRO: Lista de Coisas Pendentes (Ocupa 2 colunas) */}
+                <Card className="lg:col-span-2 flex flex-col border-primary/20 shadow-sm">
+                    <CardHeader className="bg-primary/5 rounded-t-lg border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            <ClipboardCheck className="w-5 h-5 text-primary" />
+                            Painel de Pendências Ativas
+                        </CardTitle>
+                        <CardDescription>Ações requeridas que demandam sua atenção ou preenchimento.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1">
-                        <div className="space-y-6">
-                            {stats.ultimasAnotacoes.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-8">Nenhuma ocorrência registrada recentemente.</p>
-                            ) : (
-                                stats.ultimasAnotacoes.map((anotacao) => (
-                                    <div key={anotacao.id} className="flex items-start gap-4">
-                                        <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${Number(anotacao.pontos) >= 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                                        <div className="space-y-1 w-full">
-                                            <div className="flex justify-between items-start">
-                                                <p className="text-sm font-medium leading-none">
-                                                    {anotacao.tipo.titulo}
-                                                </p>
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                                    {format(new Date(anotacao.createdAt), "HH:mm")}
-                                                </span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground line-clamp-1">
-                                                {formatarNomeGuerra(anotacao.aluno, anotacao.aluno?.usuario?.nome || 'Aluno')}
-                                            </p>
-                                            <div className="flex items-center gap-2 pt-1">
-                                                <Badge variant={Number(anotacao.pontos) >= 0 ? "secondary" : "destructive"} className="text-[10px] h-5 px-1.5">
-                                                    {Number(anotacao.pontos) > 0 ? '+' : ''}{Number(anotacao.pontos)} pts
-                                                </Badge>
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    por {formatarNomeGuerra(anotacao.autor?.perfilAluno, anotacao.autor.nome)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                    <CardContent className="flex-1 p-0">
+                        <div className="divide-y">
+                            
+                            {/* PENDÊNCIA 1: TAF */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-2">
+                                        Testes de Aptidão Física (TAF)
+                                        {stats.tafsPendentes > 0 && <Badge variant="destructive" className="h-5 px-1.5">{stats.tafsPendentes}</Badge>}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Alunos sem registro de TAF cadastrado para o ano letivo atual.
+                                    </p>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
+                                    <Link href="/admin/taf">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                                </Button>
+                            </div>
+
+                            {/* PENDÊNCIA 2: BOLETINS */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-2">
+                                        Desempenho Escolar (Boletins)
+                                        {stats.notasPendentes > 0 && <Badge variant="destructive" className="h-5 px-1.5">{stats.notasPendentes}</Badge>}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Alunos sem boletim iniciado no ano letivo atual.
+                                    </p>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
+                                    <Link href="/admin/desempenho">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                                </Button>
+                            </div>
+
+                            {/* PENDÊNCIA 3: PROMOÇÕES */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-2">
+                                        Aprovações de Promoção
+                                        {stats.promocoesPendentes > 0 && <Badge variant="destructive" className="h-5 px-1.5">{stats.promocoesPendentes}</Badge>}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Candidatos com status pendente de aprovação nos ciclos abertos.
+                                    </p>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
+                                    <Link href="/admin/promocoes">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                                </Button>
+                            </div>
+
+                            {/* PENDÊNCIA 4: ATIVIDADES / TAREFAS (Exemplo adicional p/ fechar a lista) */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-2">
+                                        Partes e Processos
+                                        {stats.processosAtivos > 0 && <Badge variant="secondary" className="h-5 px-1.5">{stats.processosAtivos}</Badge>}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Documentos que ainda não foram finalizados (deferidos/indeferidos).
+                                    </p>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
+                                    <Link href="/admin/partes">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                                </Button>
+                            </div>
+
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-3 h-full flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                            Punições Recentes
+                {/* COLUNA DIREITA: Aniversariantes do Mês */}
+                <Card className="flex flex-col h-full">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Cake className="w-5 h-5 text-orange-500" />
+                            Aniversariantes
                         </CardTitle>
-                        <CardDescription>
-                            Últimas infrações registradas.
+                        <CardDescription className="capitalize">
+                            Nascidos no mês de {nomeMesAtual}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {stats.ultimasPunicoes.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-                                    <TrendingUp className="h-8 w-8 mb-2 opacity-20" />
-                                    <p className="text-sm">Tudo tranquilo por enquanto.</p>
-                                </div>
-                            ) : (
-                                stats.ultimasPunicoes.map((anotacao) => (
-                                    <Link href={`/admin/alunos/${anotacao.aluno?.id}`} key={anotacao.id} className="flex items-center justify-between p-2 hover:bg-accent rounded-md transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarFallback className="text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-                                                    {anotacao.aluno?.nomeDeGuerra?.substring(0, 2) || "AL"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="grid gap-0.5">
-                                                <p className="text-sm font-medium leading-none">
-                                                    {anotacao.aluno?.cargo?.abreviacao} {anotacao.aluno?.nomeDeGuerra}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {anotacao.tipo.titulo}
-                                                </p>
+                    <CardContent className="flex-1">
+                        {stats.aniversariantesMes.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
+                                <Cake className="w-10 h-10 mb-2 text-muted-foreground" />
+                                <p className="text-sm">Nenhum aniversariante<br/>este mês.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {stats.aniversariantesMes.map((usuario) => {
+                                    const dia = usuario.dataNascimento ? format(usuario.dataNascimento, "dd") : "--";
+                                    const nomeGuerra = usuario.perfilAluno?.nomeDeGuerra || usuario.nome.split(' ')[0];
+                                    const cargo = usuario.perfilAluno?.cargo?.abreviacao || '';
+
+                                    return (
+                                        <div key={usuario.id} className="flex items-center justify-between group">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10 border shadow-sm group-hover:scale-105 transition-transform">
+                                                    <AvatarImage src={usuario.fotoUrl || undefined} />
+                                                    <AvatarFallback>{usuario.nome.substring(0, 2)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="text-sm font-semibold">
+                                                        {cargo} {nomeGuerra}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground truncate max-w-[120px]">
+                                                        {usuario.nome}
+                                                    </p>
+                                                </div>
                                             </div>
+                                            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/30">
+                                                Dia {dia}
+                                            </Badge>
                                         </div>
-                                        <div className="font-bold text-sm text-red-600 dark:text-red-400">
-                                            {Number(anotacao.pontos)}
-                                        </div>
-                                    </Link>
-                                ))
-                            )}
-                        </div>
-                        {stats.ultimasPunicoes.length > 0 && (
-                            <div className="mt-4 pt-4 border-t text-center">
-                                <Link href="/admin/classificacao-geral" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-                                    Ver classificação completa &rarr;
-                                </Link>
+                                    )
+                                })}
                             </div>
                         )}
                     </CardContent>
+                    <CardFooter className="pt-2 border-t">
+                        <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
+                            <Link href="/admin/alunos">Ver cadastro completo <ArrowRight className="ml-2 w-3 h-3"/></Link>
+                        </Button>
+                    </CardFooter>
                 </Card>
-            </div>
 
-            <div className="space-y-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2 opacity-80">
-                    <BrainCircuit className="h-5 w-5" /> Inteligência do Sistema (Em Breve)
-                </h2>
-                <div className="grid gap-4 md:grid-cols-3 opacity-60 pointer-events-none select-none grayscale-[0.5]">
-                    <Card className="border-dashed bg-muted/40">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center justify-between">
-                                Promoções
-                                <Clock className="h-4 w-4" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">3 Alunos</div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Cumprem requisitos para promoção de cargo.
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-dashed bg-muted/40">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center justify-between">
-                                Pendências TAF
-                                <AlertCircle className="h-4 w-4" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">12 Pendentes</div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Notas de Teste Físico não lançadas no prazo.
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                     <Card className="border-dashed bg-muted/40">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center justify-between">
-                                Padrões Detectados
-                                <BrainCircuit className="h-4 w-4" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-sm font-semibold">Atrasos Recorrentes</div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                5 alunos apresentaram atrasos &gt;3x na semana.
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
         </div>
     );
