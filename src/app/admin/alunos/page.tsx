@@ -23,13 +23,11 @@ type PageProps = {
 export default async function AdminAlunosPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
-  // Parâmetros da URL
   const sort = searchParams.sort || 'nome';
   const statusFilter = (searchParams.status as StatusUsuario | 'TODOS') || 'TODOS';
   const turmaFilter = searchParams.turmaId || 'todas';
   const anoFilter = searchParams.ano || 'todos';
 
-  // 1. LÓGICA DE ORDENAÇÃO
   let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' };
   if (sort === 'numero') orderByClause = { perfilAluno: { numero: 'asc' } };
   else if (sort === 'antiguidade') orderByClause = [
@@ -39,23 +37,18 @@ export default async function AdminAlunosPage(props: PageProps) {
     { dataNascimento: 'asc' }
   ];
 
-  // 2. BUSCA DE DADOS PARA OS DROPDOWNS (Filtros)
   const turmas = await prisma.turma.findMany({ orderBy: { ano: 'desc' } });
 
-  // Gera uma lista de anos desde 2015 até o ano atual para o filtro de "Ano Letivo"
   const anoAtual = new Date().getFullYear();
   const anosDisponiveis = Array.from({ length: anoAtual - 2015 + 1 }, (_, i) => anoAtual - i);
 
-  // 3. LÓGICA DE FILTRAGEM (Where)
-  // Se o usuário selecionou um ano específico, filtramos quem estava ativo naquele ano através do Histórico
-// 3. LÓGICA DE FILTRAGEM (Where)
+
   let anoFilterClause: Prisma.UsuarioWhereInput = {};
   
   if (anoFilter !== 'todos') {
     const anoNum = parseInt(anoFilter);
     anoFilterClause = {
       OR: [
-        // Regra 1: Tem histórico de cargo ativo no ano selecionado
         {
           perfilAluno: {
             historicoCargos: {
@@ -69,13 +62,11 @@ export default async function AdminAlunosPage(props: PageProps) {
             }
           }
         },
-        // Regra 2: A Turma dele é exatamente do ano selecionado
         {
           perfilAluno: {
             turma: { ano: anoNum }
           }
         },
-        // Regra 3: Ingressou antes do ano selecionado e AINDA ESTÁ ATIVO (nunca foi desligado)
         {
           status: 'ATIVO',
           perfilAluno: {
@@ -92,10 +83,9 @@ export default async function AdminAlunosPage(props: PageProps) {
     perfilAluno: {
       ...(turmaFilter !== 'todas' ? { turmaId: turmaFilter } : {}),
     },
-    ...anoFilterClause // <--- Aplicamos o filtro de ano na raiz da query
+    ...anoFilterClause 
   };
 
-  // 4. BUSCA DOS ALUNOS
   const alunos = await prisma.usuario.findMany({
     where: whereClause,
     include: {
@@ -109,7 +99,6 @@ export default async function AdminAlunosPage(props: PageProps) {
     orderBy: orderByClause,
   });
 
-  // 5. ESTATÍSTICAS (Baseadas nos filtros aplicados)
  const baseStatsWhere: Prisma.UsuarioWhereInput = {
     role: 'ALUNO',
     perfilAluno: {
@@ -122,7 +111,6 @@ export default async function AdminAlunosPage(props: PageProps) {
   const totalAtivos = await prisma.usuario.count({ where: { ...baseStatsWhere, status: 'ATIVO' } });
   const totalInativos = await prisma.usuario.count({ where: { ...baseStatsWhere, status: 'INATIVO' } });
 
-  // Helpers para manter os outros parâmetros da URL ao clicar num botão
   const buildUrl = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams as Record<string, string>);
     Object.entries(newParams).forEach(([key, value]) => params.set(key, value));
@@ -131,7 +119,6 @@ export default async function AdminAlunosPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      {/* CABEÇALHO */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gestão de Alunos</h1>
@@ -142,10 +129,8 @@ export default async function AdminAlunosPage(props: PageProps) {
         </Link>
       </div>
 
-    {/* BARRA DE FILTROS (Dropdowns Automáticos) */}
       <AlunoFiltros turmas={turmas} anosDisponiveis={anosDisponiveis} />
 
-      {/* CARDS DE ESTATÍSTICAS DINÂMICAS */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -186,7 +171,6 @@ export default async function AdminAlunosPage(props: PageProps) {
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <CardTitle>Listagem do Efetivo</CardTitle>
 
-            {/* BOTÕES DE ORDENAÇÃO (Restaurados!) */}
             <div className="flex gap-2 text-sm bg-muted/50 p-1 rounded-md">
               <Link href={buildUrl({ sort: 'nome' })}>
                 <Button variant={sort === 'nome' ? 'default' : 'ghost'} size="sm" className="h-8">

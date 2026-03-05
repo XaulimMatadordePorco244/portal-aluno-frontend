@@ -49,6 +49,12 @@ model TafTabela {
   @@map("taf_tabela")
 }
 
+model Escola {
+  id     String        @id @default(cuid())
+  nome   String        @unique
+  alunos PerfilAluno[]
+}
+
 model TafDesempenho {
   id             String      @id @default(uuid())
   alunoId        String
@@ -139,8 +145,9 @@ model PerfilAluno {
   aptidaoFisicaStatus           AptidaoFisicaStatus?
   aptidaoFisicaLaudo            Boolean              @default(false)
   aptidaoFisicaObs              String?              @db.Text
-  escola                        String?
-  serieEscolar                  String?
+  escolaId                      String?
+  serieEscolar                  SerieEscolar?
+  turno                         String?
   endereco                      String?              @db.Text
   termoResponsabilidadeAssinado Boolean              @default(false)
   fazCursoExterno               Boolean              @default(false)
@@ -154,9 +161,12 @@ model PerfilAluno {
   conceitoInicial               String?
   foraDeData                    Boolean              @default(false)
   dataUltimaPromocao            DateTime?
+  anoLetivoAtualizado           Int                  @default(2023)
   notaDesempatePromocao         Float?               @default(0)
   modalidadeUltimaPromocao      String?
+  turmaEscolar                  String?
   turmaId                       String?
+  escola                        Escola?              @relation(fields: [escolaId], references: [id])
   turma                         Turma?               @relation("AlunosDaTurma", fields: [turmaId], references: [id], map: "fk_perfil_aluno_turma")
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
   desempenhosEscolares          DesempenhoEscolar[]
@@ -931,4 +941,15 @@ enum TipoAtividade {
   REDACAO
   LEITURA
   OUTRO
+}
+
+enum SerieEscolar {
+  SEXTO_ANO_FUNDAMENTAL
+  SETIMO_ANO_FUNDAMENTAL
+  OITAVO_ANO_FUNDAMENTAL
+  NONO_ANO_FUNDAMENTAL
+  PRIMEIRO_ANO_MEDIO
+  SEGUNDO_ANO_MEDIO
+  TERCEIRO_ANO_MEDIO
+  CONCLUIDO
 }

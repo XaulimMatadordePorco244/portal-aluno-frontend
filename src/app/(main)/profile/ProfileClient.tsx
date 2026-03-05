@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Input } from "@/components/ui/Input"; 
 import { Label } from "@/components/ui/label";
-import { UserCircle} from 'lucide-react'; 
-import { Usuario, Cargo, PerfilAluno, Companhia } from '@prisma/client';
+import { UserCircle } from 'lucide-react'; 
+import { Usuario, Cargo, PerfilAluno, Companhia, Escola } from '@prisma/client';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ type UserWithRelations = Usuario & {
   perfilAluno: (PerfilAluno & {
     cargo: Cargo | null;
     companhia: Companhia | null;
+    escola: Escola | null; 
   }) | null;
 };
 
@@ -40,8 +41,6 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
       setIsLoading(false);
     }, 1000);
   };
-
-
 
   return (
     <div className="space-y-6">
@@ -129,8 +128,8 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
           <section>
             <h3 className="text-lg font-semibold text-foreground mb-3">Escolaridade</h3>
             <div className="bg-card rounded-lg border border-border px-4 shadow-sm">
-              <InfoRow label="Escola" value={perfil?.escola} />
-              <InfoRow label="Série / Ano Escolar" value={perfil?.serieEscolar} />
+              <InfoRow label="Escola" value={perfil?.escola?.nome} />
+              <InfoRow label="Série / Ano Escolar" value={perfil?.serieEscolar?.replace(/_/g, ' ')} />
               {perfil?.fazCursoExterno && (
                 <InfoRow label="Curso Externo" value={perfil.cursoExternoDescricao} />
               )}
@@ -151,9 +150,7 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
                     className="bg-background"
                     required
                     disabled
-
                   />
-              
                 </div>
               </form>
             </div>
