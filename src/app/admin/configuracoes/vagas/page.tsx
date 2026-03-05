@@ -54,6 +54,11 @@ export default async function QuadroVagasPage() {
     const livres = limite - uso
     const isCheio = livres <= 0
 
+    const alunosFormatados = listaAlunos.map(aluno => ({
+      ...aluno,
+      numero: aluno.numero ? parseInt(aluno.numero, 10) : null
+    }))
+
     return (
       <TableRow key={categoria}>
         <TableCell className="font-medium uppercase">{categoria}</TableCell>
@@ -69,7 +74,7 @@ export default async function QuadroVagasPage() {
           )}
         </TableCell>
         <TableCell className="text-right">
-          <VisualizarAlunosDialog titulo={categoria} alunos={listaAlunos} />
+          <VisualizarAlunosDialog titulo={categoria} alunos={alunosFormatados} />
         </TableCell>
       </TableRow>
     )
