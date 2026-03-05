@@ -93,6 +93,7 @@ export function AdminSidebar() {
     { href: "/admin/atividades", label: "Atividades", icon: ClipboardList },
     { href: "/admin/escalas", label: "Escalas", icon: ClipboardList },
     { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: Briefcase },
+    { href: "/admin/dados-escolares", label: "Dados Escolares", icon: GraduationCap },
     { href: "/admin/calendario", label: "Calendário", icon: Calendar },
     { href: "/admin/turmas", label: "Turmas", icon: Calendar },
     { href: "/admin/qes", label: "QES", icon: ScrollText },
