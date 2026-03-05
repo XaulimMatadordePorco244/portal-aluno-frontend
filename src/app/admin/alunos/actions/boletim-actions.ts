@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { SerieEscolar } from '@prisma/client' 
 
 const BoletimSchema = z.object({
   alunoId: z.string(),
@@ -113,12 +114,11 @@ export async function salvarBoletim(formData: FormData) {
       }
     })
 
-    if (data.escola || data.serie) {
+    if (data.serie) {
       await prisma.perfilAluno.update({
         where: { id: data.alunoId },
         data: { 
-            escola: data.escola,
-            serieEscolar: data.serie
+            serieEscolar: data.serie as SerieEscolar
         }
       })
     }

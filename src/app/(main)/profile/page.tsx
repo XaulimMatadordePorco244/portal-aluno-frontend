@@ -19,7 +19,8 @@ export default async function ProfilePage() {
       perfilAluno: {
         include: {
           cargo: true,
-          companhia: true
+          companhia: true,
+          escola: true
         }
       }
     }

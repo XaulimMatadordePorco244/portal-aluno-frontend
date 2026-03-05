@@ -15,7 +15,6 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-// Defina o tipo que BoletimForm espera
 interface DadosIniciaisBoletim {
   mediaB1?: number | null;
   mediaB2?: number | null;
@@ -44,6 +43,7 @@ export default async function EditarBoletimPage({ params }: PageProps) {
     include: {
       usuario: true,
       companhia: true,
+      escola: true,
     }
   })
 
@@ -62,7 +62,6 @@ export default async function EditarBoletimPage({ params }: PageProps) {
     }
   })
 
-  // Prepare os dados iniciais no formato correto
   const dadosIniciais: DadosIniciaisBoletim = boletim 
     ? {
         mediaB1: boletim.mediaB1,
@@ -79,10 +78,9 @@ export default async function EditarBoletimPage({ params }: PageProps) {
         anoLetivo: boletim.anoLetivo,
       }
     : {
-        escola: aluno.escola,
+        escola: aluno.escola?.nome || null,
         serie: aluno.serieEscolar,
         anoLetivo: anoAtual,
-        // Inicialize com valores padrão
         mediaB1: null,
         mediaB2: null,
         mediaB3: null,
