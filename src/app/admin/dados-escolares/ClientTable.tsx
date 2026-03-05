@@ -3,17 +3,55 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/Button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { salvarDadosEscolaresEmLote, criarEscola, getTodosAlunos } from "./actions"
+// IMPORTAMOS O TIPO AtualizacaoEscolarData QUE CRIAMOS NAS ACTIONS
+import { salvarDadosEscolaresEmLote, criarEscola, getTodosAlunos, AtualizacaoEscolarData } from "./actions"
 import { Loader2, SaveAll, X } from "lucide-react"
 import { StudentRow } from "./StudentRow"
 
+export interface EscolaType {
+    id: string;
+    nome: string;
+}
 
-export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) {
-    const [alunos, setAlunos] = useState(alunosIniciais)
-    const [escolas, setEscolas] = useState(escolasIniciais)
+export interface AlunoType {
+    id: string;
+    nome: string;
+    fotoUrl: string | null;
+    perfilAluno: {
+        nomeDeGuerra: string | null;
+        anoLetivoAtualizado: number;
+        escolaId: string | null;
+        serieEscolar: string | null;
+        turno: string | null;
+        turmaEscolar: string | null;
+        cargo: {
+            abreviacao: string | null;
+            precedencia: number | null; // CORRIGIDO DE 'rank' PARA 'precedencia'
+        } | null;
+        escola: EscolaType | null;
+    } | null;
+}
+
+interface PendenteType {
+    userId: string;
+    escolaId?: string;
+    serieEscolar?: string;
+    turno?: string;
+    turmaEscolar?: string;
+}
+
+interface ClientTableProps {
+    alunosIniciais: AlunoType[];
+    escolasIniciais: EscolaType[];
+    anoAtual: number;
+}
+
+export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: ClientTableProps) {
+    const [alunos, setAlunos] = useState<AlunoType[]>(alunosIniciais)
+    const [escolas, setEscolas] = useState<EscolaType[]>(escolasIniciais)
     const [loading, setLoading] = useState(false)
     const [ordenacao, setOrdenacao] = useState('nome')
-    const [pendentes, setPendentes] = useState<Record<string, any>>({})
+    const [pendentes, setPendentes] = useState<Record<string, PendenteType>>({})
 
     const handleRowChange = (userId: string, field: string, value: string) => {
         setPendentes(prev => ({
@@ -36,7 +74,7 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
 
     const handleNovaEscola = async (nomeDaEscola: string) => {
         const nova = await criarEscola(nomeDaEscola)
-        setEscolas((prev: any) => [...prev, nova].sort((a: any, b: any) => a.nome.localeCompare(b.nome)))
+        setEscolas((prev) => [...prev, nova].sort((a, b) => a.nome.localeCompare(b.nome)))
         return nova.id
     }
 
@@ -45,7 +83,8 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
         if (updates.length === 0) return alert("Nenhuma alteração pendente.")
 
         setLoading(true)
-        const res = await salvarDadosEscolaresEmLote(updates, anoAtual)
+        // Usamos 'as unknown as AtualizacaoEscolarData[]' para forçar o TS a aceitar os dados
+        const res = await salvarDadosEscolaresEmLote(updates as unknown as AtualizacaoEscolarData[], anoAtual)
         setLoading(false)
 
         if (res.success) {
@@ -62,7 +101,7 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
         if (!update) return
 
         setLoading(true)
-        const res = await salvarDadosEscolaresEmLote([update], anoAtual)
+        const res = await salvarDadosEscolaresEmLote([update] as unknown as AtualizacaoEscolarData[], anoAtual)
         setLoading(false)
 
         if (res.success) {
@@ -77,7 +116,7 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
         setOrdenacao(tipo)
         setLoading(true)
         const sortedAlunos = await getTodosAlunos(tipo)
-        setAlunos(sortedAlunos)
+        setAlunos(sortedAlunos as unknown as AlunoType[])
         setLoading(false)
     }
 
@@ -100,30 +139,33 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
                         </SelectContent>
                     </Select>
                 </div>
-                {hasPendentes && (
-                    <Button
-                        variant="outline"
-                        onClick={handleCancelar}
-                        disabled={loading}
-                        className="w-full md:w-auto border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:hover:bg-red-900/30"
-                    >
-                        <X className="h-4 w-4 mr-2" />
-                        Cancelar
-                    </Button>
-                )}
+                
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    {hasPendentes && (
+                        <Button
+                            variant="outline"
+                            onClick={handleCancelar}
+                            disabled={loading}
+                            className="w-full md:w-auto border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:hover:bg-red-900/30"
+                        >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancelar
+                        </Button>
+                    )}
 
-                <Button
-                    onClick={handleSalvarTodos}
-                    disabled={!hasPendentes || loading}
-                    className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
-                >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <SaveAll className="h-4 w-4 mr-2" />}
-                    Salvar {Object.keys(pendentes).length} Alteração(ões)
-                </Button>
+                    <Button
+                        onClick={handleSalvarTodos}
+                        disabled={!hasPendentes || loading}
+                        className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <SaveAll className="h-4 w-4 mr-2" />}
+                        Salvar {Object.keys(pendentes).length} Alteração(ões)
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-card rounded-lg shadow border overflow-hidden flex flex-col">
-                {alunos.map((aluno: any) => {
+                {alunos.map((aluno) => {
                     const perfil = aluno.perfilAluno
                     const isConcluido = perfil?.serieEscolar === 'CONCLUIDO'
                     const isDesatualizado = !isConcluido && (
@@ -133,11 +175,11 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: any) 
                         !perfil?.turno
                     )
 
-                    const currentValues = pendentes[aluno.id] || {
-                        escolaId: perfil?.escolaId || "",
-                        serieEscolar: perfil?.serieEscolar || "",
-                        turno: perfil?.turno || "",
-                        turmaEscolar: perfil?.turmaEscolar || "",
+                    const currentValues = {
+                        escolaId: pendentes[aluno.id]?.escolaId ?? perfil?.escolaId ?? "",
+                        serieEscolar: pendentes[aluno.id]?.serieEscolar ?? perfil?.serieEscolar ?? "",
+                        turno: pendentes[aluno.id]?.turno ?? perfil?.turno ?? "",
+                        turmaEscolar: pendentes[aluno.id]?.turmaEscolar ?? perfil?.turmaEscolar ?? "",
                     }
 
                     return (

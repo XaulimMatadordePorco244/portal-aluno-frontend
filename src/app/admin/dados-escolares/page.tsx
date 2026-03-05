@@ -1,6 +1,5 @@
 import { getTodosAlunos, getEscolas } from "./actions"
 import { ClientTable } from "./ClientTable"
-import { GraduationCap } from "lucide-react"
 
 
 export default async function DadosEscolaresPage() {

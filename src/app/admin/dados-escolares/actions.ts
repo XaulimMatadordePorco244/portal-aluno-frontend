@@ -2,6 +2,15 @@
 
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { Prisma, SerieEscolar } from '@prisma/client'
+
+export interface AtualizacaoEscolarData {
+  userId: string;
+  escolaId?: string;
+  serieEscolar?: SerieEscolar; 
+  turno?: string;
+  turmaEscolar?: string; 
+}
 
 export async function getEscolas() {
   return await prisma.escola.findMany({ orderBy: { nome: 'asc' } })
@@ -14,7 +23,7 @@ export async function criarEscola(nome: string) {
 }
 
 export async function getTodosAlunos(ordenacao: 'nome' | 'guerra' | 'antiguidade' = 'nome') {
-  let orderByClause: any = { nome: 'asc' }
+  let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' }
 
   if (ordenacao === 'guerra') {
     orderByClause = { perfilAluno: { nomeDeGuerra: 'asc' } }
@@ -36,7 +45,7 @@ export async function getTodosAlunos(ordenacao: 'nome' | 'guerra' | 'antiguidade
   })
 }
 
-export async function salvarDadosEscolaresEmLote(atualizacoes: any[], anoAtual: number) {
+export async function salvarDadosEscolaresEmLote(atualizacoes: AtualizacaoEscolarData[], anoAtual: number) {
   try {
     await prisma.$transaction(
       atualizacoes.map((update) => 
@@ -46,7 +55,7 @@ export async function salvarDadosEscolaresEmLote(atualizacoes: any[], anoAtual: 
             escolaId: update.escolaId,
             serieEscolar: update.serieEscolar,
             turno: update.turno,
-            turmaEscolar: update.turma, 
+            turmaEscolar: update.turmaEscolar, 
             anoLetivoAtualizado: anoAtual
           }
         })
@@ -60,4 +69,3 @@ export async function salvarDadosEscolaresEmLote(atualizacoes: any[], anoAtual: 
     return { success: false }
   }
 }
-

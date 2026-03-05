@@ -7,6 +7,49 @@ import { Check, Plus } from "lucide-react"
 import { useState } from "react"
 import { FotoHover } from "@/components/ui/foto-hover"
 
+export interface EscolaType {
+    id: string;
+    nome: string;
+}
+
+export interface AlunoType {
+    id: string;
+    nome: string;
+    fotoUrl: string | null;
+    perfilAluno: {
+        nomeDeGuerra: string | null;
+        anoLetivoAtualizado: number;
+        escolaId: string | null;
+        serieEscolar: string | null;
+        turno: string | null;
+        turmaEscolar: string | null;
+        cargo: {
+            abreviacao: string | null;
+            precedencia?: number | null;
+        } | null;
+        escola: EscolaType | null;
+    } | null;
+}
+
+interface CurrentValuesType {
+    escolaId: string;
+    serieEscolar: string;
+    turno: string;
+    turmaEscolar: string;
+}
+
+interface StudentRowProps {
+    aluno: AlunoType;
+    escolas: EscolaType[];
+    isDesatualizado: boolean;
+    currentValues: CurrentValuesType;
+    onChange: (field: string, value: string) => void;
+    onSaveOne: () => void;
+    onNovaEscola: (nome: string) => Promise<string>;
+    hasModifications: boolean;
+    anoAtual: number; 
+}
+
 const SERIES_MAP: Record<string, string> = {
     "SEXTO_ANO_FUNDAMENTAL": "6º Ano - Fund.",
     "SETIMO_ANO_FUNDAMENTAL": "7º Ano - Fund.",
@@ -24,8 +67,8 @@ const TURNOS = ["Matutino", "Vespertino"]
 
 export function StudentRow({
     aluno, escolas, isDesatualizado, currentValues,
-    onChange, onSaveOne, onNovaEscola, hasModifications, anoAtual
-}: any) {
+    onChange, onSaveOne, onNovaEscola, hasModifications
+}: StudentRowProps) { 
 
     const [novaEscolaNome, setNovaEscolaNome] = useState("")
 
@@ -65,10 +108,10 @@ export function StudentRow({
             </div>
 
             <div className="flex flex-col gap-1">
-                <Select value={currentValues.escolaId} onValueChange={(v) => onChange("escolaId", v)}>
+                <Select value={currentValues.escolaId} onValueChange={(v: string) => onChange("escolaId", v)}>
                     <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Escola" /></SelectTrigger>
                     <SelectContent>
-                        {escolas.map((esc: any) => (
+                        {escolas.map((esc: EscolaType) => (
                             <SelectItem key={esc.id} value={esc.id}>{esc.nome}</SelectItem>
                         ))}
                         <div className="p-2 border-t mt-2 flex gap-2">
@@ -89,7 +132,7 @@ export function StudentRow({
             </div>
 
             <div className="flex flex-col gap-1">
-                <Select value={currentValues.serieEscolar} onValueChange={(v) => onChange("serieEscolar", v)}>
+                <Select value={currentValues.serieEscolar} onValueChange={(v: string) => onChange("serieEscolar", v)}>
                     <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Série" /></SelectTrigger>
                     <SelectContent>
                         {SERIES_ENTRIES.map(([key, label]) => (
@@ -115,7 +158,7 @@ export function StudentRow({
                 )}
             </div>
             <div className="flex flex-col gap-1">
-                <Select value={currentValues.turno} onValueChange={(v) => onChange("turno", v)}>
+                <Select value={currentValues.turno} onValueChange={(v: string) => onChange("turno", v)}>
                     <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Turno" /></SelectTrigger>
                     <SelectContent>
                         {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
