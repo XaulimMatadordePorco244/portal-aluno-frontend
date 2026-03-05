@@ -13,7 +13,8 @@ import {
   tipagemSanguinea, 
   Role, 
   StatusUsuario,
-  CargoHistoryStatus 
+  CargoHistoryStatus,
+  SerieEscolar 
 } from "@prisma/client";
 
 const alunoSchema = z.object({
@@ -124,8 +125,9 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           aptidaoFisicaObs: data.aptidaoFisicaObs,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
           
-          escola: data.escola,
-          serieEscolar: data.serieEscolar,
+          escolaId: data.escola,
+          serieEscolar: data.serieEscolar as SerieEscolar | undefined,
+          
           endereco: data.endereco,
           
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
@@ -241,8 +243,9 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
                 aptidaoFisicaObs: data.aptidaoFisicaObs,
                 aptidaoFisicaLaudo: data.aptidaoFisicaLaudo !== undefined ? !!data.aptidaoFisicaLaudo : undefined,
 
-                escola: data.escola,
-                serieEscolar: data.serieEscolar,
+                escolaId: data.escola,
+                serieEscolar: data.serieEscolar as SerieEscolar | undefined,
+                
                 endereco: data.endereco,
 
                 termoResponsabilidadeAssinado: data.termoResponsabilidadeAssinado !== undefined ? !!data.termoResponsabilidadeAssinado : undefined,

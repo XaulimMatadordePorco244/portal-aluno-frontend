@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/verificar-prazos",
       "schedule": "0 8 * * *" 
+    },
+    {
+      "path": "/api/cron/verificar-escolas",
+      "schedule": "0 9 * * 1" 
     }
   ]
 }

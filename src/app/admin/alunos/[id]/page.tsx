@@ -79,7 +79,9 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
 
   const aluno = await prisma.perfilAluno.findUnique({
     where: { id },
+  
     include: {
+      escola: true, 
       usuario: {
         include: {
           responsaveis: { include: { responsavel: true } }
@@ -172,7 +174,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* SISTEMA DE ABAS */}
       <Tabs defaultValue="geral" className="space-y-6">
         <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 rounded-lg overflow-x-auto flex-nowrap">
           <TabsTrigger value="geral" className="px-4 py-2">Visão Geral</TabsTrigger>
@@ -181,10 +182,8 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
           <TabsTrigger value="familia" className="px-4 py-2">Familiares ({aluno.usuario.responsaveis.length})</TabsTrigger>
         </TabsList>
 
-        {/* ABA 1: VISÃO GERAL (Restaurada para o estilo original) */}
         <TabsContent value="geral" className="animate-in fade-in-50 space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Resumo Militar */}
                 <Card>
                     <CardHeader className="pb-3">
                          <div className="flex items-center gap-2">
@@ -202,7 +201,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
                     </CardContent>
                 </Card>
 
-                {/* Resumo Saúde */}
                 <Card>
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
@@ -240,7 +238,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
              </div>
         </TabsContent>
 
-        {/* ABA 2: DADOS PESSOAIS */}
         <TabsContent value="pessoal" className="animate-in fade-in-50">
            <Card>
              <CardHeader>
@@ -259,7 +256,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
            </Card>
         </TabsContent>
 
-        {/* ABA 3: INSTITUCIONAL / ESCOLAR */}
         <TabsContent value="institucional" className="animate-in fade-in-50">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             
@@ -302,7 +298,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
                 </Card>
             </div>
 
-            {/* ESCOLAR - DADOS REAIS */}
             <div className="md:col-span-7 space-y-6">
                 <Card className="h-full">
                   <CardHeader className="pb-3">
@@ -316,15 +311,13 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Dados Reais do Banco (PerfilAluno) */}
                     <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
-                        <InfoRow label="Escola Atual" value={aluno.escola || 'Não informada'} />
+                        <InfoRow label="Escola Atual" value={aluno.escola?.nome || 'Não informada'} />
                         <InfoRow label="Série / Ano" value={aluno.serieEscolar || 'Não informado'} />
                     </div>
 
                     <Separator />
 
-                    {/* Área reservada para Boletim (Placeholder) */}
                     <div className="py-4 text-center">
                         <div className="bg-muted/10 border border-dashed rounded-lg p-6 flex flex-col items-center justify-center gap-2">
                             <GraduationCap className="h-8 w-8 text-muted-foreground/50" />
@@ -335,7 +328,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
 
                     <Separator />
 
-                    {/* Curso Externo (Real) */}
                     <div>
                          <div className="flex items-center justify-between mb-2">
                             <span className="text-xs text-muted-foreground uppercase font-medium">Cursos Extras / Profissionalizantes</span>
@@ -355,7 +347,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
           </div>
         </TabsContent>
 
-        {/* ABA 4: FAMILIARES */}
         <TabsContent value="familia" className="animate-in fade-in-50">
           <Card>
             <CardHeader>

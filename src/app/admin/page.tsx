@@ -8,9 +8,9 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { 
-    Users, AlertTriangle, GraduationCap, 
-    Megaphone, Medal, Cake, 
+import {
+    Users, AlertTriangle, GraduationCap,
+    Megaphone, Medal, Cake,
     ClipboardCheck, Activity, ArrowRight, FileBadge
 } from "lucide-react";
 
@@ -18,9 +18,27 @@ async function getDashboardStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const anoAtual = new Date().getFullYear();
-    const mesAtual = today.getMonth(); // 0 a 11
+    const mesAtual = today.getMonth();
+   const alunosDesatualizadosCount = await prisma.perfilAluno.count({
+        where: {
+            usuario: {
+                status: 'ATIVO',
+                role: 'ALUNO'
+            },
+            OR: [
+                { serieEscolar: null }, 
+                {
+                    serieEscolar: { not: 'CONCLUIDO' },
+                    OR: [
+                        { anoLetivoAtualizado: { lt: anoAtual } },
+                        { escolaId: null },
+                        { turno: null }
+                    ]
+                }
+            ]
+        }
+    });
 
-    // 1. Buscas Paralelas Iniciais
     const [
         totalAlunos,
         faltasHoje,
@@ -34,11 +52,8 @@ async function getDashboardStats() {
         prisma.frequencia.count({ where: { data: { gte: today }, status: 'FALTA' } }),
         prisma.cicloPromocao.count({ where: { status: 'ABERTO' } }),
         prisma.desempenhoEscolar.count({ where: { anoLetivo: anoAtual, qtdNotasVermelhas: { gt: 0 } } }),
-        // Substituindo as Partes Pendentes por Processos Ativos Gerais
         prisma.parte.count({ where: { status: { notIn: ['DEFERIDO', 'INDEFERIDO', 'RASCUNHO'] } } }),
-        // Promocoes aguardando aprovação
         prisma.candidatoCiclo.count({ where: { resultado: 'PENDENTE' } }),
-        // Pegamos todos os usuários ativos com data de nascimento para filtrar os aniversariantes
         prisma.usuario.findMany({
             where: { status: 'ATIVO', dataNascimento: { not: null } },
             select: {
@@ -48,29 +63,26 @@ async function getDashboardStats() {
         })
     ]);
 
-    // 2. Lógica para Pendências de TAF e Boletim
-    // Alunos que já têm TAF no ano
     const tafsRegistrados = await prisma.tafDesempenho.groupBy({
         by: ['alunoId'],
         where: { anoLetivo: anoAtual }
     });
     const tafsPendentes = Math.max(0, totalAlunos - tafsRegistrados.length);
 
-    // Alunos que já têm Boletim no ano
     const notasRegistradas = await prisma.desempenhoEscolar.count({
         where: { anoLetivo: anoAtual }
     });
     const notasPendentes = Math.max(0, totalAlunos - notasRegistradas);
 
-    // 3. Filtrar Aniversariantes do Mês Atual
     const aniversariantesMes = todosUsuarios
         .filter(u => u.dataNascimento?.getMonth() === mesAtual)
         .sort((a, b) => (a.dataNascimento?.getDate() || 0) - (b.dataNascimento?.getDate() || 0));
 
-    return { 
-        totalAlunos, faltasHoje, ciclosAbertos, riscoEscolar, 
+    return {
+        totalAlunos, faltasHoje, ciclosAbertos, riscoEscolar,
         processosAtivos, tafsPendentes, notasPendentes, promocoesPendentes,
-        aniversariantesMes: aniversariantesMes.slice(0, 6) // Mostra os próximos 6
+        aniversariantesMes: aniversariantesMes.slice(0, 6),
+        alunosDesatualizadosCount
     };
 }
 
@@ -83,7 +95,7 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-            {/* CABEÇALHO & LINKS RÁPIDOS */}
+
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Painel Operacional</h1>
@@ -91,26 +103,23 @@ export default async function AdminDashboardPage() {
                         Resumo administrativo — {format(new Date(), "dd 'de' MMMM, yyyy", { locale: ptBR })}
                     </p>
                 </div>
-                {/* Meus Links Rápidos solicitados */}
                 <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/admin/comunicacoes/new"><Megaphone className="w-4 h-4 mr-2"/> Publicar CI</Link>
+                        <Link href="/admin/comunicacoes/new"><Megaphone className="w-4 h-4 mr-2" /> Publicar CI</Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/admin/escalas/new"><ClipboardCheck className="w-4 h-4 mr-2"/> Nova Escala</Link>
+                        <Link href="/admin/escalas/new"><ClipboardCheck className="w-4 h-4 mr-2" /> Nova Escala</Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/admin/qes/new"><FileBadge className="w-4 h-4 mr-2"/> Publicar QES</Link>
+                        <Link href="/admin/qes/new"><FileBadge className="w-4 h-4 mr-2" /> Publicar QES</Link>
                     </Button>
                     <Button size="sm" asChild>
-                        <Link href="/admin/classificacao-geral"><Medal className="w-4 h-4 mr-2"/> Extrato Classificação</Link>
+                        <Link href="/admin/classificacao-geral"><Medal className="w-4 h-4 mr-2" /> Extrato Classificação</Link>
                     </Button>
                 </div>
             </div>
 
-            {/* KPIs - 4 CARDS NO TOPO */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* 1. Processos em Andamento (Substituiu Partes Pendentes) */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Processos Ativos</CardTitle>
@@ -122,7 +131,6 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* 2. Efetivo Faltoso */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Efetivo Faltoso (Hoje)</CardTitle>
@@ -136,7 +144,6 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* 3. Ciclos de Promoção */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Ciclos de Promoção</CardTitle>
@@ -148,7 +155,6 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* 4. Risco Escolar */}
                 <Card className={stats.riscoEscolar > 0 ? "border-yellow-500/30 bg-yellow-500/5" : ""}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Risco Escolar</CardTitle>
@@ -161,10 +167,8 @@ export default async function AdminDashboardPage() {
                 </Card>
             </div>
 
-            {/* SESSÕES PRINCIPAIS */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                
-                {/* COLUNA ESQUERDA & CENTRO: Lista de Coisas Pendentes (Ocupa 2 colunas) */}
+
                 <Card className="lg:col-span-2 flex flex-col border-primary/20 shadow-sm">
                     <CardHeader className="bg-primary/5 rounded-t-lg border-b">
                         <CardTitle className="flex items-center gap-2">
@@ -175,8 +179,7 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="flex-1 p-0">
                         <div className="divide-y">
-                            
-                            {/* PENDÊNCIA 1: TAF */}
+
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                                 <div className="space-y-1">
                                     <p className="text-sm font-semibold flex items-center gap-2">
@@ -192,7 +195,6 @@ export default async function AdminDashboardPage() {
                                 </Button>
                             </div>
 
-                            {/* PENDÊNCIA 2: BOLETINS */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                                 <div className="space-y-1">
                                     <p className="text-sm font-semibold flex items-center gap-2">
@@ -208,7 +210,28 @@ export default async function AdminDashboardPage() {
                                 </Button>
                             </div>
 
-                            {/* PENDÊNCIA 3: PROMOÇÕES */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold flex items-center gap-2">
+                                        Atualização de Dados Escolares
+                                        {stats.alunosDesatualizadosCount > 0 && (
+                                            <Badge variant="destructive" className="h-5 px-1.5">
+                                                {stats.alunosDesatualizadosCount}
+                                            </Badge>
+                                        )}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Alunos com dados escolares pendentes ou referentes a anos anteriores.
+                                    </p>
+                                </div>
+
+                                <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
+                                    <Link href="/admin/dados-escolares">
+                                        Ver todos <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Link>
+                                </Button>
+                            </div>
+
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                                 <div className="space-y-1">
                                     <p className="text-sm font-semibold flex items-center gap-2">
@@ -224,7 +247,6 @@ export default async function AdminDashboardPage() {
                                 </Button>
                             </div>
 
-                            {/* PENDÊNCIA 4: ATIVIDADES / TAREFAS (Exemplo adicional p/ fechar a lista) */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                                 <div className="space-y-1">
                                     <p className="text-sm font-semibold flex items-center gap-2">
@@ -244,7 +266,6 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* COLUNA DIREITA: Aniversariantes do Mês */}
                 <Card className="flex flex-col h-full">
                     <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-lg">
@@ -259,7 +280,7 @@ export default async function AdminDashboardPage() {
                         {stats.aniversariantesMes.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
                                 <Cake className="w-10 h-10 mb-2 text-muted-foreground" />
-                                <p className="text-sm">Nenhum aniversariante<br/>este mês.</p>
+                                <p className="text-sm">Nenhum aniversariante<br />este mês.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -295,7 +316,7 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                     <CardFooter className="pt-2 border-t">
                         <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-                            <Link href="/admin/alunos">Ver cadastro completo <ArrowRight className="ml-2 w-3 h-3"/></Link>
+                            <Link href="/admin/alunos">Ver cadastro completo <ArrowRight className="ml-2 w-3 h-3" /></Link>
                         </Button>
                     </CardFooter>
                 </Card>

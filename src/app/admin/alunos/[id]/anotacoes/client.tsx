@@ -21,6 +21,7 @@ import { deleteAnotacao } from '@/actions/anotacoes';
 import { toast } from "sonner";
 import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service';
 import { Prisma } from '@prisma/client';
+import { formatDate } from '@/lib/utils'; 
 
 type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
   include: {
@@ -182,7 +183,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
         conceitoAtual: conceitoAtual.toFixed(2),
         filtroAplicado: descricaoFiltro,
         anotacoes: filteredAnnotations.map(a => ({
-          data: a.data,
+          data: formatDate(a.data) || '', 
           tipo: a.tipo.titulo,
           pontos: Number(a.pontos),
           detalhes: a.detalhes,
@@ -258,7 +259,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
                     </div>
                     <div className="text-xs text-muted-foreground whitespace-nowrap">
                         <span className="flex items-center gap-1">
-                             <Calendar className="h-3 w-3" /> {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}
+                             <Calendar className="h-3 w-3" /> {formatDate(anotacao.data)}
                         </span>
                     </div>
                   </div>
@@ -287,7 +288,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
                         <div className="flex flex-col gap-2 sm:items-end">
                              <div className="flex items-center gap-2">
                                 <Calendar className="h-3.5 w-3.5 opacity-70" />
-                                <span>Ocorrido em: {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                                <span>Ocorrido em: {formatDate(anotacao.data)}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Clock className="h-3.5 w-3.5 opacity-70" />

@@ -7,7 +7,8 @@ import {
   GeneroUsuario, 
   tipagemSanguinea, 
   AptidaoFisicaStatus, 
-  CargoHistoryStatus 
+  CargoHistoryStatus,
+  SerieEscolar 
 } from '@prisma/client';
 
 interface PerfilAlunoCreateData {
@@ -18,7 +19,6 @@ interface PerfilAlunoCreateData {
   conceitoInicial?: string;
   anoIngresso?: number;
   foraDeData?: boolean;
-  
   
   tipagemSanguinea?: tipagemSanguinea;
   aptidaoFisicaStatus?: AptidaoFisicaStatus;
@@ -58,7 +58,6 @@ interface RelacaoResponsabilidade {
   tipoParentesco: string;
 }
 
-
 export async function POST(req: Request) {
   if (req.method !== 'POST') {
     return NextResponse.json(
@@ -92,7 +91,6 @@ export async function POST(req: Request) {
     );
   }
 }
-
 
 async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
   const users = Array.isArray(data) ? data : [data];
@@ -174,8 +172,9 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
               aptidaoFisicaLaudo: !!perfilData.aptidaoFisicaLaudo,
               aptidaoFisicaObs: perfilData.aptidaoFisicaObs,
               
-              escola: perfilData.escola,
-              serieEscolar: perfilData.serieEscolar,
+              escolaId: perfilData.escola,
+              serieEscolar: perfilData.serieEscolar as SerieEscolar | undefined,
+              
               endereco: perfilData.endereco,
               
               termoResponsabilidadeAssinado: !!perfilData.termoResponsabilidadeAssinado,

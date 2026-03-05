@@ -16,6 +16,7 @@ import { ptBR } from 'date-fns/locale';
 import { UserWithRelations } from '@/lib/auth'; 
 import { Prisma } from '@prisma/client';
 import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service';
+import { formatDate } from '@/lib/utils';
 
 type AnotacaoComRelacoes = Prisma.AnotacaoGetPayload<{
   include: {
@@ -191,7 +192,7 @@ export default function EvaluationsClient({
       conceitoAtual: conceitoAtualValor,
       filtroAplicado: descricaoFiltro,
       anotacoes: filteredAnnotations.map(a => ({
-        data: a.data,
+        data: formatDate(a.data) || '',
         tipo: a.tipo.titulo,
         pontos: Number(a.pontos),
         detalhes: a.detalhes,
@@ -276,7 +277,7 @@ export default function EvaluationsClient({
 
                     <div className="flex flex-col sm:items-end text-xs text-muted-foreground gap-0.5 whitespace-nowrap">
                          <span className="flex items-center gap-1">
-                             <Calendar className="h-3 w-3" /> {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}
+                             <Calendar className="h-3 w-3" /> {formatDate(anotacao.data)}
                          </span>
                     </div>
                   </div>
@@ -307,7 +308,7 @@ export default function EvaluationsClient({
                     <div className="flex flex-col gap-2 sm:items-end">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-3.5 w-3.5 opacity-70" />
-                            <span>Ocorrido em: {format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                            <span>Ocorrido em: {formatDate(anotacao.data)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-3.5 w-3.5 opacity-70" />
