@@ -12,6 +12,7 @@ model GmEventoCalendario {
   titulo    String
   descricao String?
   data      DateTime
+  dataFim   DateTime?
   tipo      TipoEvento
   createdAt DateTime   @default(now())
 
@@ -112,8 +113,8 @@ model Usuario {
   investigacoesBravura      ProcessoBravura[]    @relation("OficialBravura")
   qesCriados                QES[]
   logsCargoAdmin            CargoLog[]
-  notificacoes Notificacao[] 
-  pushSubscriptions PushSubscription[]
+  notificacoes              Notificacao[]
+  pushSubscriptions         PushSubscription[]
   comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
   escalasCriadas            Escala[]             @relation("EscalasCriadas")
   informativosCriados       Informativo[]        @relation("InformativosCriados")
@@ -122,8 +123,8 @@ model Usuario {
   dependentes               Responsabilidade[]   @relation("Responsavel")
   fatosObservados           Anotacao[]           @relation("FatosObservados")
   funcaoAdmin               FuncaoAdmin?         @relation(fields: [funcaoAdminId], references: [id])
-  atividadesCriadas    Atividade[]       @relation("AtividadesCriadas")
-  atividadesRecebidas  AtividadeAluno[]  @relation("AtividadesRecebidas")
+  atividadesCriadas         Atividade[]          @relation("AtividadesCriadas")
+  atividadesRecebidas       AtividadeAluno[]     @relation("AtividadesRecebidas")
 
   @@map("usuarios")
 }
@@ -155,6 +156,8 @@ model PerfilAluno {
   dataUltimaPromocao            DateTime?
   notaDesempatePromocao         Float?               @default(0)
   modalidadeUltimaPromocao      String?
+  turmaId                       String?
+  turma                         Turma?               @relation("AlunosDaTurma", fields: [turmaId], references: [id], map: "fk_perfil_aluno_turma")
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
   desempenhosEscolares          DesempenhoEscolar[]
   feedbacks                     Feedback[]
@@ -170,6 +173,7 @@ model PerfilAluno {
 
   @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
   @@index([cargoId])
+  @@index([turmaId])
   @@index([funcaoId])
   @@index([companhiaId])
   @@map("perfis_alunos")
@@ -664,13 +668,26 @@ model Notificacao {
   usuarioId String
   titulo    String
   mensagem  String
-  link      String?  
+  link      String?
   lida      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
+}
+
+model Turma {
+  id        String   @id @default(cuid())
+  nome      String
+  ano       Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alunos PerfilAluno[] @relation("AlunosDaTurma")
+
+  @@unique([nome, ano])
+  @@map("turmas")
 }
 
 model PushSubscription {
@@ -681,47 +698,47 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
 }
 
 model Atividade {
-  id          String   @id @default(cuid())
-  titulo      String
-  descricao   String   @db.Text
-  tipo        TipoAtividade @default(OUTRO)
-  
-  prazoEntrega DateTime? 
-  prazoEncerrado    Boolean   @default(false)
-  
+  id        String        @id @default(cuid())
+  titulo    String
+  descricao String        @db.Text
+  tipo      TipoAtividade @default(OUTRO)
+
+  prazoEntrega   DateTime?
+  prazoEncerrado Boolean   @default(false)
+
   criadoPorId String
-  criadoPor   Usuario  @relation("AtividadesCriadas", fields: [criadoPorId], references: [id])
+  criadoPor   Usuario @relation("AtividadesCriadas", fields: [criadoPorId], references: [id])
 
   destinatarios AtividadeAluno[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AtividadeAluno {
-  id            String   @id @default(cuid())
-  
-  atividadeId   String
-  atividade     Atividade @relation(fields: [atividadeId], references: [id], onDelete: Cascade)
-  
-  alunoId       String
-  aluno         Usuario   @relation("AtividadesRecebidas", fields: [alunoId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
-  status        StatusAtividade @default(PENDENTE)
-  
-  visualizadoEm DateTime? 
+  atividadeId String
+  atividade   Atividade @relation(fields: [atividadeId], references: [id], onDelete: Cascade)
+
+  alunoId String
+  aluno   Usuario @relation("AtividadesRecebidas", fields: [alunoId], references: [id], onDelete: Cascade)
+
+  status StatusAtividade @default(PENDENTE)
+
+  visualizadoEm DateTime?
   concluidoEm   DateTime?
-  
-  feedback      String?   @db.Text
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  feedback String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([atividadeId, alunoId])
 }

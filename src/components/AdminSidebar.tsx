@@ -94,6 +94,7 @@ export function AdminSidebar() {
     { href: "/admin/escalas", label: "Escalas", icon: ClipboardList },
     { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: Briefcase },
     { href: "/admin/calendario", label: "Calendário", icon: Calendar },
+    { href: "/admin/turmas", label: "Turmas", icon: Calendar },
     { href: "/admin/qes", label: "QES", icon: ScrollText },
     { href: "/admin/taf", label: "TAF", icon: Activity },
     { href: "/admin/qpe", label: "QPE", icon: FileSpreadsheet },

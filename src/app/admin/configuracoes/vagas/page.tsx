@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import prisma from '@/lib/prisma'
 
 import { EditarVagasDialog } from './editar-vagas-dialog'
+import { VisualizarAlunosDialog } from './visualizar-alunos'
 
 export default async function QuadroVagasPage() {
   const vagasDefinidas = await prisma.quadroVagasAntiguidade.findUnique({
@@ -19,31 +20,44 @@ export default async function QuadroVagasPage() {
       usuario: { status: 'ATIVO' },
       modalidadeUltimaPromocao: 'ANTIGUIDADE'
     },
-    include: { cargo: true }
+    include: {
+      cargo: true,
+      companhia: true,
+      usuario: { select: { nome: true, fotoUrl: true } }
+    }
   })
 
-  const ocupadas = {
-    superiores: 0, intermediarios: 0, subalternos: 0,
-    subtenentes: 0, sargentos: 0, cabos: 0, soldados: 0
+  type AlunoComRelacoes = typeof alunosAntiguidade[number]
+
+  const grupos: Record<string, AlunoComRelacoes[]> = {
+    superiores: [], intermediarios: [], subalternos: [],
+    subtenentes: [], sargentos: [], cabos: [], soldados: []
   }
 
   alunosAntiguidade.forEach(aluno => {
     const cargo = aluno.cargo
     if (!cargo) return
 
-    if (cargo.classe === 'SUPERIOR') ocupadas.superiores++
-    else if (cargo.classe === 'INTERMEDIARIO') ocupadas.intermediarios++
-    else if (cargo.classe === 'SUBALTERNO') ocupadas.subalternos++
-    
-    else if (cargo.abreviacao === 'ST') ocupadas.subtenentes++
-    else if (['1º SGT', '2º SGT', '3º SGT'].includes(cargo.abreviacao)) ocupadas.sargentos++
-    else if (cargo.abreviacao === 'CB') ocupadas.cabos++
-    else if (['SD', 'SD 1C', 'SD 2C'].includes(cargo.abreviacao)) ocupadas.soldados++ 
+    if (cargo.classe === 'SUPERIOR') grupos.superiores.push(aluno)
+    else if (cargo.classe === 'INTERMEDIARIO') grupos.intermediarios.push(aluno)
+    else if (cargo.classe === 'SUBALTERNO') grupos.subalternos.push(aluno)
+
+    else if (cargo.abreviacao === 'ST') grupos.subtenentes.push(aluno)
+    else if (['1º SGT', '2º SGT', '3º SGT'].includes(cargo.abreviacao)) grupos.sargentos.push(aluno)
+    else if (cargo.abreviacao === 'CB') grupos.cabos.push(aluno)
+    else if (['SD', 'SD 1C', 'SD 2C'].includes(cargo.abreviacao)) grupos.soldados.push(aluno)
   })
 
-  const renderRow = (categoria: string, limite: number, uso: number) => {
+  const renderRow = (categoria: string, chave: string, limite: number) => {
+    const listaAlunos = grupos[chave]
+    const uso = listaAlunos.length
     const livres = limite - uso
     const isCheio = livres <= 0
+
+    const alunosFormatados = listaAlunos.map(aluno => ({
+      ...aluno,
+      numero: aluno.numero ? parseInt(aluno.numero, 10) : null
+    }))
 
     return (
       <TableRow key={categoria}>
@@ -59,23 +73,26 @@ export default async function QuadroVagasPage() {
             </Badge>
           )}
         </TableCell>
+        <TableCell className="text-right">
+          <VisualizarAlunosDialog titulo={categoria} alunos={alunosFormatados} />
+        </TableCell>
       </TableRow>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      
+    <div className="space-y-6">
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Quadro de Vagas - Antiguidade</h1>
           <p className="text-muted-foreground">Controle de limites para promoções por critério de antiguidade.</p>
         </div>
-        
+
         <EditarVagasDialog vagasAtuais={vagasDefinidas} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="bg-red-600 text-white rounded-t-lg">
             <CardTitle className="text-lg">OFICIAIS (Total: {vagasDefinidas.superiores + vagasDefinidas.intermediarios + vagasDefinidas.subalternos})</CardTitle>
@@ -89,12 +106,13 @@ export default async function QuadroVagasPage() {
                   <TableHead className="text-center">Vagas</TableHead>
                   <TableHead className="text-center">Ocupadas</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {renderRow('Superiores', vagasDefinidas.superiores, ocupadas.superiores)}
-                {renderRow('Intermediários', vagasDefinidas.intermediarios, ocupadas.intermediarios)}
-                {renderRow('Subalternos', vagasDefinidas.subalternos, ocupadas.subalternos)}
+                {renderRow('Superiores', 'superiores', vagasDefinidas.superiores)}
+                {renderRow('Intermediários', 'intermediarios', vagasDefinidas.intermediarios)}
+                {renderRow('Subalternos', 'subalternos', vagasDefinidas.subalternos)}
               </TableBody>
             </Table>
           </CardContent>
@@ -113,13 +131,14 @@ export default async function QuadroVagasPage() {
                   <TableHead className="text-center">Vagas</TableHead>
                   <TableHead className="text-center">Ocupadas</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {renderRow('Subtenentes', vagasDefinidas.subtenentes, ocupadas.subtenentes)}
-                {renderRow('Sargentos', vagasDefinidas.sargentos, ocupadas.sargentos)}
-                {renderRow('Cabos', vagasDefinidas.cabos, ocupadas.cabos)}
-                {renderRow('Soldados', vagasDefinidas.soldados, ocupadas.soldados)}
+                {renderRow('Subtenentes', 'subtenentes', vagasDefinidas.subtenentes)}
+                {renderRow('Sargentos', 'sargentos', vagasDefinidas.sargentos)}
+                {renderRow('Cabos', 'cabos', vagasDefinidas.cabos)}
+                {renderRow('Soldados', 'soldados', vagasDefinidas.soldados)}
               </TableBody>
             </Table>
           </CardContent>

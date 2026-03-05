@@ -8,21 +8,29 @@ import { z } from 'zod'
 const EventoSchema = z.object({
   titulo: z.string().min(1, "Título é obrigatório"),
   data: z.date(),
+  dataFim: z.date().optional(), 
   tipo: z.nativeEnum(TipoEvento),
   descricao: z.string().optional()
 })
 
 export async function criarEvento(formData: FormData) {
   const dataRaw = formData.get('data') as string
+  const dataFimRaw = formData.get('dataFim') as string | null
   const tipo = formData.get('tipo') as TipoEvento
   
   const dataEvento = new Date(dataRaw + 'T12:00:00Z')
+  let dataFimEvento = undefined
+
+  if (dataFimRaw) {
+    dataFimEvento = new Date(dataFimRaw + 'T12:00:00Z')
+  }
 
   const dados = {
     titulo: formData.get('titulo') as string,
     descricao: formData.get('descricao') as string,
     tipo,
-    data: dataEvento
+    data: dataEvento,
+    dataFim: dataFimEvento
   }
 
   try {
