@@ -6,6 +6,8 @@ import { QES, Anotacao, TipoDeAnotacao, ComunicacaoInterna, Informativo, Escala 
 import Link from 'next/link';
 import { UserWithRelations } from "@/lib/auth";
 
+import { formatDate } from "@/lib/utils";
+
 type AnotacaoWithType = Anotacao & {
   tipo: TipoDeAnotacao;
 };
@@ -170,7 +172,7 @@ export default function DashboardClient({
                 <UniversalListItem 
                   key={qes.id} 
                   title={qes.titulo} 
-                  date={`Publicado em: ${new Date(qes.createdAt).toLocaleDateString('pt-BR')}`} 
+                  date={`Publicado em: ${formatDate(qes.createdAt)}`} 
                   url={qes.arquivoUrl} 
                 />
               ))}
@@ -189,7 +191,7 @@ export default function DashboardClient({
                 <AnnotationListItem
                   key={anotacao.id}
                   title={anotacao.tipo.titulo}
-                  date={`Recebido em: ${new Date(anotacao.data).toLocaleDateString('pt-BR')}`}
+                  date={`Recebido em: ${formatDate(anotacao.data)}`}
                 />
               ))}
             </div>
@@ -211,7 +213,7 @@ export default function DashboardClient({
                 <UniversalListItem
                   key={info.id}
                   title={info.titulo}
-                  date={`Publicado em: ${new Date(info.dataPublicacao).toLocaleDateString('pt-BR')}`}
+                  date={`Publicado em: ${formatDate(info.dataPublicacao)}`}
                   url={info.arquivoUrl || "/informativos"}
                 />
               ))}
@@ -234,7 +236,7 @@ export default function DashboardClient({
                 <UniversalListItem
                   key={escala.id}
                   title={`Escala: ${escala.tipo}`}
-                  date={`Data: ${new Date(escala.dataEscala).toLocaleDateString('pt-BR')}`}
+                  date={`Data: ${formatDate(escala.dataEscala)}`}
                   url={escala.pdfUrl || "#"}
                 />
               ))}
@@ -259,7 +261,7 @@ export default function DashboardClient({
                 <UniversalListItem
                   key={ci.id}
                   title={`CI ${String(ci.numeroSequencial).padStart(3, '0')}/${ci.anoReferencia} - ${ci.titulo}`}
-                  date={`Publicado em: ${new Date(ci.dataPublicacao).toLocaleDateString('pt-BR')}`}
+                  date={`Publicado em: ${formatDate(ci.dataPublicacao)}`}
                   url={ci.arquivoUrl}
                 />
               ))}
