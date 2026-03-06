@@ -131,6 +131,7 @@ model Usuario {
   funcaoAdmin               FuncaoAdmin?         @relation(fields: [funcaoAdminId], references: [id])
   atividadesCriadas         Atividade[]          @relation("AtividadesCriadas")
   atividadesRecebidas       AtividadeAluno[]     @relation("AtividadesRecebidas")
+  interacoesMaterial InteracaoMaterial[]
 
   @@map("usuarios")
 }
@@ -187,6 +188,44 @@ model PerfilAluno {
   @@index([funcaoId])
   @@index([companhiaId])
   @@map("perfis_alunos")
+}
+
+model MaterialAuxiliar {
+  id          String   @id @default(uuid())
+  titulo      String
+  descricao   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  arquivos    ArquivoMaterial[]
+  interacoes  InteracaoMaterial[]
+}
+
+model ArquivoMaterial {
+  id          String   @id @default(uuid())
+  nome        String  
+  url         String 
+  tipo        String 
+  tamanho     Int  
+  
+  materialId  String
+  material    MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+}
+
+model InteracaoMaterial {
+  id          String   @id @default(uuid())
+  tipo        TipoInteracaoMaterial
+  createdAt   DateTime @default(now())
+
+  materialId  String
+  material    MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  arquivoId   String?  
 }
 
 model ComunicacaoInterna {
@@ -952,4 +991,9 @@ enum SerieEscolar {
   SEGUNDO_ANO_MEDIO
   TERCEIRO_ANO_MEDIO
   CONCLUIDO
+}
+
+enum TipoInteracaoMaterial {
+  VISUALIZACAO
+  DOWNLOAD
 }
