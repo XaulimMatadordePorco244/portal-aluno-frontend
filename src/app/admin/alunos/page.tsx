@@ -15,6 +15,7 @@ import { Plus, Users, UserCheck, UserMinus, ShieldAlert, ArrowDownAZ, Hash, Meda
 import { AlunoActions } from "./aluno-actions";
 import { Badge } from "@/components/ui/badge";
 import { AlunoFiltros } from "./aluno-filtros";
+import { FotoHover } from "@/components/ui/foto-hover"; 
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -41,7 +42,6 @@ export default async function AdminAlunosPage(props: PageProps) {
 
   const anoAtual = new Date().getFullYear();
   const anosDisponiveis = Array.from({ length: anoAtual - 2015 + 1 }, (_, i) => anoAtual - i);
-
 
   let anoFilterClause: Prisma.UsuarioWhereInput = {};
   
@@ -195,6 +195,7 @@ export default async function AdminAlunosPage(props: PageProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16 text-center">Foto</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Turma</TableHead>
                   <TableHead>Nº</TableHead>
@@ -208,13 +209,21 @@ export default async function AdminAlunosPage(props: PageProps) {
                   const isInativo = aluno.status === 'INATIVO';
                   return (
                     <TableRow key={aluno.id} className={isInativo ? 'opacity-60 bg-muted/30' : ''}>
+                      <TableCell className="text-center align-middle">
+                        <FotoHover 
+                          src={aluno.fotoUrl} 
+                          alt={aluno.nome} 
+                        />
+                      </TableCell>
+                      
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {isInativo && (
                             <span title="Inativo/Desligado">
                               <ShieldAlert className="w-4 h-4 text-destructive" />
                             </span>
-                          )}                          <Link href={`/admin/alunos/${aluno.perfilAluno?.id}`} className="hover:underline font-semibold text-primary">
+                          )}                          
+                          <Link href={`/admin/alunos/${aluno.perfilAluno?.id}`} className="hover:underline font-semibold text-primary">
                             {aluno.nome}
                           </Link>
                         </div>
@@ -237,7 +246,7 @@ export default async function AdminAlunosPage(props: PageProps) {
                 })}
                 {alunos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                       Nenhum aluno encontrado para os filtros selecionados.
                     </TableCell>
                   </TableRow>

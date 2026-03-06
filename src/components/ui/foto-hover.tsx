@@ -1,6 +1,6 @@
 import { User } from "lucide-react"
 import { cn } from "@/lib/utils"
-import Image from "next/image" // <-- Importamos o Image do Next.js
+import Image from "next/image"
 
 interface FotoHoverProps {
     src?: string | null
