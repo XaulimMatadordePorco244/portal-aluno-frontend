@@ -28,10 +28,9 @@ import {
 } from '@/components/ui/card';
 import { 
   AlertCircle, 
-  CheckCircle2
+  CheckCircle2,
+  Plus 
 } from 'lucide-react';
-
-import { SearchAlunos } from '@/components/aluno/search-alunos';
 
 export const metadata: Metadata = {
   title: 'Gerenciar Promoções',
@@ -41,18 +40,16 @@ export const metadata: Metadata = {
 export default async function AdminPromocoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tab?: string }>; 
+  searchParams: Promise<{ tab?: string }>; 
 }) {
   const resolvedSearchParams = await searchParams;
-  const query = resolvedSearchParams?.q || '';
   
   const [alunosForaDeData, alunosPorAntiguidade, historicoRecente] = await Promise.all([
     prisma.perfilAluno.findMany({
       where: { 
         foraDeData: true,
         usuario: { 
-            status: 'ATIVO',
-            nome: { contains: query } 
+            status: 'ATIVO'
         }
       },
       include: {
@@ -71,8 +68,7 @@ export default async function AdminPromocoesPage({
       where: { 
         foraDeData: false,
         usuario: { 
-            status: 'ATIVO',
-            nome: { contains: query }
+            status: 'ATIVO'
         },
         cargoId: { not: null }
       },
@@ -117,9 +113,12 @@ export default async function AdminPromocoesPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-           
-           <SearchAlunos />
-           
+           <Link href="/admin/promocoes/nova">
+             <Button>
+               <Plus className="mr-2 h-4 w-4" />
+               Nova Transição
+             </Button>
+           </Link>
         </div>
       </div>
 

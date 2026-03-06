@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; 
 import { Bell, Check, BellRing } from "lucide-react"; 
 import { Button } from "@/components/ui/Button";
 import {
@@ -16,10 +17,10 @@ type Notificacao = {
   id: string;
   titulo: string;
   mensagem: string;
+  link: string | null;
   lida: boolean;
   createdAt: string;
 };
-
 
 function BotaoAtivarNotificacoes() {
   const [status, setStatus] = useState<"loading" | "inscrito" | "desativado" | "bloqueado" | "nao-suportado">("loading");
@@ -86,7 +87,6 @@ function BotaoAtivarNotificacoes() {
 
   return (
     <div className="p-3 bg-blue-50 border-b border-blue-100 dark:bg-blue-950/30 dark:border-blue-900 flex flex-col gap-2 items-center text-center">
- 
       <button 
         onClick={ativarNoCelular}
         className="text-[11px] bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors"
@@ -98,10 +98,10 @@ function BotaoAtivarNotificacoes() {
   );
 }
 
-
 export function NotificacoesDropdown() {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [open, setOpen] = useState(false);
+  const router = useRouter(); 
 
   const fetchNotificacoes = async () => {
     try {
@@ -128,6 +128,13 @@ export function NotificacoesDropdown() {
     } catch (error) {
       console.error("Erro ao marcar como lidas", error);
     }
+  };
+
+  const handleCliqueNotificacao = (notificacao: Notificacao) => {
+    if (!notificacao.link) return;
+
+    router.push(notificacao.link);
+    setOpen(false);
   };
 
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
@@ -167,12 +174,15 @@ export function NotificacoesDropdown() {
               {notificacoes.map((notificacao) => (
                 <div
                   key={notificacao.id}
-                  className={`p-4 border-b last:border-0 transition-colors hover:bg-muted/50 ${
+                  onClick={() => handleCliqueNotificacao(notificacao)}
+                  className={`p-4 border-b last:border-0 transition-colors ${
                     !notificacao.lida ? "bg-muted/20" : ""
+                  } ${
+                    notificacao.link ? "cursor-pointer hover:bg-muted/50" : "opacity-75 cursor-default"
                   }`}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className={`text-sm ${!notificacao.lida ? "font-semibold" : "font-medium"}`}>
+                    <span className={`text-sm ${!notificacao.lida ? "font-semibold text-primary" : "font-medium"}`}>
                       {notificacao.titulo}
                     </span>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
@@ -182,7 +192,11 @@ export function NotificacoesDropdown() {
                       })}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
+                  <p className={`text-xs line-clamp-2 ${
+                    notificacao.mensagem.includes('removido') || !notificacao.link 
+                      ? 'text-destructive font-medium' 
+                      : 'text-muted-foreground'
+                  }`}>
                     {notificacao.mensagem}
                   </p>
                 </div>
