@@ -37,7 +37,7 @@ export default async function MateriaisAlunoPage() {
           {materiais.map((material) => (
             <Link 
               key={material.id} 
-              href={`/aluno/materiais/${material.id}`}
+              href={`/materiais/${material.id}`}
               className="group flex flex-col justify-between rounded-xl border border-border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all hover:border-primary/50 overflow-hidden h-full"
             >
               <div className="p-6">
