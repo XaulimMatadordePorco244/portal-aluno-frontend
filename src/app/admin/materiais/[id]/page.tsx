@@ -7,18 +7,21 @@ import { revalidatePath } from "next/cache";
 
 export const revalidate = 0;
 
-export default async function DetalhesMaterialAdminPage({ 
-  params 
-}: { 
-  params: { id: string } 
+export default async function DetalhesMaterialAdminPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
 }) {
+
+  const { id } = await params;
+
   const material = await prisma.materialAuxiliar.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       arquivos: true,
       interacoes: {
         include: {
-          usuario: true, 
+          usuario: true,
         },
         orderBy: { createdAt: "desc" }
       },

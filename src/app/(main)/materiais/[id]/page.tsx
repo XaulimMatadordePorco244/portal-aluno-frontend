@@ -5,13 +5,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArquivosList } from "./arquivos-list";
 
-export default async function DetalhesMaterialPage({ 
-  params 
-}: { 
-  params: { id: string } 
+export default async function DetalhesMaterialPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   const material = await prisma.materialAuxiliar.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       arquivos: true,
     },
@@ -23,11 +25,13 @@ export default async function DetalhesMaterialPage({
 
   return (
     <div className="space-y-6">
-      <Link 
-        href="/aluno/materiais" 
+      <Link
+        href="/aluno/materiais"
         className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m15 18-6-6 6-6"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
         Voltar para a lista
       </Link>
 
@@ -42,6 +46,7 @@ export default async function DetalhesMaterialPage({
                 Adicionado em {format(new Date(material.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}
               </span>
             </div>
+
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               {material.titulo}
             </h1>
