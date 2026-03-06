@@ -56,8 +56,8 @@ export default async function MateriaisAdminPage() {
               <tr>
                 <th className="h-12 px-4 text-left align-middle font-medium">Título / Tópico</th>
                 <th className="h-12 px-4 text-center align-middle font-medium">Arquivos</th>
-                <th className="h-12 px-4 text-center align-middle font-medium">👁️ Views Únicas</th>
-                <th className="h-12 px-4 text-center align-middle font-medium">💾 Downloads</th>
+                <th className="h-12 px-4 text-center align-middle font-medium">Views Únicas</th>
+                <th className="h-12 px-4 text-center align-middle font-medium">Downloads</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Data de Criação</th>
                 <th className="h-12 px-4 text-right align-middle font-medium">Ações</th>
               </tr>

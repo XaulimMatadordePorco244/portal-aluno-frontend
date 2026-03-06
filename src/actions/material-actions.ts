@@ -156,3 +156,71 @@ export async function excluirMaterialAuxiliar(id: string) {
     return { success: false, message: "Erro interno ao excluir material." };
   }
 }
+
+
+export async function excluirMaterialCompleto(materialId: string) {
+  try {
+    const material = await prisma.materialAuxiliar.findUnique({
+      where: { id: materialId },
+      include: { arquivos: true },
+    });
+
+    if (!material) return { success: false, message: "Material não encontrado." };
+
+    for (const arquivo of material.arquivos) {
+      await del(arquivo.url);
+    }
+
+    await prisma.interacaoMaterial.deleteMany({ where: { materialId } });
+    await prisma.arquivoMaterial.deleteMany({ where: { materialId } });
+    await prisma.materialAuxiliar.delete({ where: { id: materialId } });
+
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Erro ao excluir material." };
+  }
+}
+
+export async function excluirArquivoIndividual(arquivoId: string) {
+  try {
+    const arquivo = await prisma.arquivoMaterial.findUnique({ where: { id: arquivoId } });
+    if (!arquivo) return { success: false };
+
+    await del(arquivo.url);
+    await prisma.interacaoMaterial.deleteMany({ where: { arquivoId } });
+    await prisma.arquivoMaterial.delete({ where: { id: arquivoId } });
+
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false };
+  }
+}
+
+export async function adicionarArquivosExtra(materialId: string, formData: FormData) {
+  try {
+    const arquivos = formData.getAll("arquivos") as File[];
+    if (!arquivos || arquivos.length === 0) return { success: false };
+
+    for (const file of arquivos) {
+      const blob = await put(`materiais/${Date.now()}-${file.name}`, file, {
+        access: "public",
+      });
+
+      await prisma.arquivoMaterial.create({
+        data: {
+          nome: file.name,
+          url: blob.url,
+          tamanho: file.size,
+          tipo: file.type,
+          materialId: materialId,
+        },
+      });
+    }
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false };
+  }
+}
