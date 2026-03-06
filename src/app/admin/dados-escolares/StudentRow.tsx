@@ -51,6 +51,8 @@ interface StudentRowProps {
 }
 
 const SERIES_MAP: Record<string, string> = {
+    "QUARTO_ANO_FUNDAMENTAL": "4º Ano - Fund.",
+    "QUINTO_ANO_FUNDAMENTAL": "5º Ano - Fund.",
     "SEXTO_ANO_FUNDAMENTAL": "6º Ano - Fund.",
     "SETIMO_ANO_FUNDAMENTAL": "7º Ano - Fund.",
     "OITAVO_ANO_FUNDAMENTAL": "8º Ano - Fund.",

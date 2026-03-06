@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/Button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// IMPORTAMOS O TIPO AtualizacaoEscolarData QUE CRIAMOS NAS ACTIONS
 import { salvarDadosEscolaresEmLote, criarEscola, getTodosAlunos, AtualizacaoEscolarData } from "./actions"
 import { Loader2, SaveAll, X } from "lucide-react"
 import { StudentRow } from "./StudentRow"
@@ -26,7 +25,7 @@ export interface AlunoType {
         turmaEscolar: string | null;
         cargo: {
             abreviacao: string | null;
-            precedencia: number | null; // CORRIGIDO DE 'rank' PARA 'precedencia'
+            precedencia: number | null; 
         } | null;
         escola: EscolaType | null;
     } | null;
@@ -83,7 +82,6 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: Clien
         if (updates.length === 0) return alert("Nenhuma alteração pendente.")
 
         setLoading(true)
-        // Usamos 'as unknown as AtualizacaoEscolarData[]' para forçar o TS a aceitar os dados
         const res = await salvarDadosEscolaresEmLote(updates as unknown as AtualizacaoEscolarData[], anoAtual)
         setLoading(false)
 

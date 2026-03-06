@@ -37,7 +37,7 @@ export default async function NovaPromocaoPage() {
           nome: true,
           abreviacao: true,
           precedencia: true,
-          tipo: true // <--- CORREÇÃO: Adicionado o campo 'tipo' aqui
+          tipo: true
         }
       }
     },
@@ -56,20 +56,18 @@ export default async function NovaPromocaoPage() {
     }
   });
 
-  // 2. Transformação de Dados (Adapter Pattern)
   const alunos = alunosDb.map(aluno => ({
     id: aluno.id,
     usuario: { nome: aluno.usuario.nome },
     nomeDeGuerra: aluno.nomeDeGuerra,
     conceitoAtual: aluno.conceitoAtual,
     
-    // Se cargo existir, mapeamos incluindo o TIPO convertido para string
     cargo: aluno.cargo ? {
       id: aluno.cargo.id,
       nome: aluno.cargo.nome,
       abreviacao: aluno.cargo.abreviacao ?? '', 
       precedencia: aluno.cargo.precedencia,
-      tipo: aluno.cargo.tipo.toString() // <--- Conversão do Enum para String
+      tipo: aluno.cargo.tipo.toString() 
     } : undefined 
   }));
 
@@ -79,7 +77,7 @@ export default async function NovaPromocaoPage() {
   }));
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="space-y-6">
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Nova Transição em Massa</h1>
@@ -89,7 +87,7 @@ export default async function NovaPromocaoPage() {
         </p>
       </div>
 
-      <div className="max-w-4xl">
+      <div >
         <NovaTransicaoForm 
           alunos={alunos} 
           cargos={cargos} 
