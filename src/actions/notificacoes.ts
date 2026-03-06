@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 
+
+
 export async function criarNotificacao(usuarioId: string, titulo: string, mensagem: string, linkRelacionado?: string) {
   try {
     await prisma.notificacao.create({

@@ -724,6 +724,7 @@ model Notificacao {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
+  
 }
 
 model Turma {

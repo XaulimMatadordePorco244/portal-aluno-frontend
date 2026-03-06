@@ -57,7 +57,7 @@ export async function criarMaterialAuxiliar(formData: FormData) {
         usuarioId: aluno.id,
         titulo: "Novo Material Auxiliar",
         mensagem: `O material "${titulo}" foi adicionado. Clique para acessar.`,
-        link: `/aluno/materiais/${novoMaterial.id}`,
+        link: `/materiais/${novoMaterial.id}`,
         lida: false,
       }));
 
@@ -69,13 +69,13 @@ export async function criarMaterialAuxiliar(formData: FormData) {
       await notificarTodosAlunosEscala({
         titulo: "Novo Material Disponível 📚",
         mensagem: `${titulo} já está disponível para estudo.`,
-        url: `/aluno/materiais/${novoMaterial.id}`,
+        url: `/materiais/${novoMaterial.id}`,
         tag: `material-${novoMaterial.id}`
       });
     }
 
     revalidatePath("/admin/materiais");
-    revalidatePath("/aluno/materiais");
+    revalidatePath("/materiais");
     return { success: true, message: "Material criado e alunos notificados!" };
 
   } catch (error) {
@@ -147,8 +147,19 @@ export async function excluirMaterialAuxiliar(id: string) {
       where: { id }
     });
 
+
+    await prisma.notificacao.updateMany({
+      where: { 
+        link: { contains: id } 
+      },
+      data: {
+        link: null,
+        mensagem: "Este material foi removido pelo administrador." 
+      }
+    });
+
     revalidatePath("/admin/materiais");
-    revalidatePath("/aluno/materiais");
+    revalidatePath("/materiais");
     return { success: true, message: "Material excluído com sucesso." };
 
   } catch (error) {
@@ -156,7 +167,6 @@ export async function excluirMaterialAuxiliar(id: string) {
     return { success: false, message: "Erro interno ao excluir material." };
   }
 }
-
 
 export async function excluirMaterialCompleto(materialId: string) {
   try {
@@ -174,6 +184,17 @@ export async function excluirMaterialCompleto(materialId: string) {
     await prisma.interacaoMaterial.deleteMany({ where: { materialId } });
     await prisma.arquivoMaterial.deleteMany({ where: { materialId } });
     await prisma.materialAuxiliar.delete({ where: { id: materialId } });
+
+
+    await prisma.notificacao.updateMany({
+      where: { 
+        link: { contains: materialId } 
+      },
+      data: {
+        link: null, 
+        mensagem: "Este material foi removido pelo administrador." 
+      }
+    });
 
     return { success: true };
   } catch (error) {
