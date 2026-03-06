@@ -4,7 +4,6 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { recalcularConceitoAluno } from "@/lib/conceitoUtils";
 
 import { criarNotificacao } from "@/actions/notificacoes"; 
@@ -77,7 +76,10 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
     });
 
     if (!validatedFields.success) {
-      return { errors: validatedFields.error.flatten().fieldErrors };
+      return { 
+        success: false, 
+        errors: validatedFields.error.flatten().fieldErrors 
+      };
     }
 
     const { tipoId, data, pontos: pontosFormulario, detalhes, quemAnotouId, quemAnotouNome } = validatedFields.data;
@@ -110,6 +112,7 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
         if (dataLancamento < dataPromocao) {
           const nome = alunoInfo.nomeDeGuerra || "Aluno";
           return { 
+            success: false, 
             message: `BLOQUEADO: A data (${dataLancamento.toLocaleDateString()}) é anterior à promoção de ${nome}.` 
           };
         }
@@ -121,16 +124,16 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
     });
 
     if (!tipoAnotacao) {
-        return { message: "Tipo de anotação inválido." };
+        return { success: false, message: "Tipo de anotação inválido." }; 
     }
 
     let pontosFinais = pontosFormulario;
     
     if (tipoAnotacao.abertoCoordenacao) {
       if (tipoAnotacao.categoriaAberto === "ELOGIO" && pontosFinais <= 0) 
-        return { message: "Elogios devem ter pontuação positiva." };
+        return { success: false, message: "Elogios devem ter pontuação positiva." }; 
       if (tipoAnotacao.categoriaAberto === "PUNICAO" && pontosFinais >= 0) 
-        return { message: "Punições devem ter pontuação negativa." };
+        return { success: false, message: "Punições devem ter pontuação negativa." }; 
     } else {
       pontosFinais = Number(tipoAnotacao.pontos) || 0;
     }
@@ -211,14 +214,14 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
 
   } catch (error) {
     console.error(error);
-    return { message: "Erro interno ao criar anotação." };
+    return { success: false, message: "Erro interno ao criar anotação." }; 
   }
 
   revalidatePath("/admin/anotacoes");
   revalidatePath("/admin/classificacao-geral");
   revalidatePath("/admin/alunos");
   
-  redirect("/admin/alunos");
+  return { success: true, message: "Anotação registada com sucesso!" }; 
 }
 
 export async function updateAnotacao(id: string, prevState: FormState, formData: FormData): Promise<FormState> {
@@ -249,7 +252,10 @@ export async function updateAnotacao(id: string, prevState: FormState, formData:
     });
 
     if (!validatedFields.success) {
-        return { errors: validatedFields.error.flatten().fieldErrors };
+        return { 
+          success: false, 
+          errors: validatedFields.error.flatten().fieldErrors 
+        };
     }
 
     const { tipoId, data, pontos, detalhes, quemAnotouId, quemAnotouNome } = validatedFields.data;
@@ -259,7 +265,7 @@ export async function updateAnotacao(id: string, prevState: FormState, formData:
         select: { alunoId: true }
     });
 
-    if (!anotacaoExistente) return { message: "Anotação não encontrada." };
+    if (!anotacaoExistente) return { success: false, message: "Anotação não encontrada." }; // <-- Corrigido
 
     await prisma.anotacao.update({
         where: { id },

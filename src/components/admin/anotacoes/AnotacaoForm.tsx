@@ -12,7 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnotacao, updateAnotacao } from '@/actions/anotacoes'; 
 import { Usuario, TipoDeAnotacao, Companhia, PerfilAluno, Cargo } from '@prisma/client';
-import { Check, ChevronsUpDown, X, Loader2, UserCheck, Globe, User } from 'lucide-react';
+import { Check, ChevronsUpDown, X, Loader2, UserCheck, Globe, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -213,11 +213,15 @@ export default function AnotacaoForm({
 
       if (result?.success) {
         toast.success(isEditing ? "Anotação atualizada!" : "Anotação lançada!");
-        if (preSelectedAlunoId || initialData?.alunoId) {
-            router.push(`/admin/alunos/${preSelectedAlunoId || initialData?.alunoId}`);
-        } else {
-            router.push("/admin/alunos");
-        }
+        
+        setTimeout(() => {
+          if (preSelectedAlunoId || initialData?.alunoId) {
+              router.push(`/admin/anotacoes`);
+          } else {
+              router.push("/admin");
+          }
+        }, 1500); 
+
       } else if (result?.message) {
         toast.error(result.message);
       }
@@ -546,9 +550,16 @@ export default function AnotacaoForm({
       </div>
 
       {formState?.message && (
-        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium flex items-center gap-2">
-            <X className="h-4 w-4" />
-            {formState.message}
+        <div 
+          className={cn(
+            "p-3 rounded-md border text-sm font-medium flex items-center gap-2",
+            formState.success 
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+              : "bg-destructive/10 border-destructive/20 text-destructive"
+          )}
+        >
+          {formState.success ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          {formState.message}
         </div>
       )}
 
