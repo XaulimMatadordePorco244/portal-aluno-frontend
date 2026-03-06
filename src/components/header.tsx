@@ -78,6 +78,7 @@ const menuGroups = [
       { href: "/qes", label: "Quadro de Estudo (QES)", icon: CalendarClock },
       { href: "/classification", label: "Classificação Geral", icon: Trophy },
       { href: "/antiguidade", label: "Antiguidade", icon: Trophy },
+      { href: "/materiais", label: "Materiais Auxiliares", icon: Trophy },
       { href: "/regulations", label: "Regulamentos", icon: Scale },
       { href: "/informativos", label: "Informativos", icon: Newspaper },
       { href: "/comunicacoes-internas", label: "Comunicações Internas", icon: Mail },
@@ -161,7 +162,7 @@ export function Header({ user }: { user: User | null }) {
             </DropdownMenu>
           )}
         </nav>
-        
+
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
