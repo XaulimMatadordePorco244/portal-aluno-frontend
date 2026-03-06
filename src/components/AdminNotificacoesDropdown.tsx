@@ -74,7 +74,7 @@ export function AdminNotificacoesDropdown() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative hover:bg-muted/50">
-          <Bell className="h-5 w-5 text-muted-foreground" />
+          <Bell className="h-5 w-5 text-foreground" />
           {naoLidasCount > 0 && (
             <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 border-2 border-background text-[10px] font-bold text-white animate-in zoom-in">
               {naoLidasCount > 99 ? '99+' : naoLidasCount}

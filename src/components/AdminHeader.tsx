@@ -1,7 +1,7 @@
 "use client";
 
-import { User, Slash } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { User, ArrowLeft } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,52 +26,30 @@ export function AdminHeader({
     userImage?: string | null;
 }) {
     const pathname = usePathname();
-    const segments = pathname.split("/").filter(Boolean);
+    const router = useRouter();
 
-    const labels: Record<string, string> = {
-        admin: "Admin",
-        dashboard: "Dashboard",
-        alunos: "Alunos",
-        instrutores: "Instrutores",
-        novo: "Novo",
-        editar: "Editar",
-    };
+    const isDashboard = pathname === "/admin";
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 w-full items-center gap-4 border-b bg-background px-6 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                {segments.map((segment, index) => {
-                    const href = "/" + segments.slice(0, index + 1).join("/");
-                    const isLast = index === segments.length - 1;
-
-                    const label =
-                        labels[segment] ??
-                        segment.charAt(0).toUpperCase() + segment.slice(1);
-
-                    return (
-                        <div key={href} className="flex items-center gap-2">
-                            {!isLast ? (
-                                <Link
-                                    href={href}
-                                    className="hover:text-foreground transition-colors"
-                                >
-                                    {label}
-                                </Link>
-                            ) : (
-                                <span className="text-foreground font-semibold">
-                                    {label}
-                                </span>
-                            )}
-
-                            {!isLast && (
-                                <Slash className="h-4 w-4 text-muted-foreground/50" />
-                            )}
-                        </div>
-                    );
-                })}
+        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background px-6 shadow-sm">
+            
+            <div className="flex items-center">
+                {!isDashboard ? (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => router.back()}
+                        className="text-muted-foreground hover:text-foreground gap-2"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar
+                    </Button>
+                ) : (
+                    <div className="w-20" /> 
+                )}
             </div>
 
-            <div className="ml-auto flex items-center gap-4">
+            <div className="flex items-center gap-4">
                 
                 <ThemeToggle />
 
