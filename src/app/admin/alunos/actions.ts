@@ -19,7 +19,7 @@ import {
 
 const alunoSchema = z.object({
   nome: z.string().min(3, "Nome obrigatório"),
-  cpf: z.string().length(11, "CPF deve ter 11 dígitos"),
+  cpf: z.string().transform(val => val.replace(/\D/g, '')).pipe(z.string().length(11, "CPF deve ter 11 dígitos")),
   email: z.string().email().optional().or(z.literal("")),
   password: z.string().optional().or(z.literal("")),
   rg: z.string().optional(),
@@ -46,6 +46,12 @@ const alunoSchema = z.object({
   termoResponsabilidadeAssinado: z.string().optional(), 
   fazCursoExterno: z.string().optional(), 
   cursoExternoDescricao: z.string().optional(),
+
+  responsavelNome: z.string().min(3, "Nome do responsável é obrigatório"),
+  responsavelCpf: z.string().transform(val => val.replace(/\D/g, '')).pipe(z.string().length(11, "CPF do responsável inválido")),
+  responsavelParentesco: z.string().min(1, "Grau de parentesco é obrigatório"),
+  responsavelTelefone: z.string().min(1, "Telefone do responsável é obrigatório"),
+  responsavelEmail: z.string().email("Email do responsável inválido").optional().or(z.literal("")),
 });
 
 export type AlunoState = {
@@ -59,18 +65,18 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   if (!user || user.role !== 'ADMIN') return { message: "Acesso negado." };
 
   const rawData = Object.fromEntries(formData.entries());
-  
   const fotoPerfil = formData.get("fotoPerfil") as File | null;
 
   if (!rawData.email) delete rawData.email;
   if (!rawData.password) delete rawData.password;
+  if (!rawData.responsavelEmail) delete rawData.responsavelEmail;
   
   const validated = alunoSchema.safeParse(rawData);
 
   if (!validated.success) {
     return {
       errors: validated.error.flatten().fieldErrors,
-      message: "Erro de validação nos campos.",
+      message: "Erro de validação nos campos. Verifique os dados digitados.",
     };
   }
 
@@ -127,9 +133,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           
           escolaId: data.escola,
           serieEscolar: data.serieEscolar as SerieEscolar | undefined,
-          
           endereco: data.endereco,
-          
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
           cursoExternoDescricao: data.cursoExternoDescricao,
@@ -152,6 +156,34 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
             });
         }
       }
+
+      let responsavelUser = await tx.usuario.findUnique({
+        where: { cpf: data.responsavelCpf }
+      });
+
+      if (!responsavelUser) {
+        const passwordPadraoResp = await bcrypt.hash(data.responsavelCpf, 10); 
+        responsavelUser = await tx.usuario.create({
+            data: {
+                nome: data.responsavelNome,
+                cpf: data.responsavelCpf,
+                telefone: data.responsavelTelefone,
+                email: data.responsavelEmail || null,
+                password: passwordPadraoResp,
+                role: Role.RESPONSAVEL,
+                status: StatusUsuario.ATIVO
+            }
+        });
+      }
+
+      await tx.responsabilidade.create({
+        data: {
+            alunoId: novoUsuario.id,
+            responsavelId: responsavelUser.id,
+            tipoParentesco: data.responsavelParentesco
+        }
+      });
+
     });
 
   } catch (error: unknown) {
@@ -161,10 +193,10 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
       const prismaError = error as { code: string; meta?: { target?: string[] } };
       if (prismaError.code === 'P2002') {
         if (prismaError.meta?.target?.includes('cpf')) {
-          return { message: 'CPF já cadastrado.' };
+          return { message: 'Já existe um usuário com este CPF no sistema.' };
         }
         if (prismaError.meta?.target?.includes('numero')) {
-          return { message: 'Número já em uso.' };
+          return { message: 'Este número de matrícula já está em uso.' };
         }
       }
     }
@@ -175,6 +207,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
+
 
 export async function updateAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const id = formData.get("id") as string;
