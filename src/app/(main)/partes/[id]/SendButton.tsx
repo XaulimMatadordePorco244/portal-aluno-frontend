@@ -44,15 +44,25 @@ export function SendButton({ parteId }: SendButtonProps) {
             const pdfFile = await generatePartePDF(parteAtualizada);
 
             setLoadingText("Salvando documento...");
-            const formData = new FormData();
-            formData.append("file", pdfFile);
+            const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(pdfFile);
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = error => reject(error);
+            });
 
             const uploadResponse = await fetch(`/api/partes/${parteId}/upload`, {
                 method: 'POST',
-                body: formData,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fileBase64: base64, 
+                    fileName: pdfFile.name 
+                }),
             });
 
             if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json().catch(() => ({ error: 'Erro desconhecido' }));
+                console.error("Erro no upload (Resposta da API):", errorData);
                 console.warn("A parte foi enviada, mas houve um erro ao salvar o PDF no servidor.");
             }
 
