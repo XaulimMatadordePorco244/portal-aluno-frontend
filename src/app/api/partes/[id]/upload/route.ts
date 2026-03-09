@@ -39,7 +39,7 @@ export async function POST(
 
     return NextResponse.json({ 
       success: true, 
-      url: blob.url,
+      urlPdf: blob.url,
       message: "PDF salvo com sucesso!"
     });
 
