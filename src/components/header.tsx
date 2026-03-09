@@ -39,6 +39,7 @@ import {
   CalendarRange,
   Briefcase,
   LogOut,
+  Cake,
   ShieldAlert,
 } from "lucide-react";
 
@@ -81,6 +82,7 @@ const menuGroups = [
       { href: "/materiais", label: "Materiais Auxiliares", icon: Trophy },
       { href: "/regulations", label: "Regulamentos", icon: Scale },
       { href: "/informativos", label: "Informativos", icon: Newspaper },
+      { href: "/aniversariantes", label: "Aniversariantes", icon: Cake },
       { href: "/comunicacoes-internas", label: "Comunicações Internas", icon: Mail },
       { href: "/taf", label: "Teste de Aptidão Física", icon: Activity },
       { href: "/quadros", label: "QOGM e QPGM", icon: Users },
