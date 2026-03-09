@@ -37,7 +37,6 @@ function ErrorMsg({ error }: { error?: string[] }) {
 export default function AlunoForm({ cargos, companhias }: AlunoFormProps) {
   const [state, formAction] = useActionState(createAluno, undefined);
   const [cursoExterno, setCursoExterno] = useState(false);
-  
   const [profilePic, setProfilePic] = useState<File | null>(null);
 
   const handleSubmit = (formData: FormData) => {
@@ -257,6 +256,51 @@ export default function AlunoForm({ cargos, companhias }: AlunoFormProps) {
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
            <Checkbox id="termoResponsabilidadeAssinado" name="termoResponsabilidadeAssinado" />
            <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
+        </div>
+      </section>
+
+      <section className="space-y-4 pb-4">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">5</span>
+            Dados do Responsável
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="space-y-2">
+             <Label htmlFor="responsavelNome">Nome do Responsável</Label>
+             <Input id="responsavelNome" name="responsavelNome" placeholder="Nome completo do responsável" required />
+             <ErrorMsg error={state?.errors?.responsavelNome} />
+           </div>
+           <div className="space-y-2">
+             <Label htmlFor="responsavelCpf">CPF do Responsável</Label>
+             <Input id="responsavelCpf" name="responsavelCpf" placeholder="000.000.000-00" required maxLength={14} />
+             <ErrorMsg error={state?.errors?.responsavelCpf} />
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+               <Label htmlFor="responsavelParentesco">Grau de Parentesco</Label>
+               <Select name="responsavelParentesco" defaultValue="MAE">
+                 <SelectTrigger><SelectValue /></SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="MAE">Mãe</SelectItem>
+                   <SelectItem value="PAI">Pai</SelectItem>
+                   <SelectItem value="AVO">Avô/Avó</SelectItem>
+                   <SelectItem value="TIO">Tio(a)</SelectItem>
+                   <SelectItem value="IRMAO">Irmão(ã)</SelectItem>
+                   <SelectItem value="OUTRO">Outro</SelectItem>
+                 </SelectContent>
+               </Select>
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="responsavelTelefone">Telefone</Label>
+               <Input id="responsavelTelefone" name="responsavelTelefone" placeholder="(00) 00000-0000" required />
+            </div>
+            <div className="space-y-2">
+               <Label htmlFor="responsavelEmail">Email (Opcional)</Label>
+               <Input id="responsavelEmail" name="responsavelEmail" type="email" placeholder="email@exemplo.com" />
+            </div>
         </div>
       </section>
 

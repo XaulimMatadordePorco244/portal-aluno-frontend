@@ -13,8 +13,8 @@ export default async function NewAlunoPage() {
   ]);
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="max-w-4xl mx-auto">
+    <div >
+      <Card >
         <CardHeader>
           <CardTitle>Cadastrar Novo Aluno</CardTitle>
           <CardDescription>
@@ -22,7 +22,6 @@ export default async function NewAlunoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* 2. Passamos os dados obrigatórios para o formulário */}
           <AlunoForm cargos={cargos} companhias={companhias} />
         </CardContent>
       </Card>
