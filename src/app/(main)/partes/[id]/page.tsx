@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 
 import { SendButton } from './SendButton';
 import { DownloadButton } from './DownloadButton';
-import { DeleteButton } from '@/components/partes/DeleteButton'; 
+import { DeleteButton } from '@/components/partes/DeleteButton';
 
 async function getParteDetails(id: string) {
   const user = await getCurrentUser();
@@ -26,8 +26,8 @@ async function getParteDetails(id: string) {
           }
         }
       },
-      analises: { 
-        include: { 
+      analises: {
+        include: {
           analista: {
             include: {
               perfilAluno: {
@@ -37,11 +37,11 @@ async function getParteDetails(id: string) {
                 }
               }
             }
-          } 
-        } 
+          }
+        }
       },
-      etapas: { 
-        include: { 
+      etapas: {
+        include: {
           responsavel: {
             include: {
               perfilAluno: {
@@ -51,8 +51,8 @@ async function getParteDetails(id: string) {
                 }
               }
             }
-          } 
-        } 
+          }
+        }
       },
       logs: true,
     },
@@ -64,13 +64,13 @@ async function getParteDetails(id: string) {
   return parte;
 }
 
-export default async function Page({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+export default async function Page({
+  params
+}: {
+  params: Promise<{ id: string }>
 }) {
-   const { id } = await params;
-  
+  const { id } = await params;
+
   const parte = await getParteDetails(id);
 
   if (!parte) {
@@ -78,9 +78,8 @@ export default async function Page({
   }
 
   const perfil = parte.autor.perfilAluno;
-  const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${
-    perfil?.nomeDeGuerra || parte.autor.nome
-  }`;
+  const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || parte.autor.nome
+    }`;
 
   return (
     <div>
@@ -123,7 +122,7 @@ export default async function Page({
                 <p className="text-sm text-muted-foreground text-center">
                   Este documento ainda é um rascunho. Revise, edite se necessário, ou envie para análise.
                 </p>
-                
+
                 <div className="flex flex-wrap justify-center gap-3 w-full">
                   <Link href={`/partes/${parte.id}/editar`}>
                     <Button variant="outline">
@@ -134,7 +133,7 @@ export default async function Page({
 
                   <DeleteButton parteId={parte.id} />
 
-                  <SendButton parte={parte} />
+                  <SendButton parteId={parte.id} />
                 </div>
               </div>
             </div>

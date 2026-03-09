@@ -4,37 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Send, Loader2 } from "lucide-react";
-import { generatePartePDF } from "@/lib/PartepdfGenerator";
-import { Prisma } from "@prisma/client";
-
-type ParteWithRelations = Prisma.ParteGetPayload<{
-  include: {
-    autor: {
-      include: {
-        perfilAluno: {
-          include: {
-            cargo: true;
-            companhia: true;
-          };
-        };
-      };
-    };
-    analises: {
-      include: {
-        analista: true;
-      };
-    };
-    etapas: true;
-    logs: true;
-  };
-}>;
+import { generatePartePDF } from "@/lib/PartepdfGenerator"; 
 
 interface SendButtonProps {
-    parte: ParteWithRelations;
+    parteId: string; 
 }
 
-export function SendButton({ parte }: SendButtonProps) {
+export function SendButton({ parteId }: SendButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState("Processando...");
     const router = useRouter();
 
     const handleSend = async () => {
@@ -48,24 +26,37 @@ export function SendButton({ parte }: SendButtonProps) {
         if (!confirmou) return;
 
         setIsLoading(true);
+        setLoadingText("Gerando protocolo...");
 
         try {
-            const pdfFile = await generatePartePDF(parte);
-            
+            const response = await fetch(`/api/partes/${parteId}/enviar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const parteAtualizada = await response.json();
+
+            if (!response.ok) {
+                throw new Error(parteAtualizada.error || 'Falha ao oficializar a parte.');
+            }
+
+            setLoadingText("Gerando PDF...");
+            const pdfFile = await generatePartePDF(parteAtualizada);
+
+            setLoadingText("Salvando documento...");
             const formData = new FormData();
             formData.append("file", pdfFile);
 
-            const response = await fetch(`/api/partes/${parte.id}/enviar`, {
+            const uploadResponse = await fetch(`/api/partes/${parteId}/upload`, {
                 method: 'POST',
                 body: formData,
             });
 
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Falha ao enviar a parte.');
+            if (!uploadResponse.ok) {
+                console.warn("A parte foi enviada, mas houve um erro ao salvar o PDF no servidor.");
             }
 
-            alert("Parte enviada com sucesso! O protocolo foi gerado.");
+            alert(`Parte enviada com sucesso! Protocolo: ${parteAtualizada.numeroDocumento}`);
             router.refresh();
 
         } catch (err: unknown) {
@@ -74,6 +65,7 @@ export function SendButton({ parte }: SendButtonProps) {
             alert(errorMessage);
         } finally {
             setIsLoading(false);
+            setLoadingText("Processando...");
         }
     };
 
@@ -85,15 +77,9 @@ export function SendButton({ parte }: SendButtonProps) {
             className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
         >
             {isLoading ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                </>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {loadingText}</>
             ) : (
-                <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Enviar para Análise
-                </>
+                <><Send className="mr-2 h-4 w-4" /> Enviar para Análise</>
             )}
         </Button>
     );
