@@ -24,7 +24,7 @@ const toBase64 = async (url: string) => {
 export async function generatePartePDF(data: ParteData): Promise<File> {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-    const logoUrl = '/img/logo.png'; 
+    const logoUrl = '/img/logo.jpg'; 
     const logoGuardaMirim = await toBase64(logoUrl); 
     const brasaoMarcaDagua = await toBase64(logoUrl);
     
