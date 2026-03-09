@@ -42,16 +42,14 @@ const MODALIDADES_PROMOCAO = [
   "ANTIGUIDADE",
   "MERECIMENTO",
   "BRAVURA",
-  "PÓS-MORTEM",
-  "RESSARCIMENTO DE PRETERIÇÃO"
+  "MÉRITO INTELECTUAL",
+  "MÉRITO ESCOLAR"
 ];
 
 const MODALIDADES_DESPROMOCAO = [
-  "DISCIPLINA",
-  "INSUFICIÊNCIA TÉCNICA",
-  "A PEDIDO",
-  "RECLASSIFICAÇÃO",
-  "DECISÃO JUDICIAL"
+  "INDISCIPLINA",
+  "INSUBORDINAÇÃO",
+  "REPROVAR NA ESCOLA"
 ];
 
 export default function NovaTransicaoForm({ 
@@ -187,7 +185,6 @@ export default function NovaTransicaoForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PROMOCAO">Promoção (Carreira)</SelectItem>
-                  <SelectItem value="BRAVURA">Ato de Bravura</SelectItem>
                   <SelectItem value="DESPROMOCAO">Despromoção</SelectItem>
                   <SelectItem value="CURSO">Conclusão de Curso</SelectItem>
                 </SelectContent>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Metadata } from "next";
 
 
 export default function NotFound() {
@@ -13,7 +12,7 @@ export default function NotFound() {
   const handleGoBack = () => {
     try {
       router.back();
-    } catch (error) {
+    } catch {
       router.push("/");
     }
   };

@@ -1,6 +1,8 @@
 import { listarFeedbacksAdmin } from '@/app/actions/feedback-actions'
 import PainelFeedbackAdmin from './painel-feedback-admin'
 
+export const dynamic = 'force-dynamic';
+
 export default async function PaginaFeedbackAdmin() {
   const feedbacks = await listarFeedbacksAdmin()
 

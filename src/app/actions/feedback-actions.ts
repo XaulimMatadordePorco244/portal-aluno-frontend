@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function listarFeedbacksDoAluno(alunoId: string) {
   try {
@@ -30,7 +31,7 @@ export async function excluirFeedback(id: string, alunoId: string) {
 
     await prisma.feedback.delete({ where: { id } })
     
-    revalidatePath('/aluno/feedback')
+    revalidatePath('/feedback')
     revalidatePath('/admin/feedback')
     return { success: true, message: 'Mensagem apagada com sucesso.' }
   } catch  {
@@ -54,7 +55,7 @@ export async function editarFeedback(id: string, alunoId: string, dados: FormDat
       data: { assunto, mensagem, destinatario }
     })
 
-    revalidatePath('/aluno/feedback')
+    revalidatePath('/feedback')
     revalidatePath('/admin/feedback')
     return { success: true, message: 'Mensagem atualizada!' }
   } catch  {
@@ -86,7 +87,14 @@ export async function listarAdminsParaDestinatario() {
 
 export async function listarFeedbacksAdmin() {
   try {
+    const user = await getCurrentUser()
+    
+    if (!user) return []
+
     const feedbacks = await prisma.feedback.findMany({
+      where: {
+        destinatario: user.userId
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         aluno: {
@@ -108,7 +116,6 @@ export async function listarFeedbacksAdmin() {
   }
 }
 
-
 export async function enviarFeedback(alunoId: string, dados: FormData) {
   const assunto = dados.get('assunto') as string
   const mensagem = dados.get('mensagem') as string
@@ -128,7 +135,7 @@ export async function enviarFeedback(alunoId: string, dados: FormData) {
       }
     })
 
-    revalidatePath('/aluno/feedback')
+    revalidatePath('/feedback')
     revalidatePath('/admin/feedback')
     return { success: true, message: 'Mensagem enviada com sucesso!' }
   } catch (error) {

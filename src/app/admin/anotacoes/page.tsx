@@ -7,7 +7,6 @@ import {
   Search,
   MoreHorizontal,
   Edit2,
-  Trash,
   UserCheck,
   Filter,
   Clock,
@@ -39,6 +38,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Prisma, CargoHistoryStatus } from "@prisma/client";
+import { DeleteAnotacaoButton } from "@/app/admin/anotacoes/delete-button";
 
 type AnotacaoWithRelations = Prisma.AnotacaoGetPayload<{
   include: {
@@ -405,9 +405,7 @@ export default async function AnotacoesDashboardPage({
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer flex items-center gap-2 font-medium">
-                          <Trash className="h-4 w-4" /> Excluir Registro
-                        </DropdownMenuItem>
+                        <DeleteAnotacaoButton id={item.id} />
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
