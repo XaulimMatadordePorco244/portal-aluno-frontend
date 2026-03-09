@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { generatePartePDF } from "@/lib/PartepdfGenerator";
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { ProcessoCompleto  } from "@/lib/types";
+import { ProcessoCompleto } from "@/lib/types";
 
 interface DownloadButtonProps {
   parteData: ProcessoCompleto;
@@ -12,6 +12,10 @@ interface DownloadButtonProps {
 
 export function DownloadButton({ parteData }: DownloadButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
+
+    if (parteData.status === 'RASCUNHO') {
+        return null;
+    }
 
     const handleDownload = async () => {
         setIsLoading(true);

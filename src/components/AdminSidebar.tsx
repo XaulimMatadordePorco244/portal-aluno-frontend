@@ -24,6 +24,7 @@ import {
   Medal,
   ScrollText,
   Settings,
+  Cake,
   Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,6 +84,7 @@ export function AdminSidebar() {
 
   const efetivoLinks = [
     { href: "/admin/alunos", label: "Alunos", icon: Users },
+    { href: "/admin/aniversariantes", label: "Aniversariantes", icon: Cake },
     { href: "/admin/cargos/gerenciar", label: "Cargos", icon: Medal },
     { href: "/admin/promocoes", label: "Promoções", icon: TrendingUp },
     { href: "/admin/antiguidade", label: "Antiguidade", icon: Medal },
