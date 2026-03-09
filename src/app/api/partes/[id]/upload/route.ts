@@ -15,26 +15,27 @@ export async function POST(
 
     const { id } = await params;
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const { fileBase64, fileName } = await req.json();
 
-    if (!file) {
+    if (!fileBase64 || !fileName) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
 
-    const anoAtual = new Date().getFullYear();
-    const filePath = `PARTES/${anoAtual}/${file.name}`;
+    const base64Data = fileBase64.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
 
-    const blob = await put(filePath, file, {
+    const anoAtual = new Date().getFullYear();
+    const filePath = `PARTES/${anoAtual}/${fileName}`;
+
+    const blob = await put(filePath, buffer, {
       access: 'public',
       addRandomSuffix: false, 
+      contentType: 'application/pdf', 
     });
 
     await prisma.parte.update({
       where: { id },
-      data: { 
-        urlPdf: blob.url 
-      }
+      data: { urlPdf: blob.url } 
     });
 
     return NextResponse.json({ 
