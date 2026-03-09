@@ -7,7 +7,6 @@ import {
   Search,
   MoreHorizontal,
   Edit2,
-  Trash,
   UserCheck,
   Filter,
   Clock,
