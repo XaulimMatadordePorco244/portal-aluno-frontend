@@ -3,8 +3,23 @@ import { notFound } from "next/navigation";
 import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
-import { Cargo, Funcao, Usuario, Escala, EscalaItem, PerfilAluno } from "@prisma/client";
+import { Escala, EscalaItem, Usuario, PerfilAluno, Funcao, Cargo, FuncaoAdmin } from '@prisma/client';
 
+export type EscalaItemCompleto = EscalaItem & {
+  aluno: Usuario & {
+    perfilAluno: (PerfilAluno & {
+      funcao: Funcao | null;
+      cargo: Cargo | null;
+    }) | null;
+    funcaoAdmin: FuncaoAdmin | null;
+  };
+  funcaoId?: string | null;
+};
+
+export type EscalaCompleta = Escala & {
+  itens: EscalaItemCompleto[];
+  criadoPor: Usuario;
+};
 export type UserComCargoEFuncao = Usuario & {
   perfilAluno: (PerfilAluno & {
     funcao: Funcao | null;
@@ -12,48 +27,42 @@ export type UserComCargoEFuncao = Usuario & {
   }) | null;
 };
 
-export type EscalaItemCompleto = EscalaItem & {
-  aluno: PerfilAluno & {
-    usuario: Usuario;
-    funcao: Funcao | null;
-  };
-  funcaoId: string | null;
-};
 
-export type EscalaCompleta = Escala & {
-  itens: EscalaItemCompleto[];
-  criadoPor: Usuario;
-};
 
 async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
-  const escala = await prisma.escala.findUnique({
+ const escala = await prisma.escala.findUnique({
     where: { id },
     include: {
       itens: {
         include: {
-          aluno: {
+          aluno: { 
             include: {
-              usuario: true,
-              funcao: true,
-            },
-          },
+              perfilAluno: {
+                include: {
+                  funcao: true,
+                  cargo: true,
+                }
+              },
+              funcaoAdmin: true 
+            }
+          }
         },
         orderBy: {
-          secao: 'asc',
-        },
+          secao: "asc"
+        }
       },
-      criadoPor: true,
-    },
+      criadoPor: true
+    }
   });
 
   if (!escala) return null;
 
-  return {
+return {
     ...escala,
     itens: escala.itens.map(item => ({
       ...item,
-      alunoId: item.aluno.usuarioId,
-      funcaoId: item.aluno.funcao?.id || null
+      alunoId: item.aluno.id, 
+      funcaoId: item.aluno.perfilAluno?.funcao?.id || null 
     }))
   };
 }

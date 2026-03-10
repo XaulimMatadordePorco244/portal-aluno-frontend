@@ -458,11 +458,27 @@ export class EscalaPDFBuilder extends PDFBuilder {
       halign: 'center'
     }
 
+    const dataPublicacao = this.escala.publishedAt || this.escala.createdAt || new Date(); 
+    const dataFormatada = new Date(dataPublicacao).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+    const adminResponsavel = (this.escala as any).autor;
+
+    const nomeCompletoAdmin = adminResponsavel?.nome || 'NOME DO ADMINISTRADOR';
+    const nomeDeGuerraAdmin = adminResponsavel?.nomeDeGuerra || 'NOME DE GUERRA';
+    const funcaoAdminCompleta = adminResponsavel?.funcao || 'AUX ADM - ESCALANTE';
+    const funcaoAdminCurta = 'AUX. ADM.'; 
+
     autoTable(this.doc as jsPDFWithAutoTable, {
       startY: this.currentY,
       body: [[
         { content: 'ELABORADO', styles: { fontStyle: 'bold', halign: 'center' } },
-        { content: 'Revisado: 29/09/25\nAUX. ADM. ISABELY', styles: { halign: 'center' } },
+        { 
+          content: `Revisado: ${dataFormatada}\n${funcaoAdminCurta} ${nomeDeGuerraAdmin.toUpperCase()}`, 
+          styles: { halign: 'center' } 
+        },
         { content: 'CONFERIDO', styles: { fontStyle: 'bold', halign: 'center' } }
       ]] as RowInput[],
       theme: 'grid',
@@ -488,13 +504,15 @@ export class EscalaPDFBuilder extends PDFBuilder {
 
     this.doc.setFontSize(9)
     this.doc.setFont('Arial', 'bold')
-    this.doc.text('ISABELY CRISTINA SILVA DE OLIVEIRA', this.pageWidth / 2, this.currentY, { align: 'center' })
+    
+    this.doc.text(nomeCompletoAdmin.toUpperCase(), this.pageWidth / 2, this.currentY, { align: 'center' })
     this.currentY += 3
     this.doc.setFontSize(8)
-    this.doc.text('AUX ADM - ESCALANTE', this.pageWidth / 2, this.currentY, { align: 'center' })
+    
+    this.doc.text(funcaoAdminCompleta.toUpperCase(), this.pageWidth / 2, this.currentY, { align: 'center' })
   }
 
-  public async build(): Promise<Uint8Array> {
+  public async build(escala: unknown): Promise<Uint8Array> {
     try {
       await this.init()
       await this.loadFonts()

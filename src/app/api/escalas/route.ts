@@ -15,6 +15,7 @@ const escalaItemSchema = z.object({
 });
 
 const createEscalaSchema = z.object({
+  titulo: z.string().optional(), 
   dataEscala: z.string().datetime("Formato de data inválido."),
   tipo: z.nativeEnum(TipoEscala),
   elaboradoPor: z.string().min(3, "O nome do elaborador é obrigatório."),
@@ -33,25 +34,21 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch (error) {
-    console.error('Erro na rota /api/escalas:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 
   const validation = createEscalaSchema.safeParse(body);
   if (!validation.success) {
-    console.error("Erro de validação Zod:", JSON.stringify(validation.error.format(), null, 2));
     return NextResponse.json({ error: 'Dados inválidos', details: validation.error.format() }, { status: 400 });
   }
 
-  const { dataEscala, tipo, elaboradoPor, itens, fardamento, observacoes } = validation.data;
+  const { titulo, dataEscala, tipo, elaboradoPor, itens, fardamento, observacoes } = validation.data;
 
   try {
     const novaEscala = await prisma.$transaction(async (tx) => {
       const escala = await tx.escala.create({
         data: {
+          titulo: titulo, 
           dataEscala: new Date(dataEscala),
           tipo: tipo,
           elaboradoPor: elaboradoPor,
@@ -79,10 +76,8 @@ export async function POST(request: Request) {
       return escala;
     });
 
-
     try {
       const dataFormatada = new Date(dataEscala).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-      
       notificarTodosAlunosEscala({
         titulo: "⚠️ Nova Escala Publicada!",
         mensagem: `Uma nova escala para o dia ${dataFormatada} acabou de ser publicada. Verifique o portal!`,
@@ -95,11 +90,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(novaEscala, { status: 201 });
 
-  } catch (error) {
-    console.error("Erro ao criar escala no DB:", error);
-    if (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('P')) {
-      return NextResponse.json({ error: `Erro no banco de dados: ${error.message}` }, { status: 500 });
-    }
+  } catch (error: any) {
+    console.error("Erro ao salvar a escala:", error);
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }
 }

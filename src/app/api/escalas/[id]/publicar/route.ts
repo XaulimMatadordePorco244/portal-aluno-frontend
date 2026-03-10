@@ -4,7 +4,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { EscalaPDFBuilder } from '@/lib/escalaPdfGenerator';
 import { put } from '@vercel/blob';
 import { format } from 'date-fns';
-import { EscalaCompleta } from '@/app/admin/escalas/[id]/page'; 
+import { EscalaCompleta } from '@/app/admin/escalas/[id]/page';
+import { StatusEscala } from '@prisma/client';
 
 async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
@@ -12,11 +13,15 @@ async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
     include: {
       itens: {
         include: {
-          aluno: {
+          aluno: { 
             include: {
-              usuario: true,
-              funcao: true,
-              cargo: true
+              perfilAluno: { 
+                include: {
+                  funcao: true,
+                  cargo: true
+                }
+              },
+              funcaoAdmin: true 
             }
           },
         },
@@ -32,10 +37,10 @@ async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
     ...escala,
     itens: escala.itens.map(item => ({
       ...item,
-      alunoId: item.aluno.usuarioId,
-      funcaoId: item.aluno.funcao?.id || null 
+      alunoId: item.aluno.id, 
+      funcaoId: item.aluno.perfilAluno?.funcao?.id || null 
     }))
-  };
+  } as EscalaCompleta; 
 }
 
 export async function POST(
@@ -56,8 +61,7 @@ export async function POST(
     }
 
     const pdfBuilder = new EscalaPDFBuilder(escala);
-    const pdfBytes = await pdfBuilder.build();
-
+    const pdfBytes = await pdfBuilder.build(escala); 
     const pdfBuffer = Buffer.from(pdfBytes);
 
     const dataFormatada = format(new Date(escala.dataEscala), 'dd.MM.yyyy');
@@ -73,13 +77,15 @@ export async function POST(
       where: { id: escala.id },
       data: {
         pdfUrl: blob.url,
+        status: StatusEscala.PUBLICADA, 
+        publishedAt: new Date(), 
       },
     });
 
     return NextResponse.json(escalaAtualizada);
 
   } catch (error) {
-    console.error("Erro ao gerar PDF da escala:", error);
+    console.error("Erro ao publicar e gerar PDF da escala:", error);
     return NextResponse.json({ 
       error: 'Não foi possível gerar o PDF.',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined

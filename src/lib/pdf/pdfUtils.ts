@@ -164,8 +164,8 @@ export class PDFBuilder {
 
   async init(): Promise<void> {
     try {
-      const logoPath = '/img/logo.png';
-      const watermarkPath = '/img/logo.png';
+      const logoPath = '/img/logo.jpg';
+      const watermarkPath = '/img/logo.jpg';
       this.logoBase64 = await toBase64(logoPath);
       this.watermarkBase64 = await toBase64(watermarkPath);
       console.log('PDFBuilder: Imagens carregadas com sucesso.');
