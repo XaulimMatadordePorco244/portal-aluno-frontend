@@ -37,7 +37,6 @@ export async function getAlmanaque() {
           }
         },
         anoIngresso: true,
-        nomeDeGuerra: true,
         numero: true
       },
       orderBy: [
@@ -76,7 +75,7 @@ export async function updateAntiguidadeMassa(
       )
     );
 
-    revalidatePath("/admin/efetivo/antiguidade");
+    revalidatePath("/admin/antiguidade");
     return { success: true };
   } catch {
     return { success: false, error: "Falha ao atualizar antiguidade" };

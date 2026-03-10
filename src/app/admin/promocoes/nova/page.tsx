@@ -26,10 +26,9 @@ export default async function NovaPromocaoPage() {
     },
     select: {
       id: true,
-      nomeDeGuerra: true, 
       conceitoAtual: true, 
       usuario: {
-        select: { nome: true }
+        select: { nome: true, nomeDeGuerra: true }
       },
       cargo: {
         select: {
@@ -59,7 +58,7 @@ export default async function NovaPromocaoPage() {
   const alunos = alunosDb.map(aluno => ({
     id: aluno.id,
     usuario: { nome: aluno.usuario.nome },
-    nomeDeGuerra: aluno.nomeDeGuerra,
+    nomeDeGuerra: aluno.usuario.nomeDeGuerra,
     conceitoAtual: aluno.conceitoAtual,
     
     cargo: aluno.cargo ? {

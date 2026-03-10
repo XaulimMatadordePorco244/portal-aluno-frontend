@@ -16,8 +16,8 @@ type VinculoAtividadeType = {
   visualizadoEm: Date | string | null;
   aluno: {
     nome: string;
+    nomeDeGuerra: string | null;
     perfilAluno: {
-      nomeDeGuerra: string | null;
       cargo: {
         abreviacao: string;
       } | null;
@@ -25,17 +25,17 @@ type VinculoAtividadeType = {
   };
 };
 
-export function LinhaAlunoAtividade({ 
-  vinculo 
-}: { 
-  vinculo: VinculoAtividadeType 
+export function LinhaAlunoAtividade({
+  vinculo
+}: {
+  vinculo: VinculoAtividadeType
 }) {
   const [status, setStatus] = useState<StatusAtividade>(vinculo.status);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const perfil = vinculo.aluno.perfilAluno;
-  const nomeExibicao = perfil?.nomeDeGuerra 
-    ? `${perfil.cargo?.abreviacao || ''} ${perfil.nomeDeGuerra}` 
+  const nomeExibicao = vinculo.aluno.nomeDeGuerra
+    ? `${perfil?.cargo?.abreviacao || ''} ${vinculo.aluno.nomeDeGuerra}`
     : vinculo.aluno.nome;
 
   const handleStatusChange = async (novoStatus: StatusAtividade) => {
@@ -59,10 +59,10 @@ export function LinhaAlunoAtividade({
 
   const renderBadge = () => {
     switch (status) {
-      case 'PENDENTE': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/> Não Abriu</Badge>;
-      case 'VISUALIZADO': return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1"/> Visualizado</Badge>;
-      case 'REALIZADO': return <Badge className="bg-primary text-primary-foreground"><CheckCircle2 className="w-3 h-3 mr-1"/> Realizado</Badge>;
-      case 'NAO_REALIZADO': return <Badge variant="destructive" className="bg-destructive/80"><AlertCircle className="w-3 h-3 mr-1"/> Não Realizado</Badge>;
+      case 'PENDENTE': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Abriu</Badge>;
+      case 'VISUALIZADO': return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Visualizado</Badge>;
+      case 'REALIZADO': return <Badge className="bg-primary text-primary-foreground"><CheckCircle2 className="w-3 h-3 mr-1" /> Realizado</Badge>;
+      case 'NAO_REALIZADO': return <Badge variant="destructive" className="bg-destructive/80"><AlertCircle className="w-3 h-3 mr-1" /> Não Realizado</Badge>;
       default: return null;
     }
   };
@@ -72,7 +72,7 @@ export function LinhaAlunoAtividade({
       <TableCell className="font-medium">{nomeExibicao.trim()}</TableCell>
       <TableCell>{renderBadge()}</TableCell>
       <TableCell className="text-muted-foreground text-sm">
-        {vinculo.visualizadoEm 
+        {vinculo.visualizadoEm
           ? format(new Date(vinculo.visualizadoEm), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
           : "---"}
       </TableCell>

@@ -110,7 +110,7 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
         dataLancamento.setHours(0, 0, 0, 0);
 
         if (dataLancamento < dataPromocao) {
-          const nome = alunoInfo.nomeDeGuerra || "Aluno";
+          const nome = alunoInfo.usuario.nomeDeGuerra || "Aluno";
           return {
             success: false,
             message: `BLOQUEADO: A data (${dataLancamento.toLocaleDateString()}) é anterior à promoção de ${nome}.`

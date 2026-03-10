@@ -2,25 +2,25 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
 } from '@/components/ui/sheet'
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -30,12 +30,12 @@ import { Eye } from 'lucide-react'
 interface Aluno {
   id: string
   numero: number | null
-  nomeDeGuerra: string | null
   cargo?: { abreviacao: string } | null
   companhia?: { abreviacao: string | null } | null
   usuario: {
     nome: string
     fotoUrl: string | null
+    nomeDeGuerra: string | null
   }
 }
 
@@ -45,7 +45,7 @@ interface Props {
 }
 
 export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
-  const alunosOrdenados = [...alunos].sort((a, b) => 
+  const alunosOrdenados = [...alunos].sort((a, b) =>
     (a.numero || 9999) - (b.numero || 9999)
   )
 
@@ -57,7 +57,7 @@ export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
           Ver {titulo}
         </Button>
       </SheetTrigger>
-      
+
       <SheetContent className="w-full sm:max-w-2xl flex flex-col p-6 overflow-hidden">
         <SheetHeader className="mb-4">
           <SheetTitle className="text-2xl">Ocupantes - {titulo}</SheetTitle>
@@ -76,14 +76,14 @@ export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
               {alunosOrdenados.length > 0 ? (
                 alunosOrdenados.map((aluno) => (
                   <TableRow key={aluno.id} className="hover:bg-muted/30">
-                    
+
                     <TableCell className="text-center font-bold text-muted-foreground text-base">
                       {aluno.numero ? String(aluno.numero).padStart(3, '0') : '-'}
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-4">
-                        
+
                         <HoverCard openDelay={100} closeDelay={100}>
                           <HoverCardTrigger asChild>
                             <Avatar className="h-12 w-12 border-2 shadow-sm cursor-pointer hover:scale-105 transition-transform">
@@ -91,7 +91,7 @@ export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
                               <AvatarFallback>{aluno.usuario.nome.substring(0, 2)}</AvatarFallback>
                             </Avatar>
                           </HoverCardTrigger>
-                          
+
                           {aluno.usuario.fotoUrl && (
                             <HoverCardContent side="left" align="center" className="w-64 p-2 shadow-2xl border-primary border-2 bg-muted/50 backdrop-blur-md">
                               <div className="relative w-full aspect-3/4 rounded-sm overflow-hidden">
@@ -109,7 +109,7 @@ export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
 
                         <div className="flex flex-col">
                           <span className="font-bold text-base flex items-center gap-2">
-                            {aluno.cargo?.abreviacao || 'AL'} GM {aluno.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
+                            {aluno.cargo?.abreviacao || 'AL'} GM {aluno.usuario.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
                           </span>
                           <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={aluno.usuario.nome}>
                             {aluno.usuario.nome}

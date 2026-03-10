@@ -1,34 +1,33 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { 
-  Role, 
-  StatusUsuario, 
-  GeneroUsuario, 
-  tipagemSanguinea, 
-  AptidaoFisicaStatus, 
+import {
+  Role,
+  StatusUsuario,
+  GeneroUsuario,
+  tipagemSanguinea,
+  AptidaoFisicaStatus,
   CargoHistoryStatus,
-  SerieEscolar 
+  SerieEscolar
 } from '@prisma/client';
 
 interface PerfilAlunoCreateData {
   numero: string;
-  nomeDeGuerra: string;
   companhiaId: string;
   cargoId: string;
   conceitoInicial?: string;
   anoIngresso?: number;
   foraDeData?: boolean;
-  
+
   tipagemSanguinea?: tipagemSanguinea;
   aptidaoFisicaStatus?: AptidaoFisicaStatus;
   aptidaoFisicaLaudo?: boolean;
   aptidaoFisicaObs?: string;
-  
+
   escola?: string;
   serieEscolar?: string;
   endereco?: string;
-  
+
   termoResponsabilidadeAssinado?: boolean;
   fazCursoExterno?: boolean;
   cursoExternoDescricao?: string;
@@ -39,16 +38,17 @@ interface UsuarioCreateData {
   nome: string;
   cpf: string;
   password: string;
+  nomeDeGuerra: string;
   role: Role;
   status?: StatusUsuario;
   email?: string;
   fotoUrl?: string;
   rg?: string;
   rgEstadoEmissor?: string;
-  dataNascimento?: string; 
+  dataNascimento?: string;
   telefone?: string;
   genero?: GeneroUsuario;
-  
+
   perfilAluno?: PerfilAlunoCreateData;
 }
 
@@ -135,6 +135,7 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
         const novoUsuario = await tx.usuario.create({
           data: {
             nome: user.nome,
+            nomeDeGuerra: user.nomeDeGuerra,
             cpf: user.cpf,
             email: user.email?.trim() || null,
             password: hashedPassword,
@@ -157,11 +158,10 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
             data: {
               usuarioId: novoUsuario.id,
               numero: perfilData.numero,
-              nomeDeGuerra: perfilData.nomeDeGuerra,
               companhiaId: perfilData.companhiaId,
               cargoId: perfilData.cargoId,
               funcaoId: perfilData.funcaoId,
-              
+
               conceitoInicial: conceito,
               conceitoAtual: conceito,
               anoIngresso: perfilData.anoIngresso || new Date().getFullYear(),
@@ -171,12 +171,12 @@ async function criarUsuarios(data: UsuarioCreateData | UsuarioCreateData[]) {
               aptidaoFisicaStatus: perfilData.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
               aptidaoFisicaLaudo: !!perfilData.aptidaoFisicaLaudo,
               aptidaoFisicaObs: perfilData.aptidaoFisicaObs,
-              
+
               escolaId: perfilData.escola,
               serieEscolar: perfilData.serieEscolar as SerieEscolar | undefined,
-              
+
               endereco: perfilData.endereco,
-              
+
               termoResponsabilidadeAssinado: !!perfilData.termoResponsabilidadeAssinado,
               fazCursoExterno: !!perfilData.fazCursoExterno,
               cursoExternoDescricao: perfilData.cursoExternoDescricao,
@@ -286,9 +286,9 @@ async function criarResponsabilidades(relacoes: RelacaoResponsabilidade[]) {
 
     } catch (error) {
       console.error(`Erro ao criar responsabilidade:`, error);
-      errors.push({ 
-        alunoCpf: relacao.alunoCpf, 
-        error: error instanceof Error ? error.message : 'Erro desconhecido' 
+      errors.push({
+        alunoCpf: relacao.alunoCpf,
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
       });
     }
   }

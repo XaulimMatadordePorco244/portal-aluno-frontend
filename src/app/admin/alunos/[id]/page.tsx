@@ -101,7 +101,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
       
-      {/* HEADER SUPERIOR */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <Link href="/admin/alunos" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar para Lista
@@ -136,7 +135,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
         </DropdownMenu>
       </div>
 
-      {/* HERO CARD DE IDENTIDADE */}
       <div className="bg-card border rounded-xl p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
         <Avatar className="h-28 w-28 border-4 border-background shadow-md">
           <AvatarImage src={aluno.usuario.fotoUrl || undefined} />
@@ -152,7 +150,7 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
           </div>
           
           <h1 className="text-2xl md:text-3xl tracking-tight">
-            {highlightWarName(aluno.usuario.nome, aluno.nomeDeGuerra || undefined)}
+            {highlightWarName(aluno.usuario.nome, aluno.usuario.nomeDeGuerra || undefined)}
           </h1>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground pt-2">
@@ -259,7 +257,6 @@ export default async function AdminAlunoPerfilPage({ params }: PageProps) {
         <TabsContent value="institucional" className="animate-in fade-in-50">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             
-            {/* INSTITUCIONAL */}
             <div className="md:col-span-5 space-y-6">
                 <Card className="h-full">
                   <CardHeader>

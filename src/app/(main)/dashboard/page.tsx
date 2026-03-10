@@ -50,7 +50,7 @@ async function getRankingSnippet(user: UserWithRelations) {
   const rankingData = rankingSnippet.map((peer, index) => ({
     id: peer.id,
     nome: peer.nome,
-    nomeDeGuerra: peer.perfilAluno?.nomeDeGuerra,
+    nomeDeGuerra: peer.nomeDeGuerra,
     numero: peer.perfilAluno?.numero,
     conceitoAtual: peer.perfilAluno?.conceitoAtual,
     cargo: peer.perfilAluno?.cargo,

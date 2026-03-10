@@ -25,20 +25,24 @@ export default async function TafDashboardPage({ searchParams }: PageProps) {
   const bimestreSelecionado = Number(params.bimestre) || 1
 
   const alunos = await prisma.perfilAluno.findMany({
-    where: { 
-      usuario: { status: 'ATIVO' }
-    }, 
-    orderBy: { nomeDeGuerra: 'asc' },
-    include: {
-      usuario: true,
-      tafs: {
-        where: {
-          anoLetivo: anoSelecionado,
-          bimestre: bimestreSelecionado
-        }
+  where: { 
+    usuario: { status: 'ATIVO' }
+  }, 
+  orderBy: {
+    usuario: {
+      nomeDeGuerra: 'asc'
+    }
+  },
+  include: {
+    usuario: true,
+    tafs: {
+      where: {
+        anoLetivo: anoSelecionado,
+        bimestre: bimestreSelecionado
       }
     }
-  })
+  }
+})
 
   const totalAlunos = alunos.length
   const realizados = alunos.filter(a => a.tafs.length > 0).length
@@ -136,7 +140,7 @@ export default async function TafDashboardPage({ searchParams }: PageProps) {
                     return (
                         <TableRow key={aluno.id}>
                             <TableCell>
-                                <div className="font-medium">{aluno.nomeDeGuerra || 'Sem nome de guerra'}</div>
+                                <div className="font-medium">{aluno.usuario?.nomeDeGuerra || 'Sem nome de guerra'}</div>
                                 <div className="text-xs text-muted-foreground uppercase">{aluno.usuario?.genero || 'N/A'}</div>
                             </TableCell>
                             

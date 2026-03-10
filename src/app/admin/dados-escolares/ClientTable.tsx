@@ -16,8 +16,8 @@ export interface AlunoType {
     id: string;
     nome: string;
     fotoUrl: string | null;
+    nomeDeGuerra: string | null;
     perfilAluno: {
-        nomeDeGuerra: string | null;
         anoLetivoAtualizado: number;
         escolaId: string | null;
         serieEscolar: string | null;
@@ -25,7 +25,7 @@ export interface AlunoType {
         turmaEscolar: string | null;
         cargo: {
             abreviacao: string | null;
-            precedencia: number | null; 
+            precedencia: number | null;
         } | null;
         escola: EscolaType | null;
     } | null;
@@ -137,7 +137,7 @@ export function ClientTable({ alunosIniciais, escolasIniciais, anoAtual }: Clien
                         </SelectContent>
                     </Select>
                 </div>
-                
+
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     {hasPendentes && (
                         <Button

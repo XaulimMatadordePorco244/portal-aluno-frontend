@@ -8,23 +8,31 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
   const startDate = new Date(ano, mes - 1, 1)
   const endDate = new Date(ano, mes, 0) 
 
-  const alunos = await prisma.perfilAluno.findMany({
-    where: { usuario: { status: 'ATIVO' } },
-    orderBy: [
-      { cargo: { precedencia: 'asc' } },   
-      { dataUltimaPromocao: 'asc' },        
-      { numero: 'asc' }                     
-    ],
-    select: { 
-      id: true, 
-      nomeDeGuerra: true, 
-      cargo: { 
-        select: { 
-          abreviacao: true 
-        } 
-      } 
+ const alunos = await prisma.perfilAluno.findMany({
+  where: {
+    usuario: {
+      status: 'ATIVO'
     }
-  })
+  },
+  orderBy: [
+    { cargo: { precedencia: 'asc' } },
+    { dataUltimaPromocao: 'asc' },
+    { numero: 'asc' }
+  ],
+  select: {
+    id: true,
+    usuario: {
+      select: {
+        nomeDeGuerra: true
+      }
+    },
+    cargo: {
+      select: {
+        abreviacao: true
+      }
+    }
+  }
+})
 
   const frequencias = await prisma.frequencia.findMany({
     where: {
@@ -39,7 +47,7 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
   const alunosFormatados = alunos.map(aluno => ({
     id: aluno.id,
     graduacao: aluno.cargo?.abreviacao || 'AL', 
-    nomeDeGuerra: aluno.nomeDeGuerra || 'N/D'
+    nomeDeGuerra: aluno.usuario.nomeDeGuerra || 'N/D'
   }))
 
   return { 

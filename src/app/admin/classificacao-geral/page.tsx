@@ -21,7 +21,7 @@ const getRankingCacheado = unstable_cache(
         cargoId: { not: null }
       },
       include: {
-        usuario: { select: { nome: true } },
+        usuario: { select: { nome: true, nomeDeGuerra: true } },
         cargo: true,
         anotacoesRecebidas: { select: { pontos: true } }
       }
@@ -56,7 +56,7 @@ const getRankingCacheado = unstable_cache(
           posicao: 0,
           numero: aluno.numero,
           nome: aluno.usuario.nome,
-          nomeDeGuerra: aluno.nomeDeGuerra || "S/N",
+          nomeDeGuerra: aluno.usuario.nomeDeGuerra || "S/N",
           cargo: aluno.cargo?.nome || "Sem Cargo",
           precedencia: aluno.cargo?.precedencia || 999,
           totalElogios: elogios,

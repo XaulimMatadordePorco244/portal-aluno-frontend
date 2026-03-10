@@ -57,18 +57,34 @@ export async function atualizarFuncao(formData: FormData) {
 
 export async function listarAlunosParaSelect() {
   const alunos = await prisma.perfilAluno.findMany({
-    where: { usuario: { status: 'ATIVO' } },
-    orderBy: { nomeDeGuerra: 'asc' },
+    where: {
+      usuario: {
+        status: 'ATIVO'
+      }
+    },
+    orderBy: {
+      usuario: {
+        nomeDeGuerra: 'asc'
+      }
+    },
     select: {
       id: true,
-      nomeDeGuerra: true,
-      cargo: { select: { abreviacao: true } }
+      usuario: {
+        select: {
+          nomeDeGuerra: true
+        }
+      },
+      cargo: {
+        select: {
+          abreviacao: true
+        }
+      }
     }
   })
 
   return alunos.map(aluno => ({
     id: aluno.id,
-    label: `${aluno.cargo?.abreviacao || 'AL'} GM ${aluno.nomeDeGuerra}`.toUpperCase(),
-    value: `${aluno.cargo?.abreviacao || 'AL'} GM ${aluno.nomeDeGuerra}`.toUpperCase() 
+    label: `${aluno.cargo?.abreviacao || 'AL'} GM ${aluno.usuario.nomeDeGuerra}`.toUpperCase(),
+    value: `${aluno.cargo?.abreviacao || 'AL'} GM ${aluno.usuario.nomeDeGuerra}`.toUpperCase()
   }))
 }

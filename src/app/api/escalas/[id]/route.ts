@@ -3,9 +3,19 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth'; 
 import { StatusEscala } from '@prisma/client';
 
+type EscalaItemInput = {
+  id?: string;
+  secao: string;
+  cargo: string;
+  horarioInicio: string;
+  horarioFim: string;
+  alunoId: string;
+  observacao: string;
+};
+
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
   if (user?.role !== 'ADMIN') {
@@ -28,8 +38,8 @@ export async function PUT(
     } = body;
 
     const itensParaManter = itens
-      .filter((item: any) => item.id !== undefined && item.id !== null)
-      .map((item: any) => item.id);
+      .filter((item: EscalaItemInput) => item.id !== undefined && item.id !== null)
+      .map((item: EscalaItemInput) => item.id);
 
     const escalaAtualizada = await prisma.$transaction(async (tx) => {
       
@@ -55,7 +65,7 @@ export async function PUT(
       });
 
       await Promise.all(
-        itens.map((item: any) => {
+        itens.map((item: EscalaItemInput) => {
           if (item.id) {
             return tx.escalaItem.update({
               where: { id: item.id },
@@ -120,7 +130,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
   if (user?.role !== 'ADMIN') {

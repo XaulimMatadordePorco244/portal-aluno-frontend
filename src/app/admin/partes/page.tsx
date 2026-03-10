@@ -29,9 +29,7 @@ async function getPartes({ search, status }: SearchParams) {
             { autor: { nome: { contains: search } } },
             {
                 autor: {
-                    perfilAluno: {
-                        nomeDeGuerra: { contains: search }
-                    }
+                    nomeDeGuerra: { contains: search }
                 }
             },
         ];
@@ -41,7 +39,9 @@ async function getPartes({ search, status }: SearchParams) {
         where: whereClause,
         include: {
             autor: {
-                include: {
+                select: {
+                    nome: true,
+                    nomeDeGuerra: true,
                     perfilAluno: {
                         include: {
                             cargo: true
@@ -111,7 +111,7 @@ export default async function AdminPartesPage({
                         <TableBody>
                             {partes.map((parte) => {
                                 const perfil = parte.autor.perfilAluno;
-                                const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || parte.autor.nome}`;
+                                const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome}`;
 
                                 return (
                                     <TableRow key={parte.id}>

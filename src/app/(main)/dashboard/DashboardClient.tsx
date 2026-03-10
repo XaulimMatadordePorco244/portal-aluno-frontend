@@ -118,7 +118,7 @@ export default function DashboardClient({
 }) {
   const perfil = user.perfilAluno;
   const cargoAbreviacao = perfil?.cargo?.abreviacao || 'Usuário';
-  const nomeExibicao = perfil?.nomeDeGuerra || user.nome;
+  const nomeExibicao = user.nomeDeGuerra || user.nome;
   const currentUserCargoName = perfil?.cargo?.nome;
 
   return (

@@ -26,7 +26,7 @@ export async function getTodosAlunos(ordenacao: 'nome' | 'guerra' | 'antiguidade
   let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' }
 
   if (ordenacao === 'guerra') {
-    orderByClause = { perfilAluno: { nomeDeGuerra: 'asc' } }
+    orderByClause = { nomeDeGuerra: 'asc' } 
   } else if (ordenacao === 'antiguidade') {
     orderByClause = [
       { perfilAluno: { cargo: { precedencia: 'asc' } } },

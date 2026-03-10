@@ -116,14 +116,13 @@ export default async function AdminCalendarioPage() {
                     backgroundColor: 'hsl(var(--primary))',
                     color: 'hsl(var(--primary-foreground))',
                     fontWeight: 'bold',
-                    borderRadius: '0.375rem' // rounded-md
+                    borderRadius: '0.375rem'
                   }
                 }}
               />
             </CardContent>
           </Card>
 
-          {/* LISTA DE EVENTOS */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>Eventos Cadastrados</CardTitle>
@@ -137,8 +136,7 @@ export default async function AdminCalendarioPage() {
                   >
                     <div className="flex items-center gap-4">
                       
-                      {/* Caixa de Data Melhorada */}
-                      <div className="flex flex-col items-center justify-center min-w-[4rem] px-2 py-1.5 h-14 bg-primary/10 text-primary rounded-md border border-primary/20 text-center">
+                      <div className="flex flex-col items-center justify-center min-w-16 px-2 py-1.5 h-14 bg-primary/10 text-primary rounded-md border border-primary/20 text-center">
                         {evt.dataFim ? (
                           <span className="text-[11px] font-bold leading-tight">
                             {format(evt.data, "dd/MM")} <br/> a <br/> {format(evt.dataFim, "dd/MM")}

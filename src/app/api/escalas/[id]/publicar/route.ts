@@ -10,11 +10,13 @@ import { StatusEscala } from '@prisma/client';
 import { criarNotificacao } from '@/actions/notificacoes';
 import webpush from 'web-push';
 
-webpush.setVapidDetails(
-    process.env.NEXT_PUBLIC_VAPID_SUBJECT!,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+if (process.env.NEXT_PUBLIC_VAPID_SUBJECT && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.NEXT_PUBLIC_VAPID_SUBJECT,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
@@ -36,7 +38,7 @@ async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
         },
         orderBy: { secao: 'asc' },
       },
-      criadoPor: true,
+      criadoPor: { include: { funcaoAdmin: true } },
     },
   });
 
@@ -70,7 +72,7 @@ export async function POST(
     }
 
     const pdfBuilder = new EscalaPDFBuilder(escala);
-    const pdfBytes = await pdfBuilder.build(escala); 
+    const pdfBytes = await pdfBuilder.build(); 
     const pdfBuffer = Buffer.from(pdfBytes);
 
     const dataFormatada = format(new Date(escala.dataEscala), 'dd.MM.yyyy');
@@ -103,30 +105,32 @@ export async function POST(
     await Promise.all(idsAlunos.map(async (alunoId) => {
       await criarNotificacao(alunoId, tituloNotif, msgNotif, linkNotif);
 
-      const subscricoes = await prisma.pushSubscription.findMany({
-        where: { usuarioId: alunoId }
-      });
+      if (process.env.NEXT_PUBLIC_VAPID_SUBJECT && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+        const subscricoes = await prisma.pushSubscription.findMany({
+          where: { usuarioId: alunoId }
+        });
 
-      for (const sub of subscricoes) {
-        try {
-          const pushConfig = {
-            endpoint: sub.endpoint,
-            keys: {
-              auth: sub.auth,
-              p256dh: sub.p256dh
-            }
-          };
+        for (const sub of subscricoes) {
+          try {
+            const pushConfig = {
+              endpoint: sub.endpoint,
+              keys: {
+                auth: sub.auth,
+                p256dh: sub.p256dh
+              }
+            };
 
-          await webpush.sendNotification(
-            pushConfig,
-            JSON.stringify({
-              title: tituloNotif,
-              body: msgNotif,
-              url: linkNotif
-            })
-          );
-        } catch (err) {
-          console.error(`Falha ao enviar push para subscricao ${sub.id}:`, err);
+            await webpush.sendNotification(
+              pushConfig,
+              JSON.stringify({
+                title: tituloNotif,
+                body: msgNotif,
+                url: linkNotif
+              })
+            );
+          } catch (err) {
+            console.error(`Falha ao enviar push para subscricao ${sub.id}:`, err);
+          }
         }
       }
     }));

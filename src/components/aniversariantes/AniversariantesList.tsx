@@ -42,7 +42,7 @@ export async function AniversariantesList({ mesSelecionado }: Props) {
         const fazHoje = user.dataNascimento!.getUTCDate() === diaDeHoje && mesSelecionado === mesDeHoje;
         
         const nomeFormatado = user.perfilAluno 
-          ? `${user.perfilAluno.cargo?.abreviacao || ''} GM ${user.perfilAluno.nomeDeGuerra}`
+          ? `${user.perfilAluno.cargo?.abreviacao || ''} GM ${user.nomeDeGuerra}`
           : user.nome.split(" ")[0];
 
         const numeroAluno = user.perfilAluno?.numero 

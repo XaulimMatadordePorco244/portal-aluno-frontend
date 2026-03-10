@@ -41,7 +41,7 @@ export default async function EditAlunoPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle>Editar Aluno</CardTitle>
           <CardDescription>
-            Altere os dados de {aluno.perfilAluno?.nomeDeGuerra || aluno.nome}.
+            Altere os dados de {aluno.nomeDeGuerra || aluno.nome}.
           </CardDescription>
         </CardHeader>
         <CardContent>

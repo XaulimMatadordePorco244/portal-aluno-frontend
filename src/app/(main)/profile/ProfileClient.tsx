@@ -73,7 +73,7 @@ export default function ProfileClient({ user }: { user: UserWithRelations }) {
           </p>
 
           <p className="text-sm text-muted-foreground">
-            Nome de Guerra: <strong className="text-foreground">{perfil?.nomeDeGuerra}</strong>
+            Nome de Guerra: <strong className="text-foreground">{user.nomeDeGuerra}</strong>
           </p>
         </div>
       </div>

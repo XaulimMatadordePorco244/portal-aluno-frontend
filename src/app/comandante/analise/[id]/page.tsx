@@ -108,7 +108,7 @@ export default async function AnalisePage({ params }: PageProps) {
                   <p className="text-sm font-bold leading-none">{parte.autor.nome}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {parte.autor.perfilAluno?.cargo?.nome} 
-                    {parte.autor.perfilAluno?.nomeDeGuerra && ` • ${parte.autor.perfilAluno.nomeDeGuerra}`}
+                    {parte.autor.nomeDeGuerra && ` • ${parte.autor.nomeDeGuerra}`}
                   </p>
                 </div>
               </div>

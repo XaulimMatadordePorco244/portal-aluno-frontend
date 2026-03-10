@@ -17,7 +17,7 @@ export async function GET() {
       perfilAluno: user.perfilAluno ? {
         id: user.perfilAluno.id,
         numero: user.perfilAluno.numero,
-        nomeDeGuerra: user.perfilAluno.nomeDeGuerra,
+        nomeDeGuerra: user.nomeDeGuerra,
         cargo: user.perfilAluno.cargo,
         companhia: user.perfilAluno.companhia,
         conceitoAtual: user.perfilAluno.conceitoAtual,

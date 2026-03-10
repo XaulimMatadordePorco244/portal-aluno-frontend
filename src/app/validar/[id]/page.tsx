@@ -28,7 +28,7 @@ export default async function ValidationResultPage({ params }: PageProps) {
   const isActive = user.status === 'ATIVO';
   const cargo = user.perfilAluno?.cargo?.nome || "Não Informado";
   const numero = user.perfilAluno?.numero || "N/A";
-  const nomeGuerra = user.perfilAluno?.nomeDeGuerra || "Aluno";
+  const nomeGuerra = user.nomeDeGuerra || "Aluno";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-6 transition-colors duration-300">

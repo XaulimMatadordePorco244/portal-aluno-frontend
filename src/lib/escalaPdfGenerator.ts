@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable, { UserOptions, CellHookData, RowInput } from 'jspdf-autotable'
 import { EscalaCompleta } from '@/app/admin/escalas/[id]/page'
+import { Usuario, FuncaoAdmin } from '@prisma/client'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { PDFBuilder } from '@/lib/pdf/pdfUtils'
@@ -161,7 +162,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
     this.doc.setFont('Arial', 'bold')
 
     const subtitleY = this.currentY - 3
-    const tituloPersonalizado = (this.escala as any).titulo; 
+    const tituloPersonalizado = this.escala.titulo; 
     
     const texto = tituloPersonalizado && tituloPersonalizado.trim() !== ''
       ? `${tituloPersonalizado.toUpperCase()} – DIA ${diaFormatado}`
@@ -468,11 +469,11 @@ export class EscalaPDFBuilder extends PDFBuilder {
       month: '2-digit',
       year: '2-digit'
     });
-    const adminResponsavel = (this.escala as any).criadoPor || null;
+    const adminResponsavel = this.escala.criadoPor as Usuario & { funcaoAdmin: FuncaoAdmin | null };
 
     const nomeCompletoAdmin = adminResponsavel?.nome || 'NOME DO ADMINISTRADOR';
     const nomeDeGuerraAdmin = adminResponsavel?.nomeDeGuerra || 'NOME DE GUERRA';
-    const funcaoAdminCompleta = adminResponsavel?.funcao || 'AUX ADM - ESCALANTE';
+    const funcaoAdminCompleta = adminResponsavel?.funcaoAdmin?.nome || 'AUX ADM - ESCALANTE';
     const funcaoAdminCurta = 'AUX. ADM.'; 
 
     autoTable(this.doc as jsPDFWithAutoTable, {
@@ -516,7 +517,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
     this.doc.text(funcaoAdminCompleta.toUpperCase(), this.pageWidth / 2, this.currentY + 6, { align: 'center' })
   }
 
-  public async build(escala: unknown): Promise<Uint8Array> {
+  public async build(): Promise<Uint8Array> {
     try {
       await this.init()
       await this.loadFonts()

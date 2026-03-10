@@ -58,7 +58,7 @@ function initializeState(
         if (!secoesMap.has(item.secao)) {
             secoesMap.set(item.secao, []);
         }
-        secoesMap.get(item.secao)!.push(item as any);
+        secoesMap.get(item.secao)!.push(item);
     });
 
     return Array.from(secoesMap.entries()).map(([nomeSecao, itensDaSecao]) => {

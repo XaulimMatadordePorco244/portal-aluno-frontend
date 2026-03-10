@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; 
-import { EscalaPDFBuilder } from "@/lib/escalaPdfGenerator"; 
+import { EscalaPDFBuilder } from "@/lib/escalaPdfGenerator";
+import { EscalaCompleta } from "@/app/admin/escalas/[id]/page"; 
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const escalaId = params.id;
+    const { id: escalaId } = await params;
 
     const escala = await prisma.escala.findUnique({
       where: { id: escalaId },
@@ -17,7 +18,7 @@ export async function GET(
             aluno: { include: { perfilAluno: { include: { funcao: true, cargo: true } }, funcaoAdmin: true } }
           }
         }, 
-        criadoPor: true,
+        criadoPor: { include: { funcaoAdmin: true } },
       },
     });
 
@@ -25,8 +26,8 @@ export async function GET(
       return NextResponse.json({ error: "Escala não encontrada" }, { status: 404 });
     }
 
-    const pdfBuilder = new EscalaPDFBuilder(escala as any);
-    const pdfBytes = await pdfBuilder.build(escala as any); 
+    const pdfBuilder = new EscalaPDFBuilder(escala as EscalaCompleta);
+    const pdfBytes = await pdfBuilder.build(); 
     
     const pdfBuffer = Buffer.from(pdfBytes);
     

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   let body;
   try {
     body = await request.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(novaEscala, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao salvar a escala:", error);
     return NextResponse.json({ error: 'Não foi possível criar a escala.' }, { status: 500 });
   }

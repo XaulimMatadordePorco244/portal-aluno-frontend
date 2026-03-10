@@ -56,9 +56,7 @@ export default async function EditAnotacaoPage({ params }: EditAnotacaoPageProps
       }
     },
     orderBy: {
-      perfilAluno: {
         nomeDeGuerra: 'asc'
-      }
     }
   });
 

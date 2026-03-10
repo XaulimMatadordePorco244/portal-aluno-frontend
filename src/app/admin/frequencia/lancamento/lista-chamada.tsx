@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import { buscarFrequenciaDoDia, salvarListaFrequencia } from '@/app/actions/frequencia-actions'
 
 interface ListaChamadaProps {
-  alunos: (PerfilAluno & { usuario: { nome: string } })[]
+  alunos: (PerfilAluno & { usuario: { nome: string, nomeDeGuerra: string | null } })[]
 }
 
 export function ListaChamada({ alunos }: ListaChamadaProps) {
@@ -102,10 +102,10 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
   const alunosFiltrados = alunos
     .filter(
       a =>
-        a.nomeDeGuerra?.toLowerCase().includes(busca.toLowerCase()) ||
+        a.usuario.nomeDeGuerra?.toLowerCase().includes(busca.toLowerCase()) ||
         a.usuario.nome.toLowerCase().includes(busca.toLowerCase())
     )
-    .sort((a, b) => (a.nomeDeGuerra || '').localeCompare(b.nomeDeGuerra || ''))
+    .sort((a, b) => (a.usuario.nomeDeGuerra || '').localeCompare(b.usuario.nomeDeGuerra || ''))
 
   const presentes = Object.values(chamada).filter(s => s === 'PRESENTE').length
   const faltas = Object.values(chamada).filter(s => s === 'FALTA').length
@@ -238,7 +238,7 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
             >
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">
-                  {aluno.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
+                  {aluno.usuario.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   {aluno.usuario.nome}

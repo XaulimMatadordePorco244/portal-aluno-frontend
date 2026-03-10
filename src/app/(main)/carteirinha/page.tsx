@@ -39,7 +39,7 @@ export default async function CarteirinhaPage() {
 
   const dadosCarteirinha = {
     nome: aluno.nome,
-    nomeDeGuerra: aluno.perfilAluno.nomeDeGuerra ?? "ALUNO", 
+    nomeDeGuerra: aluno.nomeDeGuerra ?? "ALUNO", 
     fotoUrl: aluno.fotoUrl,
     cpf: aluno.cpf,
     dataNascimento: aluno.dataNascimento ?? new Date(), 

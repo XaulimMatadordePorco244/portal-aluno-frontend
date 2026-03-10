@@ -71,7 +71,7 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
             <CardContent>
                 <div className="space-y-6">
                     {processo.etapas.map((etapa) => {
-                        const responsavelNome = etapa.responsavel?.perfilAluno?.nomeDeGuerra || etapa.responsavel?.nome || (etapa.status === "EM_ANALISE" ? "Aguardando" : "Coordenação");
+                        const responsavelNome = etapa.responsavel?.nomeDeGuerra || etapa.responsavel?.nome || (etapa.status === "EM_ANALISE" ? "Aguardando" : "Coordenação");
                         
                         return (
                         <div key={etapa.id} className="flex items-start gap-4">

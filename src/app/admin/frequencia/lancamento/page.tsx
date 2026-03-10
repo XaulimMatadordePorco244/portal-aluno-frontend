@@ -5,16 +5,17 @@ const prisma = new PrismaClient()
 
 export default async function LancamentoFrequenciaPage() {
 const alunos = await prisma.perfilAluno.findMany({
-    orderBy: {
-      nomeDeGuerra: 'asc'
-    },
-    include: {
-      usuario: { 
-        select: { nome: true } 
-      }
+  include: {
+    usuario: {
+      select: { nome: true, nomeDeGuerra: true }
     }
-  })
-
+  },
+  orderBy: {
+    usuario: {
+      nomeDeGuerra: 'asc'
+    }
+  }
+})
   return (
     <div className="p-6 space-y-6">
       <div>

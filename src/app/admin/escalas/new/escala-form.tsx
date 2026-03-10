@@ -40,6 +40,18 @@ type FuncaoAdminType = {
   setor: string | null;
 };
 
+type SecaoTemplate = {
+  nome: string;
+  total: number;
+  categoriaEsperada: string;
+  permiteMultiplosItens: boolean;
+  isSecaoAdmin: boolean;
+  isSecaoPalestrante: boolean;
+  itemFuncoes: string[];
+  inicio: string;
+  fim: string;
+};
+
 type UserComDados = Usuario & {
   perfilAluno: (PerfilAluno & {
     funcao: Funcao | null;
@@ -125,7 +137,7 @@ export function EscalaForm({
   
   const [modeloSelecionado, setModeloSelecionado] = useState<string>('');
 
-  const criarSecaoDoTemplate = useCallback((secaoTemplate: any, adminsJaAlocados: Set<string> = new Set()): SecaoState => {
+  const criarSecaoDoTemplate = useCallback((secaoTemplate: SecaoTemplate, adminsJaAlocados: Set<string> = new Set()): SecaoState => {
     const itens = Array.from({ length: secaoTemplate.total }, (v, i): ItemState => {
       const funcaoNome = secaoTemplate.itemFuncoes[i]?.toUpperCase() || '';
       

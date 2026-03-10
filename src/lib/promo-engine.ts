@@ -11,7 +11,7 @@ export type RegraComRequisitos = {
 };
 
 interface AlunoSimulacao {
-  nomeDeGuerra: string | null;
+  usuario: { nomeDeGuerra: string | null };
   conceitoAtual: string | null;
   desempenhosEscolares: { mediaFinal: number | null }[];
   tafs: { mediaFinal: number | null }[];
@@ -30,6 +30,7 @@ export async function simularPromocao(modalidade: string, regrasDraft: RegraComR
         usuario: { status: 'ATIVO' }
       },
       include: {
+        usuario: { select: { nomeDeGuerra: true } },
         desempenhosEscolares: { orderBy: { anoLetivo: 'desc' }, take: 1 }, 
         tafs: { orderBy: { dataRealizacao: 'desc' }, take: 1 },
         historicoCargos: { orderBy: { dataInicio: 'desc' }, take: 1 },
@@ -53,7 +54,7 @@ export async function simularPromocao(modalidade: string, regrasDraft: RegraComR
         if (!atende) {
           passouEmTudo = false;
           if (detalhesReprovacao.length < 5) { 
-             detalhesReprovacao.push(`Aluno ${aluno.nomeDeGuerra}: Falhou em ${req.campo} (${valorAluno} vs ${req.valor})`);
+             detalhesReprovacao.push(`Aluno ${aluno.usuario.nomeDeGuerra}: Falhou em ${req.campo} (${valorAluno} vs ${req.valor})`);
           }
           break;
         }
