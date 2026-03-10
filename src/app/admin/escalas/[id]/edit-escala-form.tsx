@@ -62,9 +62,9 @@ function initializeState(
     });
 
     return Array.from(secoesMap.entries()).map(([nomeSecao, itensDaSecao]) => {
-        
+
         const isSecaoPalestrante = itensDaSecao.some(i => i.cargo === 'PALESTRA' || i.observacao?.startsWith(AUXILIAR_PREFIX));
-        
+
         const isSecaoAdmin = itensDaSecao.length > 0 && itensDaSecao.every(item => admins.some(a => a.id === item.alunoId));
 
         const itensState: ItemState[] = itensDaSecao.map(item => {
@@ -77,7 +77,7 @@ function initializeState(
                 tema = item.cargo !== 'PALESTRA' ? item.cargo : '';
                 if (item.observacao && item.observacao.startsWith(AUXILIAR_PREFIX)) {
                     const auxNome = item.observacao.substring(AUXILIAR_PREFIX.length);
-                    const auxUser = alunos.find(a => 
+                    const auxUser = alunos.find(a =>
                         a.nomeDeGuerra === auxNome || a.nome === auxNome
                     );
                     auxiliarUserId = auxUser?.id || '';
@@ -111,8 +111,8 @@ function initializeState(
         return {
             id: `secao-${nomeSecao}-${Math.random()}`,
             nome: nomeSecao,
-            categoriaEsperada: '', 
-            permiteMultiplosItens: true, 
+            categoriaEsperada: '',
+            permiteMultiplosItens: true,
             isSecaoAdmin: isSecaoAdmin,
             isSecaoPalestrante: isSecaoPalestrante,
             itens: itensState
@@ -187,6 +187,7 @@ export function EditEscalaForm({
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
+    const [titulo, setTitulo] = useState(escalaInicial.titulo || '');
     const [dataEscala, setDataEscala] = useState(escalaInicial.dataEscala);
     const [tipo, setTipo] = useState(escalaInicial.tipo);
     const [elaboradoPor, setElaboradoPor] = useState(escalaInicial.elaboradoPor);
@@ -210,6 +211,12 @@ export function EditEscalaForm({
         const itemCopy: ItemState = { ...novasSecoes[secaoIndex].itens[itemIndex] };
         itemCopy[field] = value;
         novasSecoes[secaoIndex].itens[itemIndex] = itemCopy;
+        setSecoes(novasSecoes);
+    };
+
+    const handleSecaoNameChange = (secaoIndex: number, newName: string) => {
+        const novasSecoes = [...secoes];
+        novasSecoes[secaoIndex].nome = newName;
         setSecoes(novasSecoes);
     };
 
@@ -279,6 +286,7 @@ export function EditEscalaForm({
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    titulo: titulo,
                     dataEscala: dataEscala,
                     tipo: tipo,
                     elaboradoPor: elaboradoPor,
@@ -295,6 +303,7 @@ export function EditEscalaForm({
 
             const updatedEscala: EscalaCompleta = await response.json();
 
+            setTitulo(updatedEscala.titulo || '');
             setDataEscala(updatedEscala.dataEscala);
             setTipo(updatedEscala.tipo);
             setElaboradoPor(updatedEscala.elaboradoPor);
@@ -319,21 +328,17 @@ export function EditEscalaForm({
         }
     };
 
-    // NOVA FUNÇÃO: Pré-visualizar o PDF sem salvar no banco de dados
     const handlePreVisualizarPdf = async () => {
         setIsGeneratingPdf(true);
         const toastId = toast.loading("Gerando pré-visualização...");
         try {
-            // Recomendo criar essa rota no seu backend. Ela deve processar a escala e
-            // retornar o arquivo PDF em formato Blob diretamente, sem salvar no DB.
             const response = await fetch(`/api/escalas/${escalaInicial.id}/preview-pdf`, { method: 'GET' });
-            
+
             if (!response.ok) throw new Error("Falha ao gerar pré-visualização.");
-            
+
             const blob = await response.blob();
             const previewUrl = URL.createObjectURL(blob);
-            
-            // Abre o PDF gerado na memória em uma nova aba
+
             window.open(previewUrl, '_blank');
             toast.success("Pré-visualização gerada!", { id: toastId });
         } catch (error) {
@@ -343,24 +348,21 @@ export function EditEscalaForm({
         }
     };
 
-    // NOVA FUNÇÃO: Publicar oficialmente (salva data, muda status, gera PDF e salva URL)
     const handlePublish = async () => {
         setIsPublishing(true);
         const toastId = toast.loading('Publicando escala e gerando PDF oficial...');
         try {
-            // Esta rota deve mudar o status para PUBLICADA, atualizar o `publicadoEm`
-            // gerar o PDF final, subir pro Storage e salvar a url no banco.
             const response = await fetch(`/api/escalas/${escalaInicial.id}/publicar`, {
                 method: 'POST',
             });
-            
+
             if (!response.ok) throw new Error('Falha ao publicar a escala.');
-            
+
             const updatedEscala = await response.json();
-            
+
             setStatus(updatedEscala.status);
-            setPdfUrl(updatedEscala.pdfUrl); // Seta a URL oficial
-            
+            setPdfUrl(updatedEscala.pdfUrl);
+
             toast.success("Escala publicada com sucesso!", { id: toastId });
             router.refresh();
         } catch (error) {
@@ -370,7 +372,6 @@ export function EditEscalaForm({
         }
     };
 
-    // NOVA FUNÇÃO: Despublicar (volta pra rascunho e perde a validade do PDF)
     const handleUnpublish = async () => {
         setIsPublishing(true);
         const toastId = toast.loading('Retornando para rascunho...');
@@ -380,13 +381,13 @@ export function EditEscalaForm({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: StatusEscala.RASCUNHO }),
             });
-            
+
             if (!response.ok) throw new Error('Falha ao alterar o status.');
-            
+
             const updatedEscala = await response.json();
             setStatus(updatedEscala.status);
-            setPdfUrl(null); // Limpa a URL pois virou rascunho
-            
+            setPdfUrl(null);
+
             toast.success("Retornado para rascunho!", { id: toastId });
             router.refresh();
         } catch (error) {
@@ -403,6 +404,7 @@ export function EditEscalaForm({
 
     const handleCancelEdit = () => {
         setIsEditing(false);
+        setTitulo(escalaInicial.titulo || '');
         setDataEscala(escalaInicial.dataEscala);
         setTipo(escalaInicial.tipo);
         setElaboradoPor(escalaInicial.elaboradoPor);
@@ -443,15 +445,14 @@ export function EditEscalaForm({
                         </p>
                     </div>
                 </div>
-                
-                {/* BOTÕES DE AÇÃO REFEITOS */}
+
                 <div className="flex flex-wrap gap-2">
                     {!isEditing ? (
                         <>
                             <Button onClick={() => setIsEditing(true)} disabled={isBloqueada}>
                                 <Edit className="mr-2 h-4 w-4" /> Editar
                             </Button>
-                            
+
                             {status === 'PUBLICADA' ? (
                                 <>
                                     {pdfUrl && (
@@ -500,7 +501,11 @@ export function EditEscalaForm({
                 </CardHeader>
                 <CardContent>
                     {isEditing ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="titulo">Título Geral da Escala</Label>
+                                <Input id="titulo" placeholder="Ex: Escala de Serviço..." value={titulo} onChange={e => setTitulo(e.target.value)} />
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="dataEscala">Data da Escala</Label>
                                 <Input id="dataEscala" type="date" value={format(new Date(dataEscala), 'yyyy-MM-dd')} onChange={e => setDataEscala(new Date(e.target.value))} />
@@ -524,7 +529,8 @@ export function EditEscalaForm({
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div><Label>Título Geral</Label><p className="font-semibold text-sm">{titulo || 'Sem título'}</p></div>
                             <div><Label>Data da Escala</Label><p className="font-semibold text-sm">{format(new Date(dataEscala), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p></div>
                             <div><Label>Tipo</Label><p className="font-semibold text-sm">{tipo}</p></div>
                             <div><Label>Elaborado Por</Label><p className="font-semibold text-sm">{elaboradoPor}</p></div>
@@ -537,7 +543,19 @@ export function EditEscalaForm({
                 {secoes.map((secao, secaoIndex) => (
                     <Card key={secao.id}>
                         <CardHeader>
-                            <CardTitle>{secao.nome}</CardTitle>
+                            {isEditing ? (
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Nome da Seção</Label>
+                                    <Input
+                                        value={secao.nome}
+                                        onChange={(e) => handleSecaoNameChange(secaoIndex, e.target.value)}
+                                        className="font-bold text-lg"
+                                        placeholder="Ex: SEÇÃO DE TRÂNSITO..."
+                                    />
+                                </div>
+                            ) : (
+                                <CardTitle>{secao.nome}</CardTitle>
+                            )}
                         </CardHeader>
                         <CardContent className="space-y-4">
 

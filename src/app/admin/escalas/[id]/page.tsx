@@ -4,6 +4,7 @@ import { EditEscalaForm } from "./edit-escala-form";
 import { getCurrentUser } from "@/lib/auth";
 import { Scale } from "lucide-react";
 import { Escala, EscalaItem, Usuario, PerfilAluno, Funcao, Cargo, FuncaoAdmin } from '@prisma/client';
+import { DeleteEscalaButton } from "./delete-escala-button";
 
 export type EscalaItemCompleto = EscalaItem & {
   aluno: Usuario & {
@@ -137,7 +138,10 @@ export default async function DetalheEscalaPage({ params }: PageProps) {
           <Scale className="w-8 h-8 text-foreground" />
           <h1 className="text-3xl font-bold text-foreground">Detalhes da Escala</h1>
         </div>
+                <DeleteEscalaButton escalaId={escala.id} />
+
       </div>
+      
 
       <EditEscalaForm
         escalaInicial={escala}
@@ -145,6 +149,8 @@ export default async function DetalheEscalaPage({ params }: PageProps) {
         admins={formData.admins}
         funcoes={formData.funcoes}
       />
+      
     </>
+    
   );
 }

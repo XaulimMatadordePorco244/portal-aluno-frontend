@@ -86,7 +86,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
   private escala: EscalaCompleta
 
   constructor(escala: EscalaCompleta) {
-    super(15)
+    super(25)
     this.escala = escala
   }
 
@@ -161,7 +161,11 @@ export class EscalaPDFBuilder extends PDFBuilder {
     this.doc.setFont('Arial', 'bold')
 
     const subtitleY = this.currentY - 3
-    const texto = `ESCALA DE ${tipoFormatado} – DIA ${diaFormatado}`
+    const tituloPersonalizado = (this.escala as any).titulo; 
+    
+    const texto = tituloPersonalizado && tituloPersonalizado.trim() !== ''
+      ? `${tituloPersonalizado.toUpperCase()} – DIA ${diaFormatado}`
+      : `ESCALA DE ${tipoFormatado} – DIA ${diaFormatado}`;
     this.doc.text(texto, this.pageWidth / 2, subtitleY, { align: 'center' })
     const textWidth = this.doc.getTextWidth(texto)
     const startX = this.pageWidth / 2 - textWidth / 2
@@ -215,7 +219,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
       fillColor: [220, 220, 220],
       textColor: 0,
       halign: 'center',
-      cellPadding: { top: 0.2, right: 0.2, bottom: 0.2, left: -9 },
+      cellPadding: { top: 0.2, right: 0.2, bottom: 0.2, left: 0.2 },
       fontSize: 8.5,
       font: 'Arial',
       lineWidth: 0.3
@@ -255,9 +259,9 @@ export class EscalaPDFBuilder extends PDFBuilder {
         ])
 
         columnStyles = {
-          0: { cellWidth: 65, halign: 'center' },
-          1: { cellWidth: 40, halign: 'center' },
-          2: { cellWidth: 'auto', halign: 'center' }
+          0: { cellWidth: 60, halign: 'center' },
+          1: { cellWidth: 'auto', halign: 'center' },
+          2: { cellWidth: 60, halign: 'center' }
         }
 
       } else {
@@ -285,9 +289,9 @@ export class EscalaPDFBuilder extends PDFBuilder {
         ])
 
         columnStyles = {
-          0: { cellWidth: 65, halign: 'center' },
-          1: { cellWidth: 40, halign: 'center' },
-          2: { cellWidth: 'auto', halign: 'center' }
+          0: { cellWidth: 60, halign: 'center' },
+          1: { cellWidth: 'auto', halign: 'center' },
+          2: { cellWidth: 60, halign: 'center' }
         }
       }
 
@@ -445,7 +449,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
     addSingleColumnSection('FARDAMENTO', this.escala.fardamento)
     addSingleColumnSection('OBSERVAÇÃO', this.escala.observacoes)
 
-    checkPageBreak(15)
+    checkPageBreak(35)
 
     const signatureTableStyles: TableStyles = {
       fontSize: 8.5,
@@ -464,7 +468,7 @@ export class EscalaPDFBuilder extends PDFBuilder {
       month: '2-digit',
       year: '2-digit'
     });
-    const adminResponsavel = (this.escala as any).autor;
+    const adminResponsavel = (this.escala as any).criadoPor || null;
 
     const nomeCompletoAdmin = adminResponsavel?.nome || 'NOME DO ADMINISTRADOR';
     const nomeDeGuerraAdmin = adminResponsavel?.nomeDeGuerra || 'NOME DE GUERRA';
@@ -505,11 +509,11 @@ export class EscalaPDFBuilder extends PDFBuilder {
     this.doc.setFontSize(9)
     this.doc.setFont('Arial', 'bold')
     
-    this.doc.text(nomeCompletoAdmin.toUpperCase(), this.pageWidth / 2, this.currentY, { align: 'center' })
+    this.doc.text(nomeCompletoAdmin.toUpperCase(), this.pageWidth / 2, this.currentY + 5, { align: 'center' })
     this.currentY += 3
     this.doc.setFontSize(8)
     
-    this.doc.text(funcaoAdminCompleta.toUpperCase(), this.pageWidth / 2, this.currentY, { align: 'center' })
+    this.doc.text(funcaoAdminCompleta.toUpperCase(), this.pageWidth / 2, this.currentY + 6, { align: 'center' })
   }
 
   public async build(escala: unknown): Promise<Uint8Array> {
