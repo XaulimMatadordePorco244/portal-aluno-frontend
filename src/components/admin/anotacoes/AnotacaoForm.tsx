@@ -140,7 +140,7 @@ export default function AnotacaoForm({
   const getDisplayText = (u: AlunoComCompanhia) => {
     if (u.role === 'ALUNO') {
       const cargo = u.perfilAluno?.cargo?.abreviacao || 'AL';
-      const nomeGuerra = u.perfilAluno?.nomeDeGuerra || u.nome.split(' ')[0];
+      const nomeGuerra = u.nomeDeGuerra || u.nome.split(' ')[0];
       return `${cargo} GM ${nomeGuerra}`;
     }
     return u.nome.toUpperCase();
@@ -148,7 +148,7 @@ export default function AnotacaoForm({
 
   const getSearchValue = (u: AlunoComCompanhia) => {
     if (u.role === 'ALUNO') {
-      return u.perfilAluno?.nomeDeGuerra || u.nome.split(' ')[0];
+      return u.nomeDeGuerra || u.nome.split(' ')[0];
     }
     return u.nome;
   };

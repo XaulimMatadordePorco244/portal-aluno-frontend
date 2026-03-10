@@ -16,7 +16,7 @@ export default async function AlunoQESPage() {
   const user = await getCurrentUserWithRelations();
 
   const perfil = user?.perfilAluno;
-  const nomeExibicao = perfil?.nomeDeGuerra || user?.nome || '';
+  const nomeExibicao = user?.nomeDeGuerra || user?.nome || '';
   const cargoExibicao = perfil?.cargo?.abreviacao || 'Aluno';
 
   return (

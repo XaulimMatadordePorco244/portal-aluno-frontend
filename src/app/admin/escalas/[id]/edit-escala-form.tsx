@@ -11,8 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Funcao, TipoEscala } from '@prisma/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit, FileDown, Globe, PlusCircle, Save, Trash2, ChevronsUpDown } from 'lucide-react';
-import { EscalaCompleta, UserComCargoEFuncao } from './page';
+import { ArrowLeft, Edit, FileDown, Globe, PlusCircle, Save, Trash2, ChevronsUpDown, Eye } from 'lucide-react';
+import { EscalaCompleta, UserComCargoEFuncao, EscalaItemCompleto } from './page';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -48,32 +48,57 @@ const AUXILIAR_PREFIX = "AUXILIAR - ";
 function initializeState(
     escala: EscalaCompleta,
     alunos: UserComCargo[],
+    admins: UserComCargo[],
+    funcoes: FuncaoComCategoria[],
     funcaoOutroId: string
 ): SecaoState[] {
 
-    return GABARITO_COLABORACAO.secoes.map(secaoTemplate => {
-        const itensDaSecao = escala.itens.filter(item => item.secao === secaoTemplate.nome);
+    const secoesMap = new Map<string, EscalaItemCompleto[]>();
+    escala.itens.forEach(item => {
+        if (!secoesMap.has(item.secao)) {
+            secoesMap.set(item.secao, []);
+        }
+        secoesMap.get(item.secao)!.push(item);
+    });
+
+    return Array.from(secoesMap.entries()).map(([nomeSecao, itensDaSecao]) => {
+
+        const isSecaoPalestrante = itensDaSecao.some(i => i.cargo === 'PALESTRA' || i.observacao?.startsWith(AUXILIAR_PREFIX));
+
+        const isSecaoAdmin = itensDaSecao.length > 0 && itensDaSecao.every(item => admins.some(a => a.id === item.alunoId));
 
         const itensState: ItemState[] = itensDaSecao.map(item => {
             let auxiliarUserId = '';
             let tema = '';
             let cargoPersonalizado = '';
+            let funcaoId = item.funcaoId || '';
 
-            if (secaoTemplate.isSecaoPalestrante) {
-                tema = item.cargo;
+            if (isSecaoPalestrante) {
+                tema = item.cargo !== 'PALESTRA' ? item.cargo : '';
                 if (item.observacao && item.observacao.startsWith(AUXILIAR_PREFIX)) {
                     const auxNome = item.observacao.substring(AUXILIAR_PREFIX.length);
-                    const auxUser = alunos.find(a => a.perfilAluno?.nomeDeGuerra === auxNome);
+                    const auxUser = alunos.find(a =>
+                        a.nomeDeGuerra === auxNome || a.nome === auxNome
+                    );
                     auxiliarUserId = auxUser?.id || '';
                 }
-            }
-            else if (item.funcaoId === funcaoOutroId) {
-                cargoPersonalizado = item.cargo;
+            } else {
+                if (!funcaoId) {
+                    const funcaoMatch = funcoes.find(f => f.nome.toUpperCase() === item.cargo.toUpperCase());
+                    if (funcaoMatch) {
+                        funcaoId = funcaoMatch.id;
+                    } else {
+                        funcaoId = funcaoOutroId;
+                        cargoPersonalizado = item.cargo;
+                    }
+                } else if (funcaoId === funcaoOutroId) {
+                    cargoPersonalizado = item.cargo;
+                }
             }
 
             return {
                 id: item.id,
-                funcaoId: item.funcaoId || '',
+                funcaoId: funcaoId,
                 horarioInicio: item.horarioInicio,
                 horarioFim: item.horarioFim,
                 userId: item.alunoId || '',
@@ -84,8 +109,12 @@ function initializeState(
         });
 
         return {
-            ...secaoTemplate,
-            id: `secao-${secaoTemplate.nome}`,
+            id: `secao-${nomeSecao}-${Math.random()}`,
+            nome: nomeSecao,
+            categoriaEsperada: '',
+            permiteMultiplosItens: true,
+            isSecaoAdmin: isSecaoAdmin,
+            isSecaoPalestrante: isSecaoPalestrante,
             itens: itensState
         };
     });
@@ -95,11 +124,10 @@ function UserCombobox({ users, value, onChange }: { users: UserComCargo[], value
     const [open, setOpen] = useState(false);
     const selectedUser = users.find(u => u.id === value);
 
-
     const formatUserDisplay = (user: UserComCargo) => {
         const perfil = user.perfilAluno;
         if (perfil) {
-            return `${perfil.cargo?.abreviacao || ''} ${perfil.nomeDeGuerra || user.nome}`.trim();
+            return `${perfil.cargo?.abreviacao || ''} ${user.nomeDeGuerra || user.nome}`.trim();
         }
         return user.nome;
     }
@@ -159,6 +187,7 @@ export function EditEscalaForm({
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
+    const [titulo, setTitulo] = useState(escalaInicial.titulo || '');
     const [dataEscala, setDataEscala] = useState(escalaInicial.dataEscala);
     const [tipo, setTipo] = useState(escalaInicial.tipo);
     const [elaboradoPor, setElaboradoPor] = useState(escalaInicial.elaboradoPor);
@@ -170,7 +199,7 @@ export function EditEscalaForm({
 
     const funcaoOutroId = useMemo(() => funcoesProp.find(f => f.nome.toUpperCase() === 'OUTRO')?.id || '', [funcoesProp]);
 
-    const [secoes, setSecoes] = useState<SecaoState[]>(() => initializeState(escalaInicial, alunos, funcaoOutroId));
+    const [secoes, setSecoes] = useState<SecaoState[]>(() => initializeState(escalaInicial, alunos, admins, funcoesProp, funcaoOutroId));
 
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -182,6 +211,12 @@ export function EditEscalaForm({
         const itemCopy: ItemState = { ...novasSecoes[secaoIndex].itens[itemIndex] };
         itemCopy[field] = value;
         novasSecoes[secaoIndex].itens[itemIndex] = itemCopy;
+        setSecoes(novasSecoes);
+    };
+
+    const handleSecaoNameChange = (secaoIndex: number, newName: string) => {
+        const novasSecoes = [...secoes];
+        novasSecoes[secaoIndex].nome = newName;
         setSecoes(novasSecoes);
     };
 
@@ -224,7 +259,7 @@ export function EditEscalaForm({
                     funcaoIdFinal = null;
                     const auxiliar = alunos.find(a => a.id === item.auxiliarUserId);
                     if (auxiliar) {
-                        const nomeAuxiliar = auxiliar.perfilAluno?.nomeDeGuerra || auxiliar.nome;
+                        const nomeAuxiliar = auxiliar.nomeDeGuerra || auxiliar.nome;
                         observacaoFinal = `AUXILIAR - ${nomeAuxiliar}`;
                     }
                 } else if (funcao?.id === funcaoOutroId) {
@@ -251,6 +286,7 @@ export function EditEscalaForm({
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    titulo: titulo,
                     dataEscala: dataEscala,
                     tipo: tipo,
                     elaboradoPor: elaboradoPor,
@@ -267,6 +303,7 @@ export function EditEscalaForm({
 
             const updatedEscala: EscalaCompleta = await response.json();
 
+            setTitulo(updatedEscala.titulo || '');
             setDataEscala(updatedEscala.dataEscala);
             setTipo(updatedEscala.tipo);
             setElaboradoPor(updatedEscala.elaboradoPor);
@@ -274,7 +311,7 @@ export function EditEscalaForm({
             setStatus(StatusEscala.RASCUNHO);
             setFardamento(updatedEscala.fardamento || '');
             setObservacoes(updatedEscala.observacoes || '');
-            setSecoes(initializeState(updatedEscala, alunos, funcaoOutroId));
+            setSecoes(initializeState(updatedEscala, alunos, admins, funcoesProp, funcaoOutroId));
 
             toast.success("Sucesso!", {
                 description: "As alterações foram salvas. O PDF foi invalidado e a escala retornou para Rascunho."
@@ -291,16 +328,19 @@ export function EditEscalaForm({
         }
     };
 
-    const handleGeneratePdf = async () => {
+    const handlePreVisualizarPdf = async () => {
         setIsGeneratingPdf(true);
-        const toastId = toast.loading("Gerando PDF...");
+        const toastId = toast.loading("Gerando pré-visualização...");
         try {
-            const response = await fetch(`/api/escalas/${escalaInicial.id}/generate-pdf`, { method: 'POST' });
-            if (!response.ok) throw new Error("Falha ao gerar o PDF.");
-            const updatedEscala = await response.json();
-            setPdfUrl(updatedEscala.pdfUrl);
-            toast.success("PDF gerado e salvo!", { id: toastId });
-            router.refresh();
+            const response = await fetch(`/api/escalas/${escalaInicial.id}/preview-pdf`, { method: 'GET' });
+
+            if (!response.ok) throw new Error("Falha ao gerar pré-visualização.");
+
+            const blob = await response.blob();
+            const previewUrl = URL.createObjectURL(blob);
+
+            window.open(previewUrl, '_blank');
+            toast.success("Pré-visualização gerada!", { id: toastId });
         } catch (error) {
             toast.error("Erro ao gerar PDF", { id: toastId, description: (error as Error).message });
         } finally {
@@ -309,26 +349,49 @@ export function EditEscalaForm({
     };
 
     const handlePublish = async () => {
-        if (status === 'RASCUNHO' && !pdfUrl) {
-            toast.error("Ação bloqueada", { description: "Você deve gerar o PDF antes de publicar." });
-            return;
-        }
         setIsPublishing(true);
-        const novoStatus = status === 'PUBLICADA' ? StatusEscala.RASCUNHO : StatusEscala.PUBLICADA;
-        const toastId = toast.loading(novoStatus === 'PUBLICADA' ? 'Publicando...' : 'Retornando...');
+        const toastId = toast.loading('Publicando escala e gerando PDF oficial...');
+        try {
+            const response = await fetch(`/api/escalas/${escalaInicial.id}/publicar`, {
+                method: 'POST',
+            });
+
+            if (!response.ok) throw new Error('Falha ao publicar a escala.');
+
+            const updatedEscala = await response.json();
+
+            setStatus(updatedEscala.status);
+            setPdfUrl(updatedEscala.pdfUrl);
+
+            toast.success("Escala publicada com sucesso!", { id: toastId });
+            router.refresh();
+        } catch (error) {
+            toast.error("Erro ao publicar", { id: toastId, description: (error as Error).message });
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    const handleUnpublish = async () => {
+        setIsPublishing(true);
+        const toastId = toast.loading('Retornando para rascunho...');
         try {
             const response = await fetch(`/api/escalas/${escalaInicial.id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: novoStatus }),
+                body: JSON.stringify({ status: StatusEscala.RASCUNHO }),
             });
+
             if (!response.ok) throw new Error('Falha ao alterar o status.');
+
             const updatedEscala = await response.json();
             setStatus(updatedEscala.status);
-            toast.success("Status atualizado!", { id: toastId });
+            setPdfUrl(null);
+
+            toast.success("Retornado para rascunho!", { id: toastId });
             router.refresh();
         } catch (error) {
-            toast.error("Erro ao atualizar status", { id: toastId, description: (error as Error).message });
+            toast.error("Erro ao retornar", { id: toastId, description: (error as Error).message });
         } finally {
             setIsPublishing(false);
         }
@@ -341,6 +404,7 @@ export function EditEscalaForm({
 
     const handleCancelEdit = () => {
         setIsEditing(false);
+        setTitulo(escalaInicial.titulo || '');
         setDataEscala(escalaInicial.dataEscala);
         setTipo(escalaInicial.tipo);
         setElaboradoPor(escalaInicial.elaboradoPor);
@@ -348,13 +412,13 @@ export function EditEscalaForm({
         setStatus(escalaInicial.status);
         setFardamento(escalaInicial.fardamento || GABARITO_COLABORACAO.fardamento);
         setObservacoes(escalaInicial.observacoes || GABARITO_COLABORACAO.observacoes);
-        setSecoes(initializeState(escalaInicial, alunos, funcaoOutroId));
+        setSecoes(initializeState(escalaInicial, alunos, admins, funcoesProp, funcaoOutroId));
     }
 
     const getAlunoName = (alunoId: string, isSecaoAdmin: boolean) => {
         const userList = isSecaoAdmin ? admins : alunos;
         const u = userList.find(u => u.id === alunoId);
-        return u?.perfilAluno?.nomeDeGuerra || u?.nome || 'N/A';
+        return u?.nomeDeGuerra || u?.nome || 'N/A';
     };
 
     const getFuncaoName = (funcaoId: string, cargoPersonalizado?: string) => {
@@ -381,16 +445,35 @@ export function EditEscalaForm({
                         </p>
                     </div>
                 </div>
+
                 <div className="flex flex-wrap gap-2">
                     {!isEditing ? (
                         <>
-                            <Button onClick={() => setIsEditing(true)} disabled={isBloqueada}><Edit className="mr-2 h-4 w-4" /> Editar</Button>
-                            {pdfUrl ? (
-                                <Button variant="outline" onClick={handleDownloadPdf}><FileDown className="mr-2 h-4 w-4" /> Baixar PDF</Button>
+                            <Button onClick={() => setIsEditing(true)} disabled={isBloqueada}>
+                                <Edit className="mr-2 h-4 w-4" /> Editar
+                            </Button>
+
+                            {status === 'PUBLICADA' ? (
+                                <>
+                                    {pdfUrl && (
+                                        <Button variant="outline" onClick={handleDownloadPdf}>
+                                            <FileDown className="mr-2 h-4 w-4" /> Baixar PDF Oficial
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" onClick={handleUnpublish} disabled={isPublishing || isBloqueada}>
+                                        <Globe className="mr-2 h-4 w-4" /> {isPublishing ? 'Processando...' : 'Retornar p/ Rascunho'}
+                                    </Button>
+                                </>
                             ) : (
-                                <Button variant="outline" onClick={handleGeneratePdf} disabled={isGeneratingPdf}><FileDown className="mr-2 h-4 w-4" /> {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}</Button>
+                                <>
+                                    <Button variant="outline" onClick={handlePreVisualizarPdf} disabled={isGeneratingPdf}>
+                                        <Eye className="mr-2 h-4 w-4" /> {isGeneratingPdf ? 'Gerando...' : 'Pré-visualizar PDF'}
+                                    </Button>
+                                    <Button variant="default" onClick={handlePublish} disabled={isPublishing || isBloqueada} className="bg-green-600 hover:bg-green-700">
+                                        <Globe className="mr-2 h-4 w-4" /> {isPublishing ? 'Publicando...' : 'Publicar Escala'}
+                                    </Button>
+                                </>
                             )}
-                            <Button variant="outline" onClick={handlePublish} disabled={isPublishing || isBloqueada}><Globe className="mr-2 h-4 w-4" /> {isPublishing ? '...' : (status === 'PUBLICADA' ? 'Retornar p/ Rascunho' : 'Publicar')}</Button>
                         </>
                     ) : (
                         <>
@@ -404,7 +487,7 @@ export function EditEscalaForm({
             {isBloqueada && !isEditing && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                     <p className="text-yellow-800 text-sm font-medium">
-                        ⚠️ Esta escala já passou da data e não pode mais ser editada ou ter seu status alterado.
+                        Esta escala já passou da data e não pode mais ser editada ou ter seu status alterado.
                     </p>
                 </div>
             )}
@@ -418,7 +501,11 @@ export function EditEscalaForm({
                 </CardHeader>
                 <CardContent>
                     {isEditing ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="titulo">Título Geral da Escala</Label>
+                                <Input id="titulo" placeholder="Ex: Escala de Serviço..." value={titulo} onChange={e => setTitulo(e.target.value)} />
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="dataEscala">Data da Escala</Label>
                                 <Input id="dataEscala" type="date" value={format(new Date(dataEscala), 'yyyy-MM-dd')} onChange={e => setDataEscala(new Date(e.target.value))} />
@@ -431,6 +518,7 @@ export function EditEscalaForm({
                                         <SelectItem value="COLABORACAO">Colaboração</SelectItem>
                                         <SelectItem value="ESPECIAL">Especial</SelectItem>
                                         <SelectItem value="EVENTO">Evento</SelectItem>
+                                        <SelectItem value="PERSONALIZADO">Personalizado</SelectItem>
                                         <SelectItem value="OUTRO">Outro</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -441,7 +529,8 @@ export function EditEscalaForm({
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div><Label>Título Geral</Label><p className="font-semibold text-sm">{titulo || 'Sem título'}</p></div>
                             <div><Label>Data da Escala</Label><p className="font-semibold text-sm">{format(new Date(dataEscala), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p></div>
                             <div><Label>Tipo</Label><p className="font-semibold text-sm">{tipo}</p></div>
                             <div><Label>Elaborado Por</Label><p className="font-semibold text-sm">{elaboradoPor}</p></div>
@@ -454,7 +543,19 @@ export function EditEscalaForm({
                 {secoes.map((secao, secaoIndex) => (
                     <Card key={secao.id}>
                         <CardHeader>
-                            <CardTitle>{secao.nome}</CardTitle>
+                            {isEditing ? (
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Nome da Seção</Label>
+                                    <Input
+                                        value={secao.nome}
+                                        onChange={(e) => handleSecaoNameChange(secaoIndex, e.target.value)}
+                                        className="font-bold text-lg"
+                                        placeholder="Ex: SEÇÃO DE TRÂNSITO..."
+                                    />
+                                </div>
+                            ) : (
+                                <CardTitle>{secao.nome}</CardTitle>
+                            )}
                         </CardHeader>
                         <CardContent className="space-y-4">
 
@@ -463,7 +564,7 @@ export function EditEscalaForm({
                             )}
 
                             {secao.itens.map((item, itemIndex) => {
-                                const funcoesFiltradas = funcoesProp.filter(f => f.categoria === secao.categoriaEsperada || f.id === funcaoOutroId);
+                                const funcoesFiltradas = funcoesProp.filter(f => f.categoria === secao.categoriaEsperada || f.id === funcaoOutroId || !secao.categoriaEsperada);
                                 const isOutroSelecionado = item.funcaoId === funcaoOutroId;
 
                                 return (
@@ -510,7 +611,7 @@ export function EditEscalaForm({
                             })}
 
                             {isEditing && secao.permiteMultiplosItens && (
-                                <Button type="button" variant="outline" onClick={() => handleAddItem(secaoIndex)} className="w-full">
+                                <Button type="button" variant="outline" onClick={() => handleAddItem(secaoIndex)} className="w-full border-dashed">
                                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar em {secao.nome}
                                 </Button>
                             )}
@@ -518,30 +619,30 @@ export function EditEscalaForm({
                     </Card>
                 ))}
 
-                {tipo === 'COLABORACAO' && (
-                    <Card>
-                        <CardHeader><CardTitle>Fardamento</CardTitle></CardHeader>
-                        <CardContent>
-                            {isEditing ? (
-                                <Textarea value={fardamento} onChange={(e) => setFardamento(e.target.value)} rows={4} />
-                            ) : (
-                                <p className="text-sm whitespace-pre-wrap font-medium">{fardamento || 'N/A'}</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
+                {secoes.length > 0 && (
+                    <>
+                        <Card>
+                            <CardHeader><CardTitle>Fardamento</CardTitle></CardHeader>
+                            <CardContent>
+                                {isEditing ? (
+                                    <Textarea value={fardamento} onChange={(e) => setFardamento(e.target.value)} rows={4} />
+                                ) : (
+                                    <p className="text-sm whitespace-pre-wrap font-medium">{fardamento || 'N/A'}</p>
+                                )}
+                            </CardContent>
+                        </Card>
 
-                {tipo === 'COLABORACAO' && (
-                    <Card>
-                        <CardHeader><CardTitle>Observações</CardTitle></CardHeader>
-                        <CardContent>
-                            {isEditing ? (
-                                <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={6} />
-                            ) : (
-                                <p className="text-sm whitespace-pre-wrap font-medium">{observacoes || 'N/A'}</p>
-                            )}
-                        </CardContent>
-                    </Card>
+                        <Card>
+                            <CardHeader><CardTitle>Observações</CardTitle></CardHeader>
+                            <CardContent>
+                                {isEditing ? (
+                                    <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={6} />
+                                ) : (
+                                    <p className="text-sm whitespace-pre-wrap font-medium">{observacoes || 'N/A'}</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </>
                 )}
             </div>
         </div>

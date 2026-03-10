@@ -48,9 +48,7 @@ export default async function NewAnotacaoPage({ searchParams }: NewAnotacaoPageP
       }
     },
     orderBy: {
-      perfilAluno: {
         nomeDeGuerra: 'asc'
-      }
     }
   });
 

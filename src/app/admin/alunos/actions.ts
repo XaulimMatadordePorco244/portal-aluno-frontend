@@ -6,15 +6,15 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
-import { put, del } from "@vercel/blob"; 
-import { 
-  AptidaoFisicaStatus, 
-  GeneroUsuario, 
-  tipagemSanguinea, 
-  Role, 
+import { put, del } from "@vercel/blob";
+import {
+  AptidaoFisicaStatus,
+  GeneroUsuario,
+  tipagemSanguinea,
+  Role,
   StatusUsuario,
   CargoHistoryStatus,
-  SerieEscolar 
+  SerieEscolar
 } from "@prisma/client";
 
 const alunoSchema = z.object({
@@ -37,14 +37,14 @@ const alunoSchema = z.object({
   tipagemSanguinea: z.nativeEnum(tipagemSanguinea).optional(),
   aptidaoFisicaStatus: z.nativeEnum(AptidaoFisicaStatus).optional(),
   aptidaoFisicaObs: z.string().optional(),
-  aptidaoFisicaLaudo: z.string().optional(), 
+  aptidaoFisicaLaudo: z.string().optional(),
 
   escola: z.string().optional(),
   serieEscolar: z.string().optional(),
   endereco: z.string().optional(),
 
-  termoResponsabilidadeAssinado: z.string().optional(), 
-  fazCursoExterno: z.string().optional(), 
+  termoResponsabilidadeAssinado: z.string().optional(),
+  fazCursoExterno: z.string().optional(),
   cursoExternoDescricao: z.string().optional(),
 
   responsavelNome: z.string().min(3, "Nome do responsável é obrigatório"),
@@ -70,7 +70,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   if (!rawData.email) delete rawData.email;
   if (!rawData.password) delete rawData.password;
   if (!rawData.responsavelEmail) delete rawData.responsavelEmail;
-  
+
   const validated = alunoSchema.safeParse(rawData);
 
   if (!validated.success) {
@@ -88,7 +88,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
     let fotoUrl: string | null = null;
 
     if (fotoPerfil && fotoPerfil.size > 0) {
-      const filename = `alunos/${Date.now()}-${fotoPerfil.name}`; 
+      const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
       const blob = await put(filename, fotoPerfil, {
         access: 'public',
         addRandomSuffix: true
@@ -103,6 +103,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           cpf: data.cpf,
           email: data.email || null,
           password: hashedPassword,
+          nomeDeGuerra: data.nomeDeGuerra,
           role: Role.ALUNO,
           status: StatusUsuario.ATIVO,
           rg: data.rg,
@@ -110,7 +111,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
           telefone: data.telefone,
           genero: data.genero,
-          fotoUrl: fotoUrl, 
+          fotoUrl: fotoUrl,
         }
       });
 
@@ -118,19 +119,18 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
         data: {
           usuarioId: novoUsuario.id,
           numero: data.numero,
-          nomeDeGuerra: data.nomeDeGuerra,
           companhiaId: data.companhiaId,
           cargoId: data.cargoId,
           conceitoInicial: conceitoInicial,
           conceitoAtual: conceitoInicial,
           anoIngresso: new Date().getFullYear(),
           foraDeData: !!data.ingressoForaDeData,
-          
+
           tipagemSanguinea: data.tipagemSanguinea,
           aptidaoFisicaStatus: data.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
           aptidaoFisicaObs: data.aptidaoFisicaObs,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
-          
+
           escolaId: data.escola,
           serieEscolar: data.serieEscolar as SerieEscolar | undefined,
           endereco: data.endereco,
@@ -143,17 +143,17 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
       if (data.cargoId) {
         const cargo = await tx.cargo.findUnique({ where: { id: data.cargoId } });
         if (cargo) {
-            await tx.cargoHistory.create({
-                data: {
-                    alunoId: novoPerfil.id,
-                    cargoId: data.cargoId,
-                    cargoNomeSnapshot: cargo.nome,
-                    conceitoInicial: parseFloat(conceitoInicial),
-                    conceitoAtual: parseFloat(conceitoInicial),
-                    status: CargoHistoryStatus.ATIVO,
-                    motivo: "Ingresso na instituição"
-                }
-            });
+          await tx.cargoHistory.create({
+            data: {
+              alunoId: novoPerfil.id,
+              cargoId: data.cargoId,
+              cargoNomeSnapshot: cargo.nome,
+              conceitoInicial: parseFloat(conceitoInicial),
+              conceitoAtual: parseFloat(conceitoInicial),
+              status: CargoHistoryStatus.ATIVO,
+              motivo: "Ingresso na instituição"
+            }
+          });
         }
       }
 
@@ -162,25 +162,25 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
       });
 
       if (!responsavelUser) {
-        const passwordPadraoResp = await bcrypt.hash(data.responsavelCpf, 10); 
+        const passwordPadraoResp = await bcrypt.hash(data.responsavelCpf, 10);
         responsavelUser = await tx.usuario.create({
-            data: {
-                nome: data.responsavelNome,
-                cpf: data.responsavelCpf,
-                telefone: data.responsavelTelefone,
-                email: data.responsavelEmail || null,
-                password: passwordPadraoResp,
-                role: Role.RESPONSAVEL,
-                status: StatusUsuario.ATIVO
-            }
+          data: {
+            nome: data.responsavelNome,
+            cpf: data.responsavelCpf,
+            telefone: data.responsavelTelefone,
+            email: data.responsavelEmail || null,
+            password: passwordPadraoResp,
+            role: Role.RESPONSAVEL,
+            status: StatusUsuario.ATIVO
+          }
         });
       }
 
       await tx.responsabilidade.create({
         data: {
-            alunoId: novoUsuario.id,
-            responsavelId: responsavelUser.id,
-            tipoParentesco: data.responsavelParentesco
+          alunoId: novoUsuario.id,
+          responsavelId: responsavelUser.id,
+          tipoParentesco: data.responsavelParentesco
         }
       });
 
@@ -188,7 +188,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
 
   } catch (error: unknown) {
     console.error("Erro ao criar aluno:", error);
-    
+
     if (typeof error === 'object' && error !== null && 'code' in error) {
       const prismaError = error as { code: string; meta?: { target?: string[] } };
       if (prismaError.code === 'P2002') {
@@ -200,7 +200,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
         }
       }
     }
-    
+
     return { message: "Erro ao salvar no banco de dados." };
   }
 
@@ -212,84 +212,84 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
 export async function updateAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const id = formData.get("id") as string;
   if (!id) return { message: "ID não fornecido" };
-  
+
   const rawData = Object.fromEntries(formData.entries());
-  const fotoPerfil = formData.get("fotoPerfil") as File | null; 
-  
+  const fotoPerfil = formData.get("fotoPerfil") as File | null;
+
   const updateSchema = alunoSchema.partial().extend({ id: z.string() });
-  
+
   const validated = updateSchema.safeParse({ ...rawData, id });
 
   if (!validated.success) {
-    return { 
-      errors: validated.error.flatten().fieldErrors, 
-      message: "Erro de validação" 
+    return {
+      errors: validated.error.flatten().fieldErrors,
+      message: "Erro de validação"
     };
   }
-  
+
   const data = validated.data;
 
   try {
-     const alunoAtual = await prisma.usuario.findUnique({ where: { id } });
-     
-     let novaFotoUrl: string | undefined = undefined;
+    const alunoAtual = await prisma.usuario.findUnique({ where: { id } });
 
-     if (fotoPerfil && fotoPerfil.size > 0) {
-        if (alunoAtual?.fotoUrl) {
-            await del(alunoAtual.fotoUrl).catch(err => console.error("Erro ao deletar foto antiga:", err));
+    let novaFotoUrl: string | undefined = undefined;
+
+    if (fotoPerfil && fotoPerfil.size > 0) {
+      if (alunoAtual?.fotoUrl) {
+        await del(alunoAtual.fotoUrl).catch(err => console.error("Erro ao deletar foto antiga:", err));
+      }
+
+      const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
+      const blob = await put(filename, fotoPerfil, {
+        access: 'public',
+        addRandomSuffix: true
+      });
+      novaFotoUrl = blob.url;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.usuario.update({
+        where: { id },
+        data: {
+          nome: data.nome,
+          email: data.email || undefined,
+          nomeDeGuerra: data.nomeDeGuerra,
+          rg: data.rg,
+          rgEstadoEmissor: data.rgEstadoEmissor,
+          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : undefined,
+          telefone: data.telefone,
+          genero: data.genero,
+          fotoUrl: novaFotoUrl,
+          ...(data.password ? { password: await bcrypt.hash(data.password, 10) } : {})
         }
+      });
 
-        const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
-        const blob = await put(filename, fotoPerfil, {
-            access: 'public',
-            addRandomSuffix: true
-        });
-        novaFotoUrl = blob.url;
-     }
+      await tx.perfilAluno.update({
+        where: { usuarioId: id },
+        data: {
+          numero: data.numero,
+          companhiaId: data.companhiaId,
+          cargoId: data.cargoId,
 
-     await prisma.$transaction(async (tx) => {
-        await tx.usuario.update({
-            where: { id },
-            data: {
-                nome: data.nome,
-                email: data.email || undefined,
-                rg: data.rg,
-                rgEstadoEmissor: data.rgEstadoEmissor,
-                dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : undefined,
-                telefone: data.telefone,
-                genero: data.genero,
-                fotoUrl: novaFotoUrl,
-                ...(data.password ? { password: await bcrypt.hash(data.password, 10) } : {})
-            }
-        });
+          tipagemSanguinea: data.tipagemSanguinea,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus,
+          aptidaoFisicaObs: data.aptidaoFisicaObs,
+          aptidaoFisicaLaudo: data.aptidaoFisicaLaudo !== undefined ? !!data.aptidaoFisicaLaudo : undefined,
 
-        await tx.perfilAluno.update({
-            where: { usuarioId: id },
-            data: {
-                numero: data.numero,
-                nomeDeGuerra: data.nomeDeGuerra,
-                companhiaId: data.companhiaId,
-                cargoId: data.cargoId, 
-                
-                tipagemSanguinea: data.tipagemSanguinea,
-                aptidaoFisicaStatus: data.aptidaoFisicaStatus,
-                aptidaoFisicaObs: data.aptidaoFisicaObs,
-                aptidaoFisicaLaudo: data.aptidaoFisicaLaudo !== undefined ? !!data.aptidaoFisicaLaudo : undefined,
+          escolaId: data.escola,
+          serieEscolar: data.serieEscolar as SerieEscolar | undefined,
 
-                escolaId: data.escola,
-                serieEscolar: data.serieEscolar as SerieEscolar | undefined,
-                
-                endereco: data.endereco,
+          endereco: data.endereco,
 
-                termoResponsabilidadeAssinado: data.termoResponsabilidadeAssinado !== undefined ? !!data.termoResponsabilidadeAssinado : undefined,
-                fazCursoExterno: data.fazCursoExterno !== undefined ? !!data.fazCursoExterno : undefined,
-                cursoExternoDescricao: data.cursoExternoDescricao,
-            }
-        });
-     });
+          termoResponsabilidadeAssinado: data.termoResponsabilidadeAssinado !== undefined ? !!data.termoResponsabilidadeAssinado : undefined,
+          fazCursoExterno: data.fazCursoExterno !== undefined ? !!data.fazCursoExterno : undefined,
+          cursoExternoDescricao: data.cursoExternoDescricao,
+        }
+      });
+    });
   } catch (error: unknown) {
-      console.error("Erro ao atualizar aluno:", error);
-      return { message: "Erro ao atualizar dados." };
+    console.error("Erro ao atualizar aluno:", error);
+    return { message: "Erro ao atualizar dados." };
   }
 
   revalidatePath("/admin/alunos");
@@ -304,33 +304,33 @@ export async function inativarAluno(id: string) {
 
   try {
     const usuarioAlvo = await prisma.usuario.findUnique({
-        where: { id },
-        include: { perfilAluno: true }
+      where: { id },
+      include: { perfilAluno: true }
     });
 
     if (!usuarioAlvo) {
-        return { success: false, message: "Aluno não encontrado." };
+      return { success: false, message: "Aluno não encontrado." };
     }
 
     await prisma.$transaction(async (tx) => {
-        await tx.usuario.update({
-            where: { id },
-            data: { status: StatusUsuario.INATIVO }
-        });
+      await tx.usuario.update({
+        where: { id },
+        data: { status: StatusUsuario.INATIVO }
+      });
 
-        if (usuarioAlvo.perfilAluno) {
-            await tx.cargoHistory.updateMany({
-                where: { 
-                    alunoId: usuarioAlvo.perfilAluno.id,
-                    status: CargoHistoryStatus.ATIVO
-                },
-                data: { 
-                    status: CargoHistoryStatus.FECHADO,
-                    dataFim: new Date(),
-                    motivo: "Desligamento / Inativação da Instituição"
-                }
-            });
-        }
+      if (usuarioAlvo.perfilAluno) {
+        await tx.cargoHistory.updateMany({
+          where: {
+            alunoId: usuarioAlvo.perfilAluno.id,
+            status: CargoHistoryStatus.ATIVO
+          },
+          data: {
+            status: CargoHistoryStatus.FECHADO,
+            dataFim: new Date(),
+            motivo: "Desligamento / Inativação da Instituição"
+          }
+        });
+      }
     });
 
     revalidatePath("/admin/alunos");
@@ -381,13 +381,13 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
               motivo: ultimoBloco.motivo ? ultimoBloco.motivo + " | Reativado" : "Reativado"
             }
           });
-          
+
           await tx.perfilAluno.update({
             where: { id: perfilId },
             data: { cargoId: ultimoBloco.cargoId }
           });
         }
-      } 
+      }
       else if (modo === 'ZERAR') {
         const cargoBase = await tx.cargo.findFirst({
           orderBy: { precedencia: 'asc' }
@@ -408,7 +408,7 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
 
           await tx.perfilAluno.update({
             where: { id: perfilId },
-            data: { 
+            data: {
               cargoId: cargoBase.id,
               conceitoInicial: "7.0",
               conceitoAtual: "7.0"
@@ -419,9 +419,9 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
     });
 
     revalidatePath("/admin/alunos");
-    return { 
-      success: true, 
-      message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).` 
+    return {
+      success: true,
+      message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).`
     };
 
   } catch (error) {

@@ -129,11 +129,19 @@ export function NotificacoesDropdown() {
       console.error("Erro ao marcar como lidas", error);
     }
   };
+const handleCliqueNotificacao = (notificacao: Notificacao) => {
+    const link = notificacao.link;
+    
+    if (!link) return;
 
-  const handleCliqueNotificacao = (notificacao: Notificacao) => {
-    if (!notificacao.link) return;
+    // LÓGICA DE FILTRO:
+    // Se o link começar com "http", é o PDF ou link externo -> Abre em nova aba
+    if (link.startsWith("http")) {
+      window.open(link, "_blank", "noopener,noreferrer");
+    } else {
+      router.push(link);
+    }
 
-    router.push(notificacao.link);
     setOpen(false);
   };
 

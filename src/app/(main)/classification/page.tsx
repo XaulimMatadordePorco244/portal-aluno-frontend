@@ -68,7 +68,7 @@ const CourseRanking = ({
                 >
                   <TableCell className="font-bold text-lg text-center border-r">{aluno.rank}º</TableCell>
                   <TableCell className="font-medium border-r">
-                    <FormattedName fullName={aluno.nome} warName={perfil?.nomeDeGuerra} />
+                    <FormattedName fullName={aluno.nome} warName={aluno.nomeDeGuerra} />
                   </TableCell>
                   <TableCell className="font-mono border-r">{perfil?.numero || 'N/A'}</TableCell>
                   

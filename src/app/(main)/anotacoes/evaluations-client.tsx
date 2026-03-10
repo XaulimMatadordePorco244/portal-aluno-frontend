@@ -186,7 +186,7 @@ export default function EvaluationsClient({
     await anotacoesPdfService.generate({
       aluno: {
         nome: user.nome,
-        nomeDeGuerra: perfil?.nomeDeGuerra,
+        nomeDeGuerra: user.nomeDeGuerra,
         cargo: perfil?.cargo?.abreviacao,
       },
       conceitoAtual: conceitoAtualValor,

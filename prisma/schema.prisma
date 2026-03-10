@@ -101,6 +101,7 @@ model Usuario {
   passwordResetToken        String?              @unique
   passwordResetExpires      DateTime?
   funcaoAdminId             String?
+  nomeDeGuerra          String?
   status                    StatusUsuario        @default(ATIVO)
   role                      Role
   genero                    GeneroUsuario?
@@ -120,6 +121,7 @@ model Usuario {
   qesCriados                QES[]
   logsCargoAdmin            CargoLog[]
   notificacoes              Notificacao[]
+  escalasAtribuidas         EscalaItem[]         @relation("EscalasAtribuidas")
   pushSubscriptions         PushSubscription[]
   comunicacoesCriadas       ComunicacaoInterna[] @relation("CIsCriadas")
   escalasCriadas            Escala[]             @relation("EscalasCriadas")
@@ -131,7 +133,7 @@ model Usuario {
   funcaoAdmin               FuncaoAdmin?         @relation(fields: [funcaoAdminId], references: [id])
   atividadesCriadas         Atividade[]          @relation("AtividadesCriadas")
   atividadesRecebidas       AtividadeAluno[]     @relation("AtividadesRecebidas")
-  interacoesMaterial InteracaoMaterial[]
+  interacoesMaterial        InteracaoMaterial[]
 
   @@map("usuarios")
 }
@@ -141,7 +143,6 @@ model PerfilAluno {
   usuarioId                     String               @unique
   numero                        String?              @unique
   anoIngresso                   Int?
-  nomeDeGuerra                  String?
   tipagemSanguinea              tipagemSanguinea?
   aptidaoFisicaStatus           AptidaoFisicaStatus?
   aptidaoFisicaLaudo            Boolean              @default(false)
@@ -173,7 +174,6 @@ model PerfilAluno {
   desempenhosEscolares          DesempenhoEscolar[]
   feedbacks                     Feedback[]
   historicoCargos               CargoHistory[]
-  escalasAtribuidas             EscalaItem[]         @relation("EscalasAtribuidas")
   frequencias                   Frequencia[]
   cargo                         Cargo?               @relation(fields: [cargoId], references: [id])
   companhia                     Companhia?           @relation(fields: [companhiaId], references: [id])
@@ -191,41 +191,41 @@ model PerfilAluno {
 }
 
 model MaterialAuxiliar {
-  id          String   @id @default(uuid())
-  titulo      String
-  descricao   String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  titulo    String
+  descricao String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  arquivos    ArquivoMaterial[]
-  interacoes  InteracaoMaterial[]
+  arquivos   ArquivoMaterial[]
+  interacoes InteracaoMaterial[]
 }
 
 model ArquivoMaterial {
-  id          String   @id @default(uuid())
-  nome        String  
-  url         String 
-  tipo        String 
-  tamanho     Int  
-  
-  materialId  String
-  material    MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
+  id      String @id @default(uuid())
+  nome    String
+  url     String
+  tipo    String
+  tamanho Int
+
+  materialId String
+  material   MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model InteracaoMaterial {
-  id          String   @id @default(uuid())
-  tipo        TipoInteracaoMaterial
-  createdAt   DateTime @default(now())
+  id        String                @id @default(uuid())
+  tipo      TipoInteracaoMaterial
+  createdAt DateTime              @default(now())
 
-  materialId  String
-  material    MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId String
+  material   MaterialAuxiliar @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
-  usuarioId   String
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  arquivoId   String?  
+  arquivoId String?
 }
 
 model ComunicacaoInterna {
@@ -553,6 +553,7 @@ model EtapaProcesso {
 model Escala {
   id           String       @id @default(cuid())
   dataEscala   DateTime     @db.Date
+  titulo       String?
   tipo         TipoEscala
   status       StatusEscala @default(RASCUNHO)
   pdfUrl       String?
@@ -580,7 +581,8 @@ model EscalaItem {
   escalaId      String
   alunoId       String
   bandeira      BandeiraTipo?
-  aluno         PerfilAluno   @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
+  
+  aluno         Usuario       @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
   escala        Escala        @relation(fields: [escalaId], references: [id], onDelete: Cascade)
 
   @@index([escalaId])
@@ -724,7 +726,6 @@ model Notificacao {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
-  
 }
 
 model Turma {

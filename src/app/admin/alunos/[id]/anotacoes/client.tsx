@@ -97,7 +97,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
     const perfil = usuario.perfilAluno;
     if (perfil) {
         const cargo = perfil.cargo?.abreviacao || '';
-        const nome = perfil.nomeDeGuerra || usuario.nome.split(' ')[0];
+        const nome = usuario.nomeDeGuerra || usuario.nome.split(' ')[0];
         return `${cargo} GM ${nome}`.trim();
     }
     return usuario.nome;
@@ -177,7 +177,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
       await anotacoesPdfService.generate({
         aluno: {
           nome: perfilAluno.usuario.nome,
-          nomeDeGuerra: perfilAluno.nomeDeGuerra,
+          nomeDeGuerra: perfilAluno.usuario.nomeDeGuerra,
           cargo: perfilAluno.cargo?.abreviacao,
         },
         conceitoAtual: conceitoAtual.toFixed(2),
@@ -199,7 +199,7 @@ export default function AdminStudentHistoryClient({ perfilAluno, anotacoes, conc
                 <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">{perfilAluno.nomeDeGuerra}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{perfilAluno.usuario.nomeDeGuerra}</h1>
                 <p className="text-muted-foreground text-sm">{perfilAluno.usuario.nome}</p>
             </div>
         </div>

@@ -28,14 +28,13 @@ export default async function AlunoTafPage({ params }: PageProps) {
     where: { id },
     select: {
       id: true,
-      nomeDeGuerra: true,
-      usuario: { select: { nome: true } }
+      usuario: { select: { nome: true, nomeDeGuerra: true } }
     }
   })
 
   if (!aluno) return notFound()
 
-  const nomeExibicao = aluno.nomeDeGuerra || aluno.usuario.nome
+  const nomeExibicao = aluno.usuario.nomeDeGuerra || aluno.usuario.nome
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">

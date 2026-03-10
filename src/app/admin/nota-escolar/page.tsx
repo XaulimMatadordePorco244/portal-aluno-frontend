@@ -80,7 +80,7 @@ export default async function NotasEscolaresPage({
       cargo: aluno.cargo,
       boletim,
       id: aluno.id,
-      nomeDeGuerra: aluno.nomeDeGuerra
+      nomeDeGuerra: user.nomeDeGuerra
     };
   });
 

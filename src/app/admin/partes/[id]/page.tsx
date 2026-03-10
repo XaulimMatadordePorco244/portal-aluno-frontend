@@ -62,7 +62,7 @@ export default async function AdminProcessoDetailsPage({
     }
 
     const perfil = processo.autor.perfilAluno;
-    const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || processo.autor.nome}`;
+    const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${processo.autor.nomeDeGuerra || processo.autor.nome}`;
 
     return (
         <>

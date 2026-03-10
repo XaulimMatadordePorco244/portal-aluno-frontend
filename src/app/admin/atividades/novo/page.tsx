@@ -20,7 +20,7 @@ async function getAlunosAtivos() {
   return alunos.map(aluno => ({
     id: aluno.id,
     nome: aluno.nome,
-    nomeDeGuerra: aluno.perfilAluno?.nomeDeGuerra || null,
+    nomeDeGuerra: aluno.nomeDeGuerra || null,
   }));
 }
 

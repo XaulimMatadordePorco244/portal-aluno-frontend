@@ -101,7 +101,7 @@ export default async function EditarBoletimPage({ params }: PageProps) {
           <AvatarFallback className="text-lg">{aluno.usuario.nome.substring(0, 2)}</AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-2xl font-bold">{aluno.nomeDeGuerra || aluno.usuario.nome}</h1>
+          <h1 className="text-2xl font-bold">{aluno.usuario.nomeDeGuerra || aluno.usuario.nome}</h1>
           <div className="flex items-center gap-2 mt-1">
              <span className="text-muted-foreground text-sm">{aluno.usuario.nome}</span>
              <Badge variant="outline">{aluno.companhia?.abreviacao || 'Sem Cia'}</Badge>

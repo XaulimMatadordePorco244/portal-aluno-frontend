@@ -16,8 +16,8 @@ export interface AlunoType {
     id: string;
     nome: string;
     fotoUrl: string | null;
+    nomeDeGuerra: string | null;
     perfilAluno: {
-        nomeDeGuerra: string | null;
         anoLetivoAtualizado: number;
         escolaId: string | null;
         serieEscolar: string | null;
@@ -47,7 +47,7 @@ interface StudentRowProps {
     onSaveOne: () => void;
     onNovaEscola: (nome: string) => Promise<string>;
     hasModifications: boolean;
-    anoAtual: number; 
+    anoAtual: number;
 }
 
 const SERIES_MAP: Record<string, string> = {
@@ -70,7 +70,7 @@ const TURNOS = ["Matutino", "Vespertino"]
 export function StudentRow({
     aluno, escolas, isDesatualizado, currentValues,
     onChange, onSaveOne, onNovaEscola, hasModifications
-}: StudentRowProps) { 
+}: StudentRowProps) {
 
     const [novaEscolaNome, setNovaEscolaNome] = useState("")
 
@@ -98,7 +98,7 @@ export function StudentRow({
                 <FotoHover src={aluno.fotoUrl} alt={aluno.nome} className="mr-3" />
                 <div className="truncate">
                     <p className="font-bold text-foreground truncate">
-                        {perfil?.cargo?.abreviacao} <span className="text-primary">{perfil?.nomeDeGuerra || "Sem Nome"}</span>
+                        {perfil?.cargo?.abreviacao} <span className="text-primary">{aluno.nomeDeGuerra || "Sem Nome"}</span>
                     </p>
                     <p className="text-xs text-muted-foreground truncate">{aluno.nome}</p>
                     {isDesatualizado && (

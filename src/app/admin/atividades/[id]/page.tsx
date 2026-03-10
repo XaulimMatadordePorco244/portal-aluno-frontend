@@ -17,9 +17,11 @@ async function getDetalhesAtividade(id: string) {
       destinatarios: {
         include: {
           aluno: {
-            include: {
+            select: {
+              nome: true,
+              nomeDeGuerra: true,
               perfilAluno: {
-                include: { cargo: true } 
+                include: { cargo: true }
               }
             }
           }

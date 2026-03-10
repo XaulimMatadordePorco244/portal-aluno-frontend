@@ -106,7 +106,7 @@ export default async function PainelComandantePage() {
                                     #{parte.id.slice(0, 8).toUpperCase()}
                                 </TableCell>
                                 <TableCell>
-                                    {parte.autor.perfilAluno?.cargo?.abreviacao} {parte.autor.perfilAluno?.nomeDeGuerra}
+                                    {parte.autor.perfilAluno?.cargo?.abreviacao} {parte.autor.nomeDeGuerra}
                                 </TableCell>
                                 <TableCell className="max-w-[200px] truncate" title={parte.assunto}>
                                     {parte.assunto}

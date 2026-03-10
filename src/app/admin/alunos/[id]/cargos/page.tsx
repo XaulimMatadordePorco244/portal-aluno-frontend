@@ -134,7 +134,7 @@ export default async function AdminAlunoCargosPage({ params }: PageProps) {
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Aluno
           </span>
-          <div>{highlightWarName(aluno.usuario.nome, aluno.nomeDeGuerra || '')}</div>
+          <div>{highlightWarName(aluno.usuario.nome, aluno.usuario.nomeDeGuerra || '')}</div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-2">

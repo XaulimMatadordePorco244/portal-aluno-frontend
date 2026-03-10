@@ -101,15 +101,17 @@ export async function listarFeedbacksAdmin() {
           select: {
             id: true,
             numero: true,
-            nomeDeGuerra: true,
             usuario: {
-              select: { nome: true }
+              select: { nome: true, nomeDeGuerra: true}
             }
           }
         }
       }
     })
-    return feedbacks
+    return feedbacks.map(feedback => ({
+      ...feedback,
+      nomeDeGuerra: feedback.aluno.usuario.nomeDeGuerra
+    }))
   } catch (error) {
     console.error('Erro ao listar feedbacks:', error)
     return []

@@ -178,7 +178,7 @@ export default async function AnotacoesDashboardPage({
     if (anot.quemAnotouNome) return anot.quemAnotouNome;
     const u = anot.quemAnotou || anot.autor;
     const cargo = u?.perfilAluno?.cargo?.abreviacao;
-    const nomeGuerra = u?.perfilAluno?.nomeDeGuerra;
+    const nomeGuerra = u?.nomeDeGuerra;
 
     if (cargo && nomeGuerra) {
       return `${cargo} GM ${nomeGuerra}`;
@@ -295,7 +295,7 @@ export default async function AnotacoesDashboardPage({
 
                   <TableCell>
                     <span className="text-sm font-medium text-foreground uppercase tracking-tight">
-                      {item.aluno?.nomeDeGuerra}
+                      {item.aluno?.usuario.nomeDeGuerra}
                     </span>
                   </TableCell>
 

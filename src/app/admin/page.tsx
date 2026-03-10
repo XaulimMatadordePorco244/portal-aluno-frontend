@@ -19,14 +19,14 @@ async function getDashboardStats() {
     today.setHours(0, 0, 0, 0);
     const anoAtual = new Date().getFullYear();
     const mesAtual = today.getMonth();
-   const alunosDesatualizadosCount = await prisma.perfilAluno.count({
+    const alunosDesatualizadosCount = await prisma.perfilAluno.count({
         where: {
             usuario: {
                 status: 'ATIVO',
                 role: 'ALUNO'
             },
             OR: [
-                { serieEscolar: null }, 
+                { serieEscolar: null },
                 {
                     serieEscolar: { not: 'CONCLUIDO' },
                     OR: [
@@ -54,13 +54,18 @@ async function getDashboardStats() {
         prisma.desempenhoEscolar.count({ where: { anoLetivo: anoAtual, qtdNotasVermelhas: { gt: 0 } } }),
         prisma.parte.count({ where: { status: { notIn: ['DEFERIDO', 'INDEFERIDO', 'RASCUNHO'] } } }),
         prisma.candidatoCiclo.count({ where: { resultado: 'PENDENTE' } }),
-        prisma.usuario.findMany({
-            where: { status: 'ATIVO', dataNascimento: { not: null } },
-            select: {
-                id: true, nome: true, fotoUrl: true, dataNascimento: true,
-                perfilAluno: { select: { nomeDeGuerra: true, cargo: { select: { abreviacao: true } } } }
+        prisma.usuario.findMany(
+            {
+                where: { status: 'ATIVO', dataNascimento: { not: null } },
+                select: {
+                    id: true, nome: true, fotoUrl: true, dataNascimento: true, nomeDeGuerra: true,
+                    perfilAluno: {
+                        select: { cargo: { select: { abreviacao: true } } }
+                    }
+                }
             }
-        })
+        )
+                
     ]);
 
     const tafsRegistrados = await prisma.tafDesempenho.groupBy({
@@ -286,7 +291,7 @@ export default async function AdminDashboardPage() {
                             <div className="space-y-4">
                                 {stats.aniversariantesMes.map((usuario) => {
                                     const dia = usuario.dataNascimento ? format(usuario.dataNascimento, "dd") : "--";
-                                    const nomeGuerra = usuario.perfilAluno?.nomeDeGuerra || usuario.nome.split(' ')[0];
+                                    const nomeGuerra = usuario.nomeDeGuerra || usuario.nome.split(' ')[0];
                                     const cargo = usuario.perfilAluno?.cargo?.abreviacao || '';
 
                                     return (

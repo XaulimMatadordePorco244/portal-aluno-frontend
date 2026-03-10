@@ -54,7 +54,7 @@ const efetivo = (efetivoResponse.success && efetivoResponse.data)
             <div className="bg-card py-3 px-4 text-center text-xs sm:text-sm font-semibold text-card-foreground flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 uppercase">
               <span>
                 {comandante.numero ? `${comandante.numero} - ` : ''} 
-                {comandante.cargo?.nome || 'CARGO N/D'} {"GM"} {comandante.nomeDeGuerra || comandante.usuario?.nome}
+                {comandante.cargo?.nome || 'CARGO N/D'} {"GM"} {comandante.usuario.nomeDeGuerra || comandante.usuario?.nome}
               </span>
             </div>
           </div>
@@ -69,7 +69,7 @@ const efetivo = (efetivoResponse.success && efetivoResponse.data)
             <div className="bg-card py-3 px-4 text-center text-xs sm:text-sm font-semibold text-card-foreground flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 uppercase">
               <span>
                 {subComandante.numero ? `${subComandante.numero} - ` : ''} 
-                {subComandante.cargo?.nome || 'CARGO N/D'} {"GM"} {subComandante.nomeDeGuerra || subComandante.usuario?.nome}
+                {subComandante.cargo?.nome || 'CARGO N/D'} {"GM"} {subComandante.usuario.nomeDeGuerra || subComandante.usuario?.nome}
               </span>
             </div>
           </div>

@@ -78,7 +78,7 @@ export default async function Page({
   }
 
   const perfil = parte.autor.perfilAluno;
-  const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${perfil?.nomeDeGuerra || parte.autor.nome
+  const nomeFormatado = `${perfil?.cargo?.abreviacao || ''} GM ${parte.autor.nomeDeGuerra || parte.autor.nome
     }`;
 
   return (

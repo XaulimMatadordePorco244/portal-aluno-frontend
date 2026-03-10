@@ -55,7 +55,7 @@ export default async function NovoTafPage({ params }: PageProps) {
         <div>
             <h1 className="text-2xl font-bold tracking-tight">Avaliação Física (TAF)</h1>
             <p className="text-muted-foreground">
-                Lançamento de resultados para <span className="text-foreground font-medium">{aluno.nomeDeGuerra || aluno.usuario.nome}</span>
+                Lançamento de resultados para <span className="text-foreground font-medium">{aluno.usuario.nomeDeGuerra || aluno.usuario.nome}</span>
             </p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default async function NovoTafPage({ params }: PageProps) {
       <div className="bg-card border rounded-xl shadow-sm p-6">
         <TafForm 
             alunoId={aluno.id}
-            nomeAluno={aluno.nomeDeGuerra || aluno.usuario.nome}
+            nomeAluno={aluno.usuario.nomeDeGuerra || aluno.usuario.nome}
             genero={generoTaf} 
         />
       </div>

@@ -135,7 +135,7 @@ export default async function PromoverAlunoPage({ params }: PageProps) {
                 Identificação
               </span>
               <div>
-                {highlightWarName(aluno.usuario.nome, aluno.nomeDeGuerra || undefined)}
+                {highlightWarName(aluno.usuario.nome, aluno.usuario.nomeDeGuerra || undefined)}
               </div>
             </div>
 

@@ -31,15 +31,15 @@ export async function generatePartePDF(data: ParteData): Promise<File> {
     const perfil = data.autor.perfilAluno;
     
     const numero = data.numeroDocumento || 'DOC-SN';
-    const nomeDeGuerra = perfil?.nomeDeGuerra || data.autor.nome;
+    const nomeDeGuerra = data.autor.nomeDeGuerra || data.autor.nome;
     const registro = perfil?.numero || 'N/A';
     const cargo = perfil?.cargo?.nome || 'Não informado';
     const dataCriacao = new Date(data.createdAt).toLocaleDateString('pt-BR');
     const assunto = data.assunto;
     const descricao = data.conteudo;
     
-    const responsavel = perfil?.nomeDeGuerra 
-        ? `${perfil.cargo?.abreviacao || ''} GM ${perfil.nomeDeGuerra}` 
+    const responsavel = data.autor.nomeDeGuerra 
+        ? `${perfil?.cargo?.abreviacao || ''} GM ${data.autor.nomeDeGuerra}` 
         : data.autor.nome;
 
     const pageW = doc.internal.pageSize.getWidth();

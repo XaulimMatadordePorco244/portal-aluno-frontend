@@ -43,7 +43,7 @@ export default async function ComandanteLayout({
   const userForHeader = {
     nome: user.nome,
     role: user.role,
-    nomeDeGuerra: user.perfilAluno?.nomeDeGuerra ?? null,
+    nomeDeGuerra: user.nomeDeGuerra ?? null,
     cargo: user.perfilAluno?.cargo?.nome ?? null,
     funcao: user.perfilAluno?.funcao?.nome ?? null,
   };

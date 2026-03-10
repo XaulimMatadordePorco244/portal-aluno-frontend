@@ -26,6 +26,7 @@ export async function buildClassificacaoTemplate(
   }
 
   builder.addHeader();
+  builder.addWatermark();
   builder.addTitle(`CLASSIFICAÇÃO GERAL - ${dataAtualizacao}`, 14, 2);
   
   const marginX = 15; 

@@ -23,7 +23,7 @@ export default async function QuadroVagasPage() {
     include: {
       cargo: true,
       companhia: true,
-      usuario: { select: { nome: true, fotoUrl: true } }
+      usuario: { select: { nome: true, fotoUrl: true, nomeDeGuerra: true } }
     }
   })
 
