@@ -11,8 +11,8 @@ import { criarNotificacao } from '@/actions/notificacoes';
 import webpush from 'web-push';
 
 webpush.setVapidDetails(
-  'mailto:teu-email@exemplo.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.NEXT_PUBLIC_VAPID_SUBJECT!,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!
 );
 
@@ -98,7 +98,7 @@ export async function POST(
 
     const tituloNotif = "Nova Escala Publicada!";
     const msgNotif = `Você foi escalado para o dia ${dataEscalaFormatada}.`;
-    const linkNotif = `/escalas/${escala.id}`;
+    const linkNotif = blob.url;
 
     await Promise.all(idsAlunos.map(async (alunoId) => {
       await criarNotificacao(alunoId, tituloNotif, msgNotif, linkNotif);
