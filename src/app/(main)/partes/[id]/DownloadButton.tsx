@@ -18,12 +18,17 @@ export function DownloadButton({ parteData }: DownloadButtonProps) {
     }
 
     const handleDownload = async () => {
+        if (parteData.urlPdf) {
+            window.open(parteData.urlPdf, '_blank');
+            return;
+        }
+
         setIsLoading(true);
         try {
             await generatePartePDF(parteData);
         } catch (error) {
             console.error("Erro ao gerar PDF:", error);
-            alert("Não foi possível gerar o PDF.");
+            alert("Não foi possível acessar ou gerar o PDF.");
         } finally {
             setIsLoading(false);
         }
@@ -36,7 +41,7 @@ export function DownloadButton({ parteData }: DownloadButtonProps) {
             ) : (
                 <Download className="mr-2 h-4 w-4" />
             )}
-            {isLoading ? "Gerando..." : "Baixar PDF"}
+            {isLoading ? "Processando..." : "Baixar PDF"}
         </Button>
     );
 }
