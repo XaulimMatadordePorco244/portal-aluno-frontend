@@ -4,8 +4,17 @@ import { getCurrentUser } from '@/lib/auth';
 import { EscalaPDFBuilder } from '@/lib/escalaPdfGenerator';
 import { put } from '@vercel/blob';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { EscalaCompleta } from '@/app/admin/escalas/[id]/page';
 import { StatusEscala } from '@prisma/client';
+import { criarNotificacao } from '@/actions/notificacoes';
+import webpush from 'web-push';
+
+webpush.setVapidDetails(
+  'mailto:teu-email@exemplo.com',
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  process.env.VAPID_PRIVATE_KEY!
+);
 
 async function getEscalaCompleta(id: string): Promise<EscalaCompleta | null> {
   const escala = await prisma.escala.findUnique({
@@ -82,12 +91,52 @@ export async function POST(
       },
     });
 
+    
+    const dataEscalaFormatada = format(new Date(escala.dataEscala), "dd/MM/yyyy (EEEE)", { locale: ptBR });
+    
+    const idsAlunos = Array.from(new Set(escala.itens.map(item => item.alunoId)));
+
+    const tituloNotif = "Nova Escala Publicada!";
+    const msgNotif = `Você foi escalado para o dia ${dataEscalaFormatada}.`;
+    const linkNotif = `/escalas/${escala.id}`;
+
+    await Promise.all(idsAlunos.map(async (alunoId) => {
+      await criarNotificacao(alunoId, tituloNotif, msgNotif, linkNotif);
+
+      const subscricoes = await prisma.pushSubscription.findMany({
+        where: { usuarioId: alunoId }
+      });
+
+      for (const sub of subscricoes) {
+        try {
+          const pushConfig = {
+            endpoint: sub.endpoint,
+            keys: {
+              auth: sub.auth,
+              p256dh: sub.p256dh
+            }
+          };
+
+          await webpush.sendNotification(
+            pushConfig,
+            JSON.stringify({
+              title: tituloNotif,
+              body: msgNotif,
+              url: linkNotif
+            })
+          );
+        } catch (err) {
+          console.error(`Falha ao enviar push para subscricao ${sub.id}:`, err);
+        }
+      }
+    }));
+
     return NextResponse.json(escalaAtualizada);
 
   } catch (error) {
-    console.error("Erro ao publicar e gerar PDF da escala:", error);
+    console.error("Erro ao publicar escala:", error);
     return NextResponse.json({ 
-      error: 'Não foi possível gerar o PDF.',
+      error: 'Não foi possível gerar a publicação.',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
   }

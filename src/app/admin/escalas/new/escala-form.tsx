@@ -453,7 +453,6 @@ export function EscalaForm({
         </Card>
       ))}
 
-      {/* CONSTRUTOR DE SEÇÕES (Aparece apenas em Personalizado) */}
       {tipoEscala === 'PERSONALIZADO' && (
         <Card className="border-dashed bg-muted/30">
           <CardContent className="pt-6 flex flex-col sm:flex-row gap-4 items-end">

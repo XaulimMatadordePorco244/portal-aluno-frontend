@@ -9,6 +9,9 @@ async function getFormData() {
         role: 'ALUNO',
         status: 'ATIVO',
       },
+       orderBy: {
+    nomeDeGuerra: 'asc'
+  },
       include: {
         perfilAluno: {
           include: {
@@ -17,9 +20,7 @@ async function getFormData() {
           }
         },
       },
-      orderBy: {
-        perfilAluno: { nomeDeGuerra: 'asc' }
-      }
+     
     }),
 
     prisma.usuario.findMany({
