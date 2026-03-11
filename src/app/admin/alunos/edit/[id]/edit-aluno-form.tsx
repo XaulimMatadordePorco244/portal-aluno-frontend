@@ -16,6 +16,7 @@ import { AvatarUpload } from '@/components/admin/avatar-upload';
 interface AlunoCompleto {
   id: string;
   nome: string;
+  nomeDeGuerra?: string | null; 
   cpf: string;
   email?: string | null;
   telefone?: string | null;
@@ -26,7 +27,6 @@ interface AlunoCompleto {
   genero?: 'MASCULINO' | 'FEMININO' | null;
   perfilAluno?: {
     numero?: string | null;
-    nomeDeGuerra?: string | null;
     cargoId?: string | null;
     companhiaId?: string | null;
     foraDeData: boolean;
@@ -182,7 +182,7 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
            </div>
            <div className="space-y-2">
               <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
-              <Input id="nomeDeGuerra" name="nomeDeGuerra" defaultValue={aluno.perfilAluno?.nomeDeGuerra || ''} required />
+              <Input id="nomeDeGuerra" name="nomeDeGuerra" defaultValue={aluno.nomeDeGuerra || ''} required />
            </div>
            <div className="space-y-2">
               <Label htmlFor="password">Nova Senha</Label>

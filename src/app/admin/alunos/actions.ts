@@ -115,7 +115,7 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
         }
       });
 
-      const novoPerfil = await tx.perfilAluno.create({
+     const novoPerfil = await tx.perfilAluno.create({
         data: {
           usuarioId: novoUsuario.id,
           numero: data.numero,
@@ -126,17 +126,18 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           anoIngresso: new Date().getFullYear(),
           foraDeData: !!data.ingressoForaDeData,
 
-          tipagemSanguinea: data.tipagemSanguinea,
+          tipagemSanguinea: data.tipagemSanguinea || null,
           aptidaoFisicaStatus: data.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
-          aptidaoFisicaObs: data.aptidaoFisicaObs,
+          aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
-          escolaId: data.escola,
-          serieEscolar: data.serieEscolar as SerieEscolar | undefined,
-          endereco: data.endereco,
+          escolaId: data.escola || null,
+          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null,
+
+          endereco: data.endereco || null,
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
-          cursoExternoDescricao: data.cursoExternoDescricao,
+          cursoExternoDescricao: data.cursoExternoDescricao || null,
         }
       });
 
@@ -264,26 +265,26 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
         }
       });
 
-      await tx.perfilAluno.update({
+ await tx.perfilAluno.update({
         where: { usuarioId: id },
         data: {
           numero: data.numero,
           companhiaId: data.companhiaId,
           cargoId: data.cargoId,
 
-          tipagemSanguinea: data.tipagemSanguinea,
-          aptidaoFisicaStatus: data.aptidaoFisicaStatus,
-          aptidaoFisicaObs: data.aptidaoFisicaObs,
-          aptidaoFisicaLaudo: data.aptidaoFisicaLaudo !== undefined ? !!data.aptidaoFisicaLaudo : undefined,
+          tipagemSanguinea: data.tipagemSanguinea || null,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus || null,
+          aptidaoFisicaObs: data.aptidaoFisicaObs || null,
+          aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
-          escolaId: data.escola,
-          serieEscolar: data.serieEscolar as SerieEscolar | undefined,
+          escolaId: data.escola || null,
+          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null, 
 
-          endereco: data.endereco,
+          endereco: data.endereco || null,
 
-          termoResponsabilidadeAssinado: data.termoResponsabilidadeAssinado !== undefined ? !!data.termoResponsabilidadeAssinado : undefined,
-          fazCursoExterno: data.fazCursoExterno !== undefined ? !!data.fazCursoExterno : undefined,
-          cursoExternoDescricao: data.cursoExternoDescricao,
+          termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
+          fazCursoExterno: !!data.fazCursoExterno,
+          cursoExternoDescricao: data.cursoExternoDescricao || null,
         }
       });
     });

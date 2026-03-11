@@ -321,7 +321,7 @@ export default async function AdminDashboardPage() {
                     </CardContent>
                     <CardFooter className="pt-2 border-t">
                         <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-                            <Link href="/admin/alunos">Ver cadastro completo <ArrowRight className="ml-2 w-3 h-3" /></Link>
+                            <Link href="/admin/aniversariantes">Ver aniversariantes <ArrowRight className="ml-2 w-3 h-3" /></Link>
                         </Button>
                     </CardFooter>
                 </Card>
