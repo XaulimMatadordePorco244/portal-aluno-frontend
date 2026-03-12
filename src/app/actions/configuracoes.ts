@@ -1,17 +1,19 @@
 'use server'
 
-import  prisma  from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { CampoRequisito, OperadorLogico } from "@prisma/client";
+import prisma from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
+import { CampoRequisito, OperadorLogico } from '@prisma/client'
+
+export interface RequisitoInput {
+  campo: CampoRequisito;
+  operador: OperadorLogico;
+  valor: string;
+}
 
 export interface RegraDinamicaInput {
   cargoOrigemId: string;
   cargoDestinoId: string;
-  requisitos: {
-    campo: CampoRequisito;
-    operador: OperadorLogico;
-    valor: string;
-  }[];
+  requisitos: RequisitoInput[];
 }
 
 export async function saveRegrasDinamicas(modalidade: string, regras: RegraDinamicaInput[]) {
@@ -24,39 +26,44 @@ export async function saveRegrasDinamicas(modalidade: string, regras: RegraDinam
             modalidade_cargoOrigemId_cargoDestinoId: {
               modalidade: modalidade,
               cargoOrigemId: regra.cargoOrigemId,
-              cargoDestinoId: regra.cargoDestinoId
+              cargoDestinoId: regra.cargoDestinoId,
             }
           },
+          update: {}, 
           create: {
-            modalidade,
+            modalidade: modalidade,
             cargoOrigemId: regra.cargoOrigemId,
             cargoDestinoId: regra.cargoDestinoId,
-          },
-          update: {} 
+          }
         });
-
         await tx.requisitoPromocao.deleteMany({
           where: { regraId: regraSalva.id }
         });
 
-        if (regra.requisitos.length > 0) {
+        if (regra.requisitos && regra.requisitos.length > 0) {
           await tx.requisitoPromocao.createMany({
-            data: regra.requisitos.map(req => ({
+            data: regra.requisitos.map((req) => ({
               regraId: regraSalva.id,
               campo: req.campo,
               operador: req.operador,
-              valor: req.valor,
-              obrigatorio: true
+              valor: String(req.valor)
             }))
           });
         }
       }
+      
+    }, {
+      maxWait: 5000,
+      timeout: 15000 
     });
 
-    revalidatePath('/admin/configuracoes/regras');
-    return { success: true };
+    revalidatePath(`/admin/configuracoes/regras/${modalidade.toLowerCase()}`);
+    revalidatePath('/admin/configuracoes');
+
+    return { success: true, message: 'Regras salvas com sucesso!' };
+
   } catch (error) {
-    console.error("Erro ao salvar regras dinâmicas:", error);
-    return { success: false, error: "Falha ao persistir configurações." };
+    console.error("[ERRO_SALVAR_REGRAS]:", error);
+    return { success: false, message: 'Erro interno ao salvar as regras.' };
   }
 }

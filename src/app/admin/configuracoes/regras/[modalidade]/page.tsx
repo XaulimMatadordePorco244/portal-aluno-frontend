@@ -23,10 +23,16 @@ export default async function Page({ params }: PageProps) {
   const resolvedParams = await params;
   const modalidade = decodeURIComponent(resolvedParams.modalidade).toUpperCase();
 
-  const cargos = await prisma.cargo.findMany({
-    orderBy: { precedencia: 'asc' },
+  // 1. Busca todos os cargos ordenados por precedência DESCENDENTE (do mais moderno para o mais antigo)
+  const todosCargos = await prisma.cargo.findMany({
+    orderBy: { precedencia: 'desc' }, 
     select: { id: true, nome: true, abreviacao: true, tipo: true, precedencia: true }
   });
+
+  // 2. Filtra removendo os cargos de "CURSO", preservando apenas o "AL SD"
+  const cargosValidos = todosCargos.filter(c => 
+    c.tipo !== 'CURSO' || c.abreviacao === 'AL SD'
+  );
 
   const regrasSalvas = await prisma.regraPromocao.findMany({
     where: { modalidade },
@@ -35,11 +41,10 @@ export default async function Page({ params }: PageProps) {
 
   const paresPossiveis = [];
 
-  for (let i = 0; i < cargos.length - 1; i++) {
-    const origem = cargos[i];
-    const destino = cargos.find(c => c.precedencia > origem.precedencia && c.tipo === origem.tipo);
-
-    if (!destino) continue;
+  // 3. Monta a escada de promoção sequencial (AL SD -> SD, SD -> CB, etc.)
+  for (let i = 0; i < cargosValidos.length - 1; i++) {
+    const origem = cargosValidos[i];
+    const destino = cargosValidos[i + 1]; 
 
     const regraBanco = regrasSalvas.find(
       r => r.cargoOrigemId === origem.id && r.cargoDestinoId === destino.id
@@ -48,15 +53,25 @@ export default async function Page({ params }: PageProps) {
     const requisitos = regraBanco?.requisitos || [];
 
     paresPossiveis.push({
-      cargoOrigem: origem,
-      cargoDestino: destino,
-      minMediaEscolar: getValor(requisitos, CampoRequisito.MEDIA_ESCOLAR, 0),
-      minConceito: getValor(requisitos, CampoRequisito.CONCEITO, 0),
-      minTaf: getValor(requisitos, CampoRequisito.TAF, 0),
-      mesesIntersticio: getValor(requisitos, CampoRequisito.INTERSTICIO_MESES, 0),
+      cargoOrigem: { 
+        id: origem.id, 
+        abreviacao: origem.abreviacao, 
+        nome: origem.nome 
+      },
+      cargoDestino: { 
+        id: destino.id, 
+        abreviacao: destino.abreviacao, 
+        nome: destino.nome 
+      },
+      
+      minMediaEscolar: getValor(requisitos, CampoRequisito.MEDIA_ESCOLAR, 0) as number,
+      minConceito: getValor(requisitos, CampoRequisito.CONCEITO, 0) as number,
+      minTaf: getValor(requisitos, CampoRequisito.TAF, 0) as number,
+      mesesIntersticio: getValor(requisitos, CampoRequisito.INTERSTICIO_MESES, 0) as number,
+      minNotaProvaTeorica: getValor(requisitos, CampoRequisito.NOTA_PROVA_TEORICA, 0) as number,
+      
       exigeProvaTeorica: getValor(requisitos, CampoRequisito.NOTA_PROVA_TEORICA, -1) !== -1,
-      minNotaProvaTeorica: getValor(requisitos, CampoRequisito.NOTA_PROVA_TEORICA, 0),
-      exigeSemNotaVermelha: getValor(requisitos, CampoRequisito.SEM_NOTA_VERMELHA, false),
+      exigeSemNotaVermelha: getValor(requisitos, CampoRequisito.SEM_NOTA_VERMELHA, false) as boolean,
     });
   }
 
@@ -64,6 +79,9 @@ export default async function Page({ params }: PageProps) {
     <div className="container mx-auto py-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Regras: {modalidade}</h1>
+        <p className="text-muted-foreground mt-2">
+          Defina os requisitos mínimos para a progressão entre cada patente nesta modalidade.
+        </p>
       </div>
 
       <RegrasPromocaoForm 
