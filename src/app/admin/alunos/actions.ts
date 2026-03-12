@@ -14,7 +14,7 @@ import {
   Role,
   StatusUsuario,
   CargoHistoryStatus,
-  SerieEscolar
+  SerieEscolar,
 } from "@prisma/client";
 
 const alunoSchema = z.object({
@@ -25,7 +25,8 @@ const alunoSchema = z.object({
   rg: z.string().optional(),
   rgEstadoEmissor: z.string().optional(),
   dataNascimento: z.string().optional(),
-  genero: z.nativeEnum(GeneroUsuario).optional(),
+
+  genero: z.nativeEnum(GeneroUsuario).optional().or(z.literal("")),
   telefone: z.string().optional(),
 
   numero: z.string().min(1, "Número obrigatório"),
@@ -34,16 +35,15 @@ const alunoSchema = z.object({
   cargoId: z.string().min(1, "Cargo obrigatório"),
   ingressoForaDeData: z.string().optional(),
 
-  tipagemSanguinea: z.nativeEnum(tipagemSanguinea).optional(),
-  aptidaoFisicaStatus: z.nativeEnum(AptidaoFisicaStatus).optional(),
+  tipagemSanguinea: z.nativeEnum(tipagemSanguinea).optional().or(z.literal("")),
+  aptidaoFisicaStatus: z.nativeEnum(AptidaoFisicaStatus).optional().or(z.literal("")),
+
   aptidaoFisicaObs: z.string().optional(),
   aptidaoFisicaLaudo: z.string().optional(),
 
-  escola: z.string().optional(),
-  serieEscolar: z.string().optional(),
-  endereco: z.string().optional(),
-
-  termoResponsabilidadeAssinado: z.string().optional(),
+  escolaId: z.string().optional().or(z.literal("")),
+  serieEscolar: z.nativeEnum(SerieEscolar).optional().or(z.literal("")), endereco: z.string().optional(),
+    termoResponsabilidadeAssinado: z.string().optional(),
   fazCursoExterno: z.string().optional(),
   cursoExternoDescricao: z.string().optional(),
 
@@ -57,6 +57,7 @@ const alunoSchema = z.object({
 export type AlunoState = {
   errors?: Record<string, string[]>;
   message?: string;
+  formData?: Record<string, any> | null;
 } | undefined;
 
 
@@ -74,9 +75,12 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   const validated = alunoSchema.safeParse(rawData);
 
   if (!validated.success) {
+    console.log("ERROS DO ZOD (CREATE):", validated.error.flatten().fieldErrors);
+
     return {
       errors: validated.error.flatten().fieldErrors,
       message: "Erro de validação nos campos. Verifique os dados digitados.",
+      formData: rawData,
     };
   }
 
@@ -110,12 +114,13 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           rgEstadoEmissor: data.rgEstadoEmissor,
           dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
           telefone: data.telefone,
-          genero: data.genero,
+          // Proteção para não mandar string vazia para Enum
+          genero: data.genero ? (data.genero as GeneroUsuario) : null,
           fotoUrl: fotoUrl,
         }
       });
 
-     const novoPerfil = await tx.perfilAluno.create({
+      const novoPerfil = await tx.perfilAluno.create({
         data: {
           usuarioId: novoUsuario.id,
           numero: data.numero,
@@ -126,12 +131,13 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           anoIngresso: new Date().getFullYear(),
           foraDeData: !!data.ingressoForaDeData,
 
-          tipagemSanguinea: data.tipagemSanguinea || null,
-          aptidaoFisicaStatus: data.aptidaoFisicaStatus || AptidaoFisicaStatus.LIBERADO,
+          // Proteção contra strings vazias em Enums
+          tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : AptidaoFisicaStatus.LIBERADO,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
-          escolaId: data.escola || null,
+          escolaId: data.escolaId || null,
           serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null,
 
           endereco: data.endereco || null,
@@ -222,9 +228,12 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
   const validated = updateSchema.safeParse({ ...rawData, id });
 
   if (!validated.success) {
+    console.log("ERROS DO ZOD (UPDATE):", validated.error.flatten().fieldErrors);
+
     return {
       errors: validated.error.flatten().fieldErrors,
-      message: "Erro de validação"
+      message: "Erro de validação",
+      formData: rawData,
     };
   }
 
@@ -259,26 +268,26 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
           rgEstadoEmissor: data.rgEstadoEmissor,
           dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : undefined,
           telefone: data.telefone,
-          genero: data.genero,
+          genero: data.genero ? (data.genero as GeneroUsuario) : null,
           fotoUrl: novaFotoUrl,
           ...(data.password ? { password: await bcrypt.hash(data.password, 10) } : {})
         }
       });
 
- await tx.perfilAluno.update({
+      await tx.perfilAluno.update({
         where: { usuarioId: id },
         data: {
           numero: data.numero,
           companhiaId: data.companhiaId,
           cargoId: data.cargoId,
 
-          tipagemSanguinea: data.tipagemSanguinea || null,
-          aptidaoFisicaStatus: data.aptidaoFisicaStatus || null,
+          tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : null,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
-          escolaId: data.escola || null,
-          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null, 
+          escolaId: data.escolaId || null,
+          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null,
 
           endereco: data.endereco || null,
 
