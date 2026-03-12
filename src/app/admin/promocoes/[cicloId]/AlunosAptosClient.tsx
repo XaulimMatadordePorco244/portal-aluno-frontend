@@ -14,18 +14,30 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
         let lista = [...ciclo.candidatos];
 
         if (modalidade === 'ANTIGUIDADE') {
-            lista = lista.filter(c => c.conceitoSnapshot >= 8.0);
-            
+            lista = lista.filter(c => {
+                const isAlSd = c.aluno.cargo?.abreviacao === 'AL SD';
+                const boletim = c.aluno.desempenhosEscolares?.[0];
+                const estaAprovadoNaEscola = boletim?.situacao === 'APROVADO';
+
+                // Se for AL SD, TEM que ter 8.0 de conceito E estar APROVADO na escola!
+                if (isAlSd) {
+                    return c.conceitoSnapshot >= 8.0 && estaAprovadoNaEscola;
+                }
+
+                // Para os outros cargos, segue a regra normal (Conceito >= 8.0)
+                return c.conceitoSnapshot >= 8.0;
+            });
+
             lista.sort((a, b) => {
                 const tempoA = new Date(a.aluno.dataUltimaPromocao || a.aluno.createdAt).getTime();
                 const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
-                if (tempoA !== tempoB) return tempoA - tempoB; 
+                if (tempoA !== tempoB) return tempoA - tempoB;
                 if (a.conceitoSnapshot !== b.conceitoSnapshot) return b.conceitoSnapshot - a.conceitoSnapshot;
                 const nascA = new Date(a.aluno.usuario.dataNascimento).getTime();
                 const nascB = new Date(b.aluno.usuario.dataNascimento).getTime();
-                return nascA - nascB; 
+                return nascA - nascB;
             });
-        } 
+        }
         else if (modalidade === 'MERECIMENTO') {
             lista.sort((a, b) => {
                 const somaA = a.conceitoSnapshot + a.mediaEscolarSnapshot;
@@ -33,7 +45,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                 if (somaA !== somaB) return somaB - somaA;
                 const tempoA = new Date(a.aluno.dataUltimaPromocao || a.aluno.createdAt).getTime();
                 const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
-                if (tempoA !== tempoB) return tempoA - tempoB; 
+                if (tempoA !== tempoB) return tempoA - tempoB;
                 return new Date(a.aluno.usuario.dataNascimento).getTime() - new Date(b.aluno.usuario.dataNascimento).getTime();
             });
         }
@@ -53,7 +65,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
 
     const getProximoCargo = (cargoAtualId: string) => {
         const currentIndex = cargos.findIndex(c => c.id === cargoAtualId);
-        const targetIndex = currentIndex - 1; 
+        const targetIndex = currentIndex - 1;
         return targetIndex >= 0 ? cargos[targetIndex] : null;
     };
 
@@ -81,7 +93,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
         }
 
         const result = await efetivarPromocoesDoCiclo(payload, ciclo.id);
-        
+
         if (result.success) {
             alert(result.message);
             setSelecionados({});
@@ -89,7 +101,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
         } else {
             alert(result.message);
         }
-            setLoading(false);
+        setLoading(false);
     };
 
     const isFechado = ciclo.status === 'FINALIZADO';
@@ -101,11 +113,10 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                     <button
                         key={aba}
                         onClick={() => { setAbaAtiva(aba as any); setSelecionados({}); }}
-                        className={`px-6 py-4 text-sm font-semibold transition-colors ${
-                            abaAtiva === aba 
-                            ? 'border-b-2 border-primary text-primary bg-card' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                        }`}
+                        className={`px-6 py-4 text-sm font-semibold transition-colors ${abaAtiva === aba
+                                ? 'border-b-2 border-primary text-primary bg-card'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            }`}
                     >
                         Por {aba.replace('_', ' ')}
                     </button>
@@ -122,6 +133,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                             <th className="p-4 text-primary font-bold">Promoção Para</th>
                             <th className="p-4">Conceito</th>
                             <th className="p-4">Média Escolar</th>
+                            <th className="p-4">Escola</th>
                             <th className="p-4">TAF</th>
                         </tr>
                     </thead>
@@ -142,8 +154,8 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                                 <tr key={candidato.id} className={`transition-colors hover:bg-muted/30 ${isSelecionado ? 'bg-primary/5 dark:bg-primary/10' : ''}`}>
                                     {!isFechado && (
                                         <td className="p-4">
-                                            <input 
-                                                type="checkbox" 
+                                            <input
+                                                type="checkbox"
                                                 disabled={jaAprovado || !proximoCargo}
                                                 checked={isSelecionado || jaAprovado}
                                                 onChange={() => toggleSelecao(candidato.alunoId)}
@@ -169,6 +181,20 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                                     <td className="p-4 font-medium">{candidato.conceitoSnapshot.toFixed(1)}</td>
                                     <td className="p-4 font-medium">{candidato.mediaEscolarSnapshot.toFixed(1)}</td>
                                     <td className="p-4 font-medium">{candidato.tafSnapshot.toFixed(1)}</td>
+                                    <td className="p-4">
+                                        {(() => {
+                                            const boletim = candidato.aluno.desempenhosEscolares?.[0];
+                                            const situacao = boletim?.situacao || 'PENDENTE';
+
+                                            if (situacao === 'APROVADO') {
+                                                return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold rounded-md">Aprovado</span>;
+                                            } else if (situacao === 'REPROVADO') {
+                                                return <span className="px-2 py-1 bg-destructive/10 text-destructive text-xs font-bold rounded-md">Reprovado</span>;
+                                            } else {
+                                                return <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-bold rounded-md">{situacao}</span>;
+                                            }
+                                        })()}
+                                    </td>
                                 </tr>
                             );
                         })}

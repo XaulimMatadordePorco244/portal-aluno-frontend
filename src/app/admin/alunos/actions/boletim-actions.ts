@@ -3,13 +3,10 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { SerieEscolar } from '@prisma/client' 
 
 const BoletimSchema = z.object({
   alunoId: z.string(),
   anoLetivo: z.coerce.number(),
-  escola: z.string().optional(),
-  serie: z.string().optional(),
   
   mediaB1: z.coerce.number().min(0).max(10).nullable().optional(),
   faltasB1: z.coerce.number().default(0),
@@ -25,6 +22,7 @@ const BoletimSchema = z.object({
   
   qtdNotasVermelhas: z.coerce.number().default(0),
   observacoes: z.string().optional(),
+  situacao: z.string().default('CURSANDO'),
 })
 
 interface RawFormData {
@@ -54,26 +52,16 @@ export async function salvarBoletim(formData: FormData) {
   }
 
   const data = result.data
-
   const totalFaltas = data.faltasB1 + data.faltasB2 + data.faltasB3 + data.faltasB4
 
   let mediaFinal: number | null = null
-  let situacao = "CURSANDO"
-
   const notas = [data.mediaB1, data.mediaB2, data.mediaB3, data.mediaB4]
   
   const boletimCompleto = notas.every(n => n !== null && n !== undefined)
 
   if (boletimCompleto) {
     const soma = (data.mediaB1 || 0) + (data.mediaB2 || 0) + (data.mediaB3 || 0) + (data.mediaB4 || 0)
-    
     mediaFinal = parseFloat((soma / 4).toFixed(1))
-
-    if (mediaFinal >= 6.0) {
-      situacao = "APROVADO"
-    } else {
-      situacao = "REPROVADO" 
-    }
   }
 
   try {
@@ -85,8 +73,6 @@ export async function salvarBoletim(formData: FormData) {
         }
       },
       update: {
-        escola: data.escola,
-        serie: data.serie,
         mediaB1: data.mediaB1, faltasB1: data.faltasB1,
         mediaB2: data.mediaB2, faltasB2: data.faltasB2,
         mediaB3: data.mediaB3, faltasB3: data.faltasB3,
@@ -95,13 +81,11 @@ export async function salvarBoletim(formData: FormData) {
         observacoes: data.observacoes,
         mediaFinal,
         totalFaltas,
-        situacao
+        situacao: data.situacao 
       },
       create: {
         alunoId: data.alunoId,
         anoLetivo: data.anoLetivo,
-        escola: data.escola,
-        serie: data.serie,
         mediaB1: data.mediaB1, faltasB1: data.faltasB1,
         mediaB2: data.mediaB2, faltasB2: data.faltasB2,
         mediaB3: data.mediaB3, faltasB3: data.faltasB3,
@@ -110,18 +94,11 @@ export async function salvarBoletim(formData: FormData) {
         observacoes: data.observacoes,
         mediaFinal,
         totalFaltas,
-        situacao
+        situacao: data.situacao 
       }
     })
 
-    if (data.serie) {
-      await prisma.perfilAluno.update({
-        where: { id: data.alunoId },
-        data: { 
-            serieEscolar: data.serie as SerieEscolar
-        }
-      })
-    }
+    
 
     revalidatePath(`/admin/alunos/${data.alunoId}`)
     revalidatePath(`/admin/nota-escolar`) 

@@ -12,6 +12,7 @@ export default async function CicloDetalhesPage({ params }: { params: { cicloId:
                         include: {
                             usuario: true,
                             cargo: true,
+                            desempenhosEscolares: { orderBy: { anoLetivo: 'desc' }, take: 1 }
                         }
                     }
                 }
