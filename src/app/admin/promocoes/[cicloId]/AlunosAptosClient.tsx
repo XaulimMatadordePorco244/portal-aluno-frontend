@@ -12,10 +12,51 @@ export interface VagasDisponiveis {
     sargentos: number;
     cabos: number;
     soldados: number;
-    _debug?: any;
+    _debug?: unknown;
 }
 
-export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, cargos: any[], vagas: VagasDisponiveis }) {
+export interface Cargo {
+    id: string;
+    nome: string;
+    abreviacao?: string;
+}
+
+interface Usuario {
+    nome: string;
+    dataNascimento: Date | string | null;
+}
+
+interface Boletim {
+    situacao: string | null;
+}
+
+interface Aluno {
+    createdAt: Date | string;
+    dataUltimaPromocao?: Date | string | null;
+    cargoId: string | null;
+    cargo?: Cargo | null;
+    usuario: Usuario;
+    desempenhosEscolares?: Boletim[];
+}
+
+export interface Candidato {
+    id: string;
+    alunoId: string;
+    resultado?: string | null;
+    conceitoSnapshot: number;
+    mediaEscolarSnapshot: number;
+    tafSnapshot: number;
+    aluno: Aluno;
+}
+
+export interface Ciclo {
+    id: string;
+    status: string;
+    candidatos: Candidato[];
+}
+
+
+export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: Ciclo, cargos: Cargo[], vagas: VagasDisponiveis }) {
     const router = useRouter();
     const [abaAtiva, setAbaAtiva] = useState<'ANTIGUIDADE' | 'MERECIMENTO' | 'MERITO_ESCOLAR'>('ANTIGUIDADE');
     const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
@@ -44,8 +85,8 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                 const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
                 if (tempoA !== tempoB) return tempoA - tempoB;
                 if (a.conceitoSnapshot !== b.conceitoSnapshot) return b.conceitoSnapshot - a.conceitoSnapshot;
-                const nascA = new Date(a.aluno.usuario.dataNascimento).getTime();
-                const nascB = new Date(b.aluno.usuario.dataNascimento).getTime();
+                const nascA = a.aluno.usuario.dataNascimento ? new Date(a.aluno.usuario.dataNascimento).getTime() : 0;
+                const nascB = b.aluno.usuario.dataNascimento ? new Date(b.aluno.usuario.dataNascimento).getTime() : 0;
                 return nascA - nascB;
             });
         }
@@ -57,7 +98,9 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                 const tempoA = new Date(a.aluno.dataUltimaPromocao || a.aluno.createdAt).getTime();
                 const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
                 if (tempoA !== tempoB) return tempoA - tempoB;
-                return new Date(a.aluno.usuario.dataNascimento).getTime() - new Date(b.aluno.usuario.dataNascimento).getTime();
+                const nascA = a.aluno.usuario.dataNascimento ? new Date(a.aluno.usuario.dataNascimento).getTime() : 0;
+                const nascB = b.aluno.usuario.dataNascimento ? new Date(b.aluno.usuario.dataNascimento).getTime() : 0;
+                return nascA - nascB;
             });
         }
         else if (modalidade === 'MERITO_ESCOLAR') {
@@ -74,7 +117,9 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
         setSelecionados(prev => ({ ...prev, [alunoId]: !prev[alunoId] }));
     };
 
-    const getProximoCargo = (cargoAtualId: string) => {
+    const getProximoCargo = (cargoAtualId: string | null) => {
+        if (!cargoAtualId) return null;
+
         const currentIndex = cargos.findIndex(c => c.id === cargoAtualId);
         const targetIndex = currentIndex - 1;
         return targetIndex >= 0 ? cargos[targetIndex] : null;
@@ -123,10 +168,13 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                 {['ANTIGUIDADE', 'MERECIMENTO', 'MERITO_ESCOLAR'].map((aba) => (
                     <button
                         key={aba}
-                        onClick={() => { setAbaAtiva(aba as any); setSelecionados({}); }}
+                        onClick={() => {
+                            setAbaAtiva(aba as 'ANTIGUIDADE' | 'MERECIMENTO' | 'MERITO_ESCOLAR');
+                            setSelecionados({});
+                        }}
                         className={`px-6 py-4 text-sm font-semibold transition-colors ${abaAtiva === aba
-                                ? 'border-b-2 border-primary text-primary bg-card'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            ? 'border-b-2 border-primary text-primary bg-card'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                             }`}
                     >
                         Por {aba.replace('_', ' ')}
@@ -177,8 +225,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, carg
                                     <td className="p-4">
                                         <div className="font-semibold text-foreground">{candidato.aluno.usuario.nome}</div>
                                         <div className="text-xs text-muted-foreground mt-0.5">
-                                            Nasc: {new Date(candidato.aluno.usuario.dataNascimento).toLocaleDateString()}
-                                            <span className="ml-2 font-bold opacity-60">#{index + 1} da fila</span>
+                                            Nasc: {candidato.aluno.usuario.dataNascimento ? new Date(candidato.aluno.usuario.dataNascimento).toLocaleDateString() : 'Não informada'}                                            <span className="ml-2 font-bold opacity-60">#{index + 1} da fila</span>
                                         </div>
                                     </td>
                                     <td className="p-4">

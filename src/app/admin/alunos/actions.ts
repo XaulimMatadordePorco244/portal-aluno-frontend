@@ -57,7 +57,7 @@ const alunoSchema = z.object({
 export type AlunoState = {
   errors?: Record<string, string[]>;
   message?: string;
-  formData?: Record<string, any> | null;
+  formData?: Record<string, unknown> | null;
 } | undefined;
 
 
@@ -114,7 +114,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           rgEstadoEmissor: data.rgEstadoEmissor,
           dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
           telefone: data.telefone,
-          // Proteção para não mandar string vazia para Enum
           genero: data.genero ? (data.genero as GeneroUsuario) : null,
           fotoUrl: fotoUrl,
         }
@@ -131,7 +130,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           anoIngresso: new Date().getFullYear(),
           foraDeData: !!data.ingressoForaDeData,
 
-          // Proteção contra strings vazias em Enums
           tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
           aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : AptidaoFisicaStatus.LIBERADO,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
@@ -434,7 +432,7 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
       message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).`
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao reativar aluno:", error);
     return { success: false, message: "Erro interno ao tentar reativar o aluno." };
   }

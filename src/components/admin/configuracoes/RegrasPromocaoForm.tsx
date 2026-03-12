@@ -109,7 +109,7 @@ function RegraCardItem({ par, modalidade }: { par: ParRegra, modalidade: string 
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao salvar regra.');
     } finally {
       setSaving(false);

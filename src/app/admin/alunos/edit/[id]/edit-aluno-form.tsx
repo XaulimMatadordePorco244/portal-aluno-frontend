@@ -14,11 +14,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from 'lucide-react';
 import { AvatarUpload } from '@/components/admin/avatar-upload';
 
+export interface AlunoEditado {
+  id: string;
+  nome: string;
+  nomeDeGuerra: string | null;
+  cpf: string;
+  email: string | null;
+  telefone: string | null;
+  rg: string | null;
+  rgEstadoEmissor: string | null;
+  fotoUrl: string | null;
+  dataNascimento: Date | string | null;
+  genero: 'MASCULINO' | 'FEMININO' | null;
+  perfilAluno: {
+    numero: string | null;      
+    cargoId: string | null;    
+    companhiaId: string | null; 
+    foraDeData: boolean;
+    tipagemSanguinea: string | null;
+    aptidaoFisicaStatus: string | null;
+    aptidaoFisicaLaudo: boolean;
+    aptidaoFisicaObs: string | null;
+    endereco: string | null;
+    escolaId: string | null;
+    serieEscolar: string | null;
+    turno: string | null;
+    turmaEscolar: string | null;
+    fazCursoExterno: boolean;
+    cursoExternoDescricao: string | null;
+    termoResponsabilidadeAssinado: boolean;
+    responsavelNome: string | null;
+    responsavelCpf: string | null;
+    responsavelParentesco: string | null;
+    responsavelTelefone: string | null;
+    responsavelEmail: string | null;
+  } | null;
+}
+
 interface AlunoFormProps {
   cargos: { id: string, nome: string }[];
   companhias: { id: string, nome: string }[];
   escolas: { id: string, nome: string }[];
-  aluno?: any;
+  aluno: AlunoEditado; 
 }
 
 function SubmitButton() {

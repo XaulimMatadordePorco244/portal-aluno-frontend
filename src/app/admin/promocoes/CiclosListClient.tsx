@@ -9,7 +9,17 @@ import {
     encerrarCicloPromocao 
 } from '@/app/actions/transicoes'; 
 
-export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: any[] }) {
+export interface CicloListagem {
+    id: string;
+    nome?: string;
+    dataInicio?: Date | string;
+    dataFim?: Date | string | null;
+    status: string;
+    _count: {        
+        candidatos: number;
+    };
+}
+export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: CicloListagem[] }) {
     const router = useRouter();
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -93,7 +103,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: a
 
                 {ciclosIniciais.map((ciclo) => {
                     const isFechado = ciclo.status === 'FINALIZADO';
-                    const temCandidatos = ciclo._count?.candidatos > 0;
+                    const temCandidatos = ciclo._count?.candidatos > 0 || 0;
                     const isProcessing = loadingId === ciclo.id || loadingId === `encerrar-${ciclo.id}` || loadingId === `apagar-${ciclo.id}`;
 
                     return (

@@ -97,7 +97,7 @@ export default async function EditAlunoPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <EditAlunoForm 
-            aluno={alunoMapeado as any}
+            aluno={alunoMapeado}
             cargos={cargosData} 
             companhias={companhiasData} 
             escolas={escolasData} 

@@ -250,7 +250,7 @@ export default function BoletimForm({ alunoId, dadosIniciais, dadosEscolares, an
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Atenção: O aluno só concorrerá às promoções se o status for marcado manualmente como "Aprovado".
+                  Atenção: O aluno só concorrerá às promoções se o status for marcado manualmente como &quot;Aprovado&quot;.
                 </p>
               </div>
 

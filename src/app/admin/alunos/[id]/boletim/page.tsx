@@ -62,7 +62,7 @@ export default async function EditarBoletimPage({ params }: PageProps) {
     }
   })
 
-  const dadosIniciais: DadosIniciaisBoletim = boletim
+  const DadosIniciaisBoletim = boletim
     ? {
       mediaB1: boletim.mediaB1,
       mediaB2: boletim.mediaB2,
