@@ -11,14 +11,15 @@ export default async function EditAlunoPage({ params }: PageProps) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
   
-  const [aluno, cargosData, companhiasData] = await Promise.all([
+  const [aluno, cargosData, companhiasData, escolasData] = await Promise.all([
     prisma.usuario.findUnique({
       where: { id },
       include: { 
         perfilAluno: {
           include: {
             companhia: true,
-            cargo: true
+            cargo: true,
+            escola: true 
           }
         } 
       },
@@ -28,6 +29,9 @@ export default async function EditAlunoPage({ params }: PageProps) {
     }),
     prisma.companhia.findMany({
       orderBy: { nome: 'asc' }
+    }),
+    prisma.escola.findMany({
+      orderBy: { nome: 'asc' }
     })
   ]);
 
@@ -36,8 +40,8 @@ export default async function EditAlunoPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="max-w-4xl mx-auto">
+    <div >
+      <Card >
         <CardHeader>
           <CardTitle>Editar Aluno</CardTitle>
           <CardDescription>
@@ -49,6 +53,7 @@ export default async function EditAlunoPage({ params }: PageProps) {
             aluno={aluno} 
             cargos={cargosData} 
             companhias={companhiasData} 
+            escolas={escolasData} 
           />
         </CardContent>
       </Card>

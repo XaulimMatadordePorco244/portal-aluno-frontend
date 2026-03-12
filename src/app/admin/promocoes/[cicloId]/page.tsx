@@ -1,10 +1,17 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import QuadroAcessoClient from './AlunosAptosClient';
+import { calcularVagasDisponiveis } from '@/app/actions/transicoes'; 
 
-export default async function CicloDetalhesPage({ params }: { params: { cicloId: string } }) {
+export default async function CicloDetalhesPage({ 
+    params 
+}: { 
+    params: Promise<{ cicloId: string }> 
+}) {
+    const { cicloId } = await params;
+
     const ciclo = await prisma.cicloPromocao.findUnique({
-        where: { id: params.cicloId },
+        where: { id: cicloId }, 
         include: {
             candidatos: {
                 include: {
@@ -27,8 +34,10 @@ export default async function CicloDetalhesPage({ params }: { params: { cicloId:
         orderBy: { precedencia: 'asc' }
     });
 
+    const vagas = await calcularVagasDisponiveis();
+
     return (
-        <div >
+        <div>
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-foreground">Alunos Aptos</h1>
                 <p className="text-slate-500 mt-1">
@@ -37,7 +46,7 @@ export default async function CicloDetalhesPage({ params }: { params: { cicloId:
                 </p>
             </div>
 
-            <QuadroAcessoClient ciclo={ciclo} cargos={cargos} />
+            <QuadroAcessoClient ciclo={ciclo} cargos={cargos} vagas={vagas} />
         </div>
     );
 }

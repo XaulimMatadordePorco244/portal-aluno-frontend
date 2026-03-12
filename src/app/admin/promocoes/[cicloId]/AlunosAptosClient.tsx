@@ -4,7 +4,18 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { efetivarPromocoesDoCiclo } from '@/app/actions/transicoes';
 
-export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, cargos: any[] }) {
+export interface VagasDisponiveis {
+    superiores: number;
+    intermediarios: number;
+    subalternos: number;
+    subtenentes: number;
+    sargentos: number;
+    cabos: number;
+    soldados: number;
+    _debug?: any;
+}
+
+export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: any, cargos: any[], vagas: VagasDisponiveis }) {
     const router = useRouter();
     const [abaAtiva, setAbaAtiva] = useState<'ANTIGUIDADE' | 'MERECIMENTO' | 'MERITO_ESCOLAR'>('ANTIGUIDADE');
     const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});

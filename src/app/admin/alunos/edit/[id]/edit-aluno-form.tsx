@@ -5,24 +5,24 @@ import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
-import { updateAluno } from '../../actions'; 
+import { updateAluno } from '../../actions';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { AvatarUpload } from '@/components/admin/avatar-upload'; 
+import { AvatarUpload } from '@/components/admin/avatar-upload';
 
 interface AlunoCompleto {
   id: string;
   nome: string;
-  nomeDeGuerra?: string | null; 
+  nomeDeGuerra?: string | null;
   cpf: string;
   email?: string | null;
   telefone?: string | null;
   rg?: string | null;
   rgEstadoEmissor?: string | null;
-  fotoUrl?: string | null; 
+  fotoUrl?: string | null;
   dataNascimento?: Date | string | null;
   genero?: 'MASCULINO' | 'FEMININO' | null;
   perfilAluno?: {
@@ -34,13 +34,22 @@ interface AlunoCompleto {
     aptidaoFisicaStatus?: string | null;
     aptidaoFisicaLaudo: boolean;
     aptidaoFisicaObs?: string | null;
-    escola?: string | null;
-    serieEscolar?: string | null;
     endereco?: string | null;
+    escolaId?: string | null;
+    serieEscolar?: string | null;
+    turno?: string | null;
+    turmaEscolar?: string | null;
+
     fazCursoExterno: boolean;
     cursoExternoDescricao?: string | null;
     termoResponsabilidadeAssinado: boolean;
-    fotoUrl?: string | null; 
+    fotoUrl?: string | null;
+
+    responsavelNome?: string | null;
+    responsavelCpf?: string | null;
+    responsavelParentesco?: string | null;
+    responsavelTelefone?: string | null;
+    responsavelEmail?: string | null;
   } | null;
 }
 
@@ -48,6 +57,7 @@ interface EditAlunoFormProps {
   aluno: AlunoCompleto;
   cargos: { id: string, nome: string }[];
   companhias: { id: string, nome: string }[];
+  escolas: { id: string, nome: string }[];
 }
 
 function SubmitButton() {
@@ -64,21 +74,21 @@ function ErrorMsg({ error }: { error?: string[] }) {
   return <p className="text-xs text-destructive mt-1">{error[0]}</p>;
 }
 
-export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFormProps) {
+export default function EditAlunoForm({ aluno, cargos, companhias, escolas }: EditAlunoFormProps) {
   const [state, formAction] = useActionState(updateAluno, undefined);
   const [temCurso, setTemCurso] = useState(!!aluno.perfilAluno?.fazCursoExterno);
-  
+
   const [profilePic, setProfilePic] = useState<File | null>(null);
 
-  const dataNascValue = aluno.dataNascimento 
-    ? new Date(aluno.dataNascimento).toISOString().split('T')[0] 
+  const dataNascValue = aluno.dataNascimento
+    ? new Date(aluno.dataNascimento).toISOString().split('T')[0]
     : '';
 
   const currentPhoto = aluno.perfilAluno?.fotoUrl || aluno.fotoUrl || null;
 
   const handleSubmit = (formData: FormData) => {
     if (profilePic) {
-        formData.append("fotoPerfil", profilePic);
+      formData.append("fotoPerfil", profilePic);
     }
     formAction(formData);
   };
@@ -92,12 +102,9 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
           <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
           Dados Pessoais
         </h3>
-        
+
         <div className="flex justify-center pb-4">
-            <AvatarUpload 
-                currentImageUrl={currentPhoto} 
-                onFileSelect={setProfilePic} 
-            />
+          <AvatarUpload currentImageUrl={currentPhoto} onFileSelect={setProfilePic} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,227 +115,280 @@ export default function EditAlunoForm({ aluno, cargos, companhias }: EditAlunoFo
           </div>
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
-            <Input 
-                id="cpf" 
-                name="cpf" 
-                defaultValue={aluno.cpf} 
-                readOnly 
-                className="bg-muted text-muted-foreground cursor-not-allowed opacity-70" 
-                title="CPF não pode ser alterado" 
-            />
+            <Input id="cpf" name="cpf" defaultValue={aluno.cpf} readOnly className="bg-muted text-muted-foreground cursor-not-allowed opacity-70" title="CPF não pode ser alterado" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-             <Label htmlFor="dataNascimento">Data de Nascimento</Label>
-             <Input id="dataNascimento" name="dataNascimento" type="date" defaultValue={dataNascValue} />
+            <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+            <Input id="dataNascimento" name="dataNascimento" type="date" defaultValue={dataNascValue} />
           </div>
           <div className="space-y-2">
-             <Label htmlFor="rg">RG</Label>
-             <Input id="rg" name="rg" defaultValue={aluno.rg || ''} />
+            <Label htmlFor="rg">RG</Label>
+            <Input id="rg" name="rg" defaultValue={aluno.rg || ''} />
           </div>
           <div className="space-y-2">
-             <Label htmlFor="rgEstadoEmissor">Órgão/UF</Label>
-             <Input id="rgEstadoEmissor" name="rgEstadoEmissor" defaultValue={aluno.rgEstadoEmissor || ''} placeholder="Ex: SSP/MS" />
+            <Label htmlFor="rgEstadoEmissor">Órgão/UF</Label>
+            <Input id="rgEstadoEmissor" name="rgEstadoEmissor" defaultValue={aluno.rgEstadoEmissor || ''} placeholder="Ex: SSP/MS" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-           <div className="space-y-2">
-              <Label>Gênero</Label>
-              <Select name="genero" defaultValue={aluno.genero || undefined}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MASCULINO">Masculino</SelectItem>
-                  <SelectItem value="FEMININO">Feminino</SelectItem>
-                </SelectContent>
-              </Select>
-           </div>
-           <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone / Celular</Label>
-              <Input id="telefone" name="telefone" defaultValue={aluno.telefone || ''} />
-           </div>
-           <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" defaultValue={aluno.email || ''} />
-              <ErrorMsg error={state?.errors?.email} />
-           </div>
+          <div className="space-y-2">
+            <Label>Gênero</Label>
+            <Select name="genero" defaultValue={aluno.genero || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MASCULINO">Masculino</SelectItem>
+                <SelectItem value="FEMININO">Feminino</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="telefone">Telefone / Celular</Label>
+            <Input id="telefone" name="telefone" defaultValue={aluno.telefone || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" defaultValue={aluno.email || ''} />
+            <ErrorMsg error={state?.errors?.email} />
+          </div>
         </div>
 
         <div className="space-y-2">
-           <Label htmlFor="endereco">Endereço Completo</Label>
-           <Textarea 
-             id="endereco" 
-             name="endereco" 
-             defaultValue={aluno.perfilAluno?.endereco || ''} 
-             placeholder="Rua, Número, Bairro, CEP..." 
-             className="h-20 resize-none" 
-           />
+          <Label htmlFor="endereco">Endereço Completo</Label>
+          <Textarea id="endereco" name="endereco" defaultValue={aluno.perfilAluno?.endereco || ''} placeholder="Rua, Número, Bairro, CEP..." className="h-20 resize-none" />
         </div>
       </section>
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
-            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
-            Dados Institucionais
+          <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
+          Dados Institucionais
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-           <div className="space-y-2">
-              <Label htmlFor="numero">Número (Matrícula)</Label>
-              <Input id="numero" name="numero" defaultValue={aluno.perfilAluno?.numero || ''} required />
-              <ErrorMsg error={state?.errors?.numero} />
-           </div>
-           <div className="space-y-2">
-              <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
-              <Input id="nomeDeGuerra" name="nomeDeGuerra" defaultValue={aluno.nomeDeGuerra || ''} required />
-           </div>
-           <div className="space-y-2">
-              <Label htmlFor="password">Nova Senha</Label>
-              <Input id="password" name="password" type="password" placeholder="Deixe em branco para manter" />
-           </div>
+          <div className="space-y-2">
+            <Label htmlFor="numero">Número (Matrícula)</Label>
+            <Input id="numero" name="numero" defaultValue={aluno.perfilAluno?.numero || ''} required />
+            <ErrorMsg error={state?.errors?.numero} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nomeDeGuerra">Nome de Guerra</Label>
+            <Input id="nomeDeGuerra" name="nomeDeGuerra" defaultValue={aluno.nomeDeGuerra || ''} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Nova Senha</Label>
+            <Input id="password" name="password" type="password" placeholder="Deixe em branco para manter" />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="space-y-2">
-              <Label>Cargo / Graduação</Label>
-              <Select name="cargoId" defaultValue={aluno.perfilAluno?.cargoId || undefined}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {cargos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-           </div>
-           <div className="space-y-2">
-              <Label>Companhia</Label>
-              <Select name="companhiaId" defaultValue={aluno.perfilAluno?.companhiaId || undefined}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {companhias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-           </div>
+          <div className="space-y-2">
+            <Label>Cargo / Graduação</Label>
+            <Select name="cargoId" defaultValue={aluno.perfilAluno?.cargoId || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {cargos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Companhia</Label>
+            <Select name="companhiaId" defaultValue={aluno.perfilAluno?.companhiaId || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {companhias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-           <Checkbox 
-             id="ingressoForaDeData" 
-             name="ingressoForaDeData" 
-             defaultChecked={aluno.perfilAluno?.foraDeData} 
-           />
-           <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Ingresso fora de data (Matrícula tardia)</Label>
+          <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" defaultChecked={aluno.perfilAluno?.foraDeData} />
+          <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Ingresso fora de data (Matrícula tardia)</Label>
         </div>
       </section>
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
-            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span>
-            Saúde e Aptidão
+          <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span>
+          Saúde e Aptidão
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="space-y-2">
-              <Label>Tipagem Sanguínea</Label>
-              <Select name="tipagemSanguinea" defaultValue={aluno.perfilAluno?.tipagemSanguinea || undefined}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A_POSITIVO">A+</SelectItem>
-                  <SelectItem value="A_NEGATIVO">A-</SelectItem>
-                  <SelectItem value="B_POSITIVO">B+</SelectItem>
-                  <SelectItem value="B_NEGATIVO">B-</SelectItem>
-                  <SelectItem value="AB_POSITIVO">AB+</SelectItem>
-                  <SelectItem value="AB_NEGATIVO">AB-</SelectItem>
-                  <SelectItem value="O_POSITIVO">O+</SelectItem>
-                  <SelectItem value="O_NEGATIVO">O-</SelectItem>
-                </SelectContent>
-              </Select>
-           </div>
-           <div className="space-y-2">
-               <Label>Aptidão Física</Label>
-               <Select name="aptidaoFisicaStatus" defaultValue={aluno.perfilAluno?.aptidaoFisicaStatus || 'LIBERADO'}>
-                 <SelectTrigger><SelectValue /></SelectTrigger>
-                 <SelectContent>
-                    <SelectItem value="LIBERADO">Liberado</SelectItem>
-                    <SelectItem value="LIBERADO_COM_RESTRICOES">Com Restrições</SelectItem>
-                    <SelectItem value="VETADO">Vetado</SelectItem>
-                 </SelectContent>
-               </Select>
-           </div>
+          <div className="space-y-2">
+            <Label>Tipagem Sanguínea</Label>
+            <Select name="tipagemSanguinea" defaultValue={aluno.perfilAluno?.tipagemSanguinea || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="A_POSITIVO">A+</SelectItem>
+                <SelectItem value="A_NEGATIVO">A-</SelectItem>
+                <SelectItem value="B_POSITIVO">B+</SelectItem>
+                <SelectItem value="B_NEGATIVO">B-</SelectItem>
+                <SelectItem value="AB_POSITIVO">AB+</SelectItem>
+                <SelectItem value="AB_NEGATIVO">AB-</SelectItem>
+                <SelectItem value="O_POSITIVO">O+</SelectItem>
+                <SelectItem value="O_NEGATIVO">O-</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Aptidão Física</Label>
+            <Select name="aptidaoFisicaStatus" defaultValue={aluno.perfilAluno?.aptidaoFisicaStatus || 'LIBERADO'}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LIBERADO">Liberado</SelectItem>
+                <SelectItem value="LIBERADO_COM_RESTRICOES">Com Restrições</SelectItem>
+                <SelectItem value="VETADO">Vetado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-           <Checkbox 
-             id="aptidaoFisicaLaudo" 
-             name="aptidaoFisicaLaudo" 
-             defaultChecked={aluno.perfilAluno?.aptidaoFisicaLaudo} 
-           />
-           <Label htmlFor="aptidaoFisicaLaudo" className="font-medium cursor-pointer">Possui laudo médico entregue?</Label>
+          <Checkbox id="aptidaoFisicaLaudo" name="aptidaoFisicaLaudo" defaultChecked={aluno.perfilAluno?.aptidaoFisicaLaudo} />
+          <Label htmlFor="aptidaoFisicaLaudo" className="font-medium cursor-pointer">Possui laudo médico entregue?</Label>
         </div>
 
         <div className="space-y-2">
-           <Label htmlFor="aptidaoFisicaObs">Observações Médicas / Restrições</Label>
-           <Textarea 
-             id="aptidaoFisicaObs" 
-             name="aptidaoFisicaObs" 
-             defaultValue={aluno.perfilAluno?.aptidaoFisicaObs || ''} 
-             placeholder="Ex: Alergia a picada de insetos..." 
-             className="h-20 resize-none" 
-           />
+          <Label htmlFor="aptidaoFisicaObs">Observações Médicas / Restrições</Label>
+          <Textarea id="aptidaoFisicaObs" name="aptidaoFisicaObs" defaultValue={aluno.perfilAluno?.aptidaoFisicaObs || ''} placeholder="Ex: Alergia a picada de insetos..." className="h-20 resize-none" />
         </div>
       </section>
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
-            <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">4</span>
-            Dados Escolares e Extras
+          <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">4</span>
+          Dados Escolares e Extras
         </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="space-y-2">
-             <Label htmlFor="escola">Escola</Label>
-             <Input id="escola" name="escola" defaultValue={aluno.perfilAluno?.escola || ''} />
-           </div>
-           <div className="space-y-2">
-             <Label htmlFor="serieEscolar">Série / Ano</Label>
-             <Input id="serieEscolar" name="serieEscolar" defaultValue={aluno.perfilAluno?.serieEscolar || ''} />
-           </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label>Escola</Label>
+            <Select name="escolaId" defaultValue={aluno.perfilAluno?.escolaId || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione a Escola" /></SelectTrigger>
+              <SelectContent>
+                {escolas.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Série Escolar</Label>
+            <Select name="serieEscolar" defaultValue={aluno.perfilAluno?.serieEscolar || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione a Série" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="QUARTO_ANO">4º Ano</SelectItem>
+                <SelectItem value="QUINTO_ANO">5º Ano</SelectItem>
+                <SelectItem value="SEXTO_ANO">6º Ano</SelectItem>
+                <SelectItem value="SETIMO_ANO">7º Ano</SelectItem>
+                <SelectItem value="OITAVO_ANO">8º Ano</SelectItem>
+                <SelectItem value="NONO_ANO">9º Ano</SelectItem>
+                <SelectItem value="PRIMEIRO_ANO_MEDIO">1º Ano Médio</SelectItem>
+                <SelectItem value="SEGUNDO_ANO_MEDIO">2º Ano Médio</SelectItem>
+                <SelectItem value="TERCEIRO_ANO_MEDIO">3º Ano Médio</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Turno</Label>
+            <Select name="turno" defaultValue={aluno.perfilAluno?.turno || undefined}>
+              <SelectTrigger><SelectValue placeholder="Selecione o Turno" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MATUTINO">Matutino</SelectItem>
+                <SelectItem value="VESPERTINO">Vespertino</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="turmaEscolar">Turma (Ex: A, B)</Label>
+            <Input id="turmaEscolar" name="turmaEscolar" defaultValue={aluno.perfilAluno?.turmaEscolar || ''} placeholder="Ex: A" />
+          </div>
         </div>
 
         <div className="space-y-2 border border-border p-4 rounded-md bg-muted/10 transition-colors hover:bg-muted/20">
-           <div className="flex items-center space-x-2 mb-2">
-              <Checkbox 
-                id="fazCursoExterno" 
-                name="fazCursoExterno"
-                defaultChecked={aluno.perfilAluno?.fazCursoExterno}
-                onCheckedChange={(checked) => setTemCurso(checked === true)} 
-              />
-              <Label htmlFor="fazCursoExterno" className="font-medium cursor-pointer">Faz algum curso externo?</Label>
-           </div>
-           
-           {temCurso && (
-             <Input 
-               name="cursoExternoDescricao" 
-               defaultValue={aluno.perfilAluno?.cursoExternoDescricao || ''} 
-               placeholder="Descreva qual curso e onde..." 
-               className="mt-2 bg-background" 
-             />
-           )}
+          <div className="flex items-center space-x-2 mb-2">
+            <Checkbox
+              id="fazCursoExterno"
+              name="fazCursoExterno"
+              defaultChecked={aluno.perfilAluno?.fazCursoExterno}
+              onCheckedChange={(checked) => setTemCurso(checked === true)}
+            />
+            <Label htmlFor="fazCursoExterno" className="font-medium cursor-pointer">Faz algum curso externo?</Label>
+          </div>
+
+          {temCurso && (
+            <Input
+              name="cursoExternoDescricao"
+              defaultValue={aluno.perfilAluno?.cursoExternoDescricao || ''}
+              placeholder="Descreva qual curso e onde..."
+              className="mt-2 bg-background"
+            />
+          )}
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-           <Checkbox 
-             id="termoResponsabilidadeAssinado" 
-             name="termoResponsabilidadeAssinado" 
-             defaultChecked={aluno.perfilAluno?.termoResponsabilidadeAssinado}
-           />
-           <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
+          <Checkbox
+            id="termoResponsabilidadeAssinado"
+            name="termoResponsabilidadeAssinado"
+            defaultChecked={aluno.perfilAluno?.termoResponsabilidadeAssinado}
+          />
+          <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
+        </div>
+      </section>
+
+      <section className="space-y-4 pb-4">
+        <h3 className="text-lg font-bold border-b border-border pb-2 text-foreground/80 flex items-center gap-2">
+          <span className="bg-primary/10 text-primary w-6 h-6 flex items-center justify-center rounded-full text-xs">5</span>
+          Dados do Responsável
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="responsavelNome">Nome do Responsável</Label>
+            <Input id="responsavelNome" name="responsavelNome" defaultValue={aluno.perfilAluno?.responsavelNome || ''} placeholder="Nome completo do responsável" required />
+            <ErrorMsg error={state?.errors?.responsavelNome} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="responsavelCpf">CPF do Responsável</Label>
+            <Input id="responsavelCpf" name="responsavelCpf" defaultValue={aluno.perfilAluno?.responsavelCpf || ''} placeholder="000.000.000-00" required maxLength={14} />
+            <ErrorMsg error={state?.errors?.responsavelCpf} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Grau de Parentesco</Label>
+            <Select name="responsavelParentesco" defaultValue={aluno.perfilAluno?.responsavelParentesco || 'MAE'}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MAE">Mãe</SelectItem>
+                <SelectItem value="PAI">Pai</SelectItem>
+                <SelectItem value="AVO">Avô/Avó</SelectItem>
+                <SelectItem value="TIO">Tio(a)</SelectItem>
+                <SelectItem value="IRMAO">Irmão(ã)</SelectItem>
+                <SelectItem value="OUTRO">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="responsavelTelefone">Telefone</Label>
+            <Input id="responsavelTelefone" name="responsavelTelefone" defaultValue={aluno.perfilAluno?.responsavelTelefone || ''} placeholder="(00) 00000-0000" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="responsavelEmail">Email (Opcional)</Label>
+            <Input id="responsavelEmail" name="responsavelEmail" type="email" defaultValue={aluno.perfilAluno?.responsavelEmail || ''} placeholder="email@exemplo.com" />
+          </div>
         </div>
       </section>
 
       {state?.message && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20">
-          {state.message}
+        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20 flex items-center">
+          <span className="mr-2">⚠️</span> {state.message}
         </div>
       )}
 

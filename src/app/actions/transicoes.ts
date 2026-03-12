@@ -334,3 +334,61 @@ export async function encerrarCicloPromocao(cicloId: string) {
         return { success: false, message: 'Erro ao encerrar o ciclo.' };
     }
 }
+
+function getCategoriaVaga(nomeCargo: string) {
+    const nome = nomeCargo.toUpperCase();
+    
+    // Oficiais
+    if (nome.includes('CORONEL') || nome.includes('MAJOR')) return 'superiores';
+    if (nome.includes('CAPITÃO') || nome.includes('CAPITAO')) return 'intermediarios';
+    if (nome.includes('TENENTE') && !nome.includes('SUBTENENTE')) return 'subalternos';
+    
+    // Praças
+    if (nome.includes('SUBTENENTE') || nome.includes('ASPIRANTE')) return 'subtenentes';
+    if (nome.includes('SARGENTO')) return 'sargentos';
+    if (nome.includes('CABO')) return 'cabos';
+    if (nome.includes('SOLDADO')) return 'soldados';
+    
+    return null;
+}
+
+export async function calcularVagasDisponiveis() {
+    const limites = await prisma.quadroVagasAntiguidade.findUnique({
+        where: { id: "singleton" }
+    });
+
+    if (!limites) {
+        throw new Error("Quadro de Vagas não foi configurado no sistema.");
+    }
+
+    const alunosAtivos = await prisma.perfilAluno.findMany({
+        where: { 
+            usuario: { status: 'ATIVO' }, 
+            cargoId: { not: null } 
+        },
+        include: { cargo: true }
+    });
+
+    const ocupadas = { superiores: 0, intermediarios: 0, subalternos: 0, subtenentes: 0, sargentos: 0, cabos: 0, soldados: 0 };
+
+    alunosAtivos.forEach(aluno => {
+        if (aluno.cargo) {
+            const categoria = getCategoriaVaga(aluno.cargo.nome);
+            if (categoria) {
+                ocupadas[categoria]++;
+            }
+        }
+    });
+
+    return {
+        superiores: Math.max(0, limites.superiores - ocupadas.superiores),
+        intermediarios: Math.max(0, limites.intermediarios - ocupadas.intermediarios),
+        subalternos: Math.max(0, limites.subalternos - ocupadas.subalternos),
+        subtenentes: Math.max(0, limites.subtenentes - ocupadas.subtenentes),
+        sargentos: Math.max(0, limites.sargentos - ocupadas.sargentos),
+        cabos: Math.max(0, limites.cabos - ocupadas.cabos),
+        soldados: Math.max(0, limites.soldados - ocupadas.soldados),
+        
+        _debug: { limites, ocupadas } 
+    };
+}
