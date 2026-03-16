@@ -74,6 +74,6 @@ export async function alternarFrequencia(alunoId: string, dataString: string, ti
     create: { alunoId, data, tipo, status: novoStatus }
   })
 
-  revalidatePath('/admin/frequencia')
+  revalidatePath('/admin/frequencia/')
   return { success: true, novoStatus }
 }

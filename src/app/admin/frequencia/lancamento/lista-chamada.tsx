@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { PerfilAluno, StatusFrequencia } from '@prisma/client'
 import { toast } from 'sonner'
-import { CalendarIcon, CheckCheck, Save, Search, MessageSquare } from 'lucide-react'
+import { CalendarIcon, CheckCheck, Save, Search, MessageSquare, Eraser } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -25,7 +25,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
   const dataUrl = searchParams.get('data')
   const tipoUrl = searchParams.get('tipo')
 
-const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
+  const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
 
   const [data, setData] = useState<Date>(dataInicial)
   const [tipo, setTipo] = useState<string>(tipoUrl || 'GERAL')
@@ -60,8 +60,16 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
     carregar()
   }, [data, tipo])
 
-  const toggleStatus = (alunoId: string, status: StatusFrequencia) => {
-    setChamada(prev => ({ ...prev, [alunoId]: status }))
+  const toggleStatus = (alunoId: string, status: StatusFrequencia | null) => {
+    setChamada(prev => {
+      const next = { ...prev }
+      if (status === null) {
+        delete next[alunoId]
+      } else {
+        next[alunoId] = status
+      }
+      return next
+    })
   }
 
   const handleObservacao = (alunoId: string, texto: string) => {
@@ -84,16 +92,17 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
       observacao: observacoes[alunoId] || null
     }))
 
-    if (registros.length === 0) {
-      toast.warning('Marque a presença de pelo menos um aluno.')
-      setLoading(false)
-      return
-    }
+
+
+
 
     const res = await salvarListaFrequencia(data, tipo, registros)
     if (res.success) {
+      const mesUrl = searchParams.get('mes') || (data.getMonth() + 1).toString()
+      const anoUrl = searchParams.get('ano') || data.getFullYear().toString()
+      const semanaUrl = searchParams.get('semana') || 'TODAS'
       toast.success(res.message)
-      router.push('/admin/frequencia')
+      router.push(`/admin/frequencia?mes=${mesUrl}&ano=${anoUrl}&tipo=${tipo}&semana=${semanaUrl}`)
     } else toast.error(res.message)
 
     setLoading(false)
@@ -113,7 +122,7 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
   return (
     <div className="space-y-6">
       <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row gap-6 justify-between md:items-center">
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4  w-full md:w-auto">
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Data
@@ -123,16 +132,15 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-full sm:w-60 justify-start text-left font-normal',
+                    ' sm:w-60 justify-start text-left w-auto font-normal',
                     !data && 'text-muted-foreground'
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {data.toLocaleDateString('pt-BR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                  {data.toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
                   })}
                 </Button>
               </PopoverTrigger>
@@ -228,12 +236,12 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
                 !status
                   ? 'bg-muted/30 border-border'
                   : status === 'FALTA'
-                  ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
-                  : status === 'JUSTIFICADA'
-                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
-                  : status === 'PRESENTE'
-                  ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50'
-                  : 'bg-card'
+                    ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
+                    : status === 'JUSTIFICADA'
+                      ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
+                      : status === 'PRESENTE'
+                        ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50'
+                        : 'bg-card'
               )}
             >
               <div className="flex-1 min-w-0">
@@ -246,6 +254,23 @@ const dataInicial = dataUrl ? new Date(dataUrl + 'T12:00:00') : new Date()
               </div>
 
               <div className="flex shrink-0 gap-1 bg-background p-1 rounded-md border shadow-sm">
+
+                <button
+                  onClick={() => toggleStatus(aluno.id, null)}
+                  title="Limpar registro de chamada"
+                  disabled={!status}
+                  className={cn(
+                    'h-8 w-8 rounded flex items-center justify-center transition-colors',
+                    status
+                      ? 'text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                      : 'text-gray-300 dark:text-gray-700 cursor-not-allowed'
+                  )}
+                >
+                  <Eraser className="w-4 h-4" />
+                </button>
+
+                <div className="w-px bg-border mx-1" />
+
                 <button
                   onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
                   className={cn(
