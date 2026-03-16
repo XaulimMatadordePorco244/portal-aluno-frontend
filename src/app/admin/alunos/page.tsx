@@ -77,15 +77,12 @@ export default async function AdminAlunosPage(props: PageProps) {
     };
   }
 
-  const whereClause: Prisma.UsuarioWhereInput = {
-    role: 'ALUNO',
+const whereClause: Prisma.UsuarioWhereInput = {
     status: statusFilter === 'TODOS' ? undefined : (statusFilter as StatusUsuario),
-    perfilAluno: {
-      ...(turmaFilter !== 'todas' ? { turmaId: turmaFilter } : {}),
-    },
+    
+    perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
     ...anoFilterClause 
   };
-
   const alunos = await prisma.usuario.findMany({
     where: whereClause,
     include: {
@@ -99,11 +96,9 @@ export default async function AdminAlunosPage(props: PageProps) {
     orderBy: orderByClause,
   });
 
- const baseStatsWhere: Prisma.UsuarioWhereInput = {
-    role: 'ALUNO',
-    perfilAluno: {
-      ...(turmaFilter !== 'todas' ? { turmaId: turmaFilter } : {}),
-    },
+const baseStatsWhere: Prisma.UsuarioWhereInput = {
+    
+    perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
     ...anoFilterClause 
   };
 

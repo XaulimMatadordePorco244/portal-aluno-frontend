@@ -437,3 +437,63 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
     return { success: false, message: "Erro interno ao tentar reativar o aluno." };
   }
 }
+
+export type TipoPromocao = 'PROMOVER_MANTER' | 'PROMOVER_ENCERRAR' | 'REVERTER';
+
+export async function gerirPrivilegiosAluno(usuarioId: string, acao: TipoPromocao) {
+  const user = await getCurrentUserWithRelations();
+  if (!user || user.role !== 'ADMIN') {
+    return { success: false, message: "Acesso negado." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      
+      if (acao === 'PROMOVER_MANTER') {
+        await tx.usuario.update({
+          where: { id: usuarioId },
+          data: { role: Role.ADMIN }
+        });
+      } 
+      
+      else if (acao === 'PROMOVER_ENCERRAR') {
+        await tx.usuario.update({
+          where: { id: usuarioId },
+          data: { role: Role.ADMIN }
+        });
+
+        const perfil = await tx.perfilAluno.findUnique({
+          where: { usuarioId: usuarioId }
+        });
+
+        if (perfil) {
+          await tx.cargoHistory.updateMany({
+            where: { 
+              alunoId: perfil.id,
+              status: CargoHistoryStatus.ATIVO
+            },
+            data: {
+              dataFim: new Date(),
+              motivo: "Promovido a Admin / Jornada Encerrada",
+              status: CargoHistoryStatus.FECHADO 
+            }
+          });
+        }
+      } 
+      
+      else if (acao === 'REVERTER') {
+        await tx.usuario.update({
+          where: { id: usuarioId },
+          data: { role: Role.ALUNO }
+        });
+      }
+    });
+
+    revalidatePath("/admin/alunos");
+    return { success: true, message: "Privilégios atualizados com sucesso." };
+
+  } catch (error) {
+    console.error("Erro ao gerir privilégios:", error);
+    return { success: false, message: "Ocorreu um erro ao alterar os privilégios." };
+  }
+}

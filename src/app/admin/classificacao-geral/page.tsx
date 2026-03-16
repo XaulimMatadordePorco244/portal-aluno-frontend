@@ -14,10 +14,11 @@ const getRankingCacheado = unstable_cache(
   async () => {
     const alunos = await prisma.perfilAluno.findMany({
       where: {
-        usuario: { 
-          role: 'ALUNO',
+        usuario: {
           status: 'ATIVO'
+
         },
+        status: 'ATIVO',
         cargoId: { not: null }
       },
       include: {
@@ -35,8 +36,8 @@ const getRankingCacheado = unstable_cache(
       let somaTotalAnotacoes = 0;
 
       const rawInicial = aluno.conceitoInicial;
-      const conceitoInicial = rawInicial 
-        ? parseFloat(String(rawInicial).replace(',', '.')) 
+      const conceitoInicial = rawInicial
+        ? parseFloat(String(rawInicial).replace(',', '.'))
         : 10.0;
 
       for (const anotacao of aluno.anotacoesRecebidas) {
@@ -48,7 +49,7 @@ const getRankingCacheado = unstable_cache(
         else if (pontos === 0.5) foPos += pontos;
         else if (pontos === -0.3) foNeg += pontos;
       }
-      
+
       return {
         rawAluno: aluno,
         dadosCalculados: {
@@ -87,18 +88,18 @@ const getRankingCacheado = unstable_cache(
       };
     });
 
-    return finalData; 
+    return finalData;
   },
-  ["ranking-classificacao-geral-key"], 
-  { 
-    tags: ["classificacao_geral"], 
-    revalidate: 86400 
-  } 
+  ["ranking-classificacao-geral-key"],
+  {
+    tags: ["classificacao_geral"],
+    revalidate: 86400
+  }
 );
 
 export default async function ClassificacaoGeralPage() {
   const finalData = await getRankingCacheado();
-  
+
   const dataAtualizacao = new Date().toLocaleDateString('pt-BR');
 
   return (
@@ -116,7 +117,7 @@ export default async function ClassificacaoGeralPage() {
           <ExtratoButton dados={finalData} dataAtualizacao={dataAtualizacao} />
         </div>
       </div>
-      
+
       <ClassificacaoTable data={finalData} />
     </div>
   );

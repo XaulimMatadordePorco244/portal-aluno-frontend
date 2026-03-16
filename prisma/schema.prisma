@@ -181,6 +181,7 @@ model PerfilAluno {
   usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
   candidatoCiclos               CandidatoCiclo[]
+  status   StatusPerfilAluno @default(ATIVO)
 
   @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
   @@index([cargoId])
@@ -1000,4 +1001,9 @@ enum SerieEscolar {
 enum TipoInteracaoMaterial {
   VISUALIZACAO
   DOWNLOAD
+}
+
+enum StatusPerfilAluno {
+  ATIVO        
+  INATIVO       
 }

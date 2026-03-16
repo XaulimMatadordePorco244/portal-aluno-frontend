@@ -49,13 +49,12 @@ export default async function CIListPage(props: Props) {
         <CIFilters />
       </div>
       
-      <CIListTable data={data} />
-      
-      {totalPages > 1 && (
-        <div className="flex justify-center pt-4">
-           <span className="text-sm text-muted-foreground">Página {currentPage} de {totalPages}</span>
-        </div>
-      )}
+      <CIListTable 
+        data={data} 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={total}
+      />
     </div>
   )
 }
