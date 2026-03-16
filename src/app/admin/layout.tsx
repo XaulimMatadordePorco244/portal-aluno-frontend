@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AdminHeader } from "@/components/AdminHeader";
 import { Metadata } from "next";
 import { Container } from "@/components/layout/Container";
+import { Footer } from "@/components/footer";
 
 
 export const metadata: Metadata = {
@@ -22,11 +23,11 @@ export default async function AdminLayout({
   const user = await getCurrentUserWithRelations();
 
   if (!user) {
-    redirect('/login'); 
+    redirect('/login');
   }
 
   if (!canAccessAdminArea(user)) {
-    redirect('/dashboard'); 
+    redirect('/dashboard');
   }
 
   const displayName = user.role === 'ADMIN' ? user.nome : (user.nome);
@@ -41,6 +42,7 @@ export default async function AdminLayout({
             {children}
           </Container>
         </main>
+              <Footer />
       </div>
     </div>
   );

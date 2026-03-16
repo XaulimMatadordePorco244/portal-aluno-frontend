@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import React from "react";
 import { Container } from "@/components/layout/Container";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "Portal do Aluno - Guarda Mirim",
@@ -58,6 +59,7 @@ export default async function MainLayout({
           {children}
         </Container>
       </main>
+      <Footer />
     </div>
   );
 }
