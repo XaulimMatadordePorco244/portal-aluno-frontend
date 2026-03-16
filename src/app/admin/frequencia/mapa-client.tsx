@@ -1,7 +1,7 @@
 'use client'
 
 import { alternarFrequencia } from './actions'
-import { Check, X, ShieldAlert, Edit2 } from 'lucide-react'
+import { Check, X, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import Link from 'next/link'
