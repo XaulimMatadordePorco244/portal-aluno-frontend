@@ -16,7 +16,7 @@ function normalizarData(date: Date): Date {
   return new Date(`${anoMesDia}T12:00:00.000Z`)
 }
 
-export async function salvarListaFrequencia(dataStr: Date | string, tipo: string, registros: any[]) {
+export async function salvarListaFrequencia(dataStr: Date | string, tipo: string, registros: RegistroFrequencia[]) {
   try {
     const data = new Date(dataStr)
 
