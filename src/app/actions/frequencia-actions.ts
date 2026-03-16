@@ -16,54 +16,42 @@ function normalizarData(date: Date): Date {
   return new Date(`${anoMesDia}T12:00:00.000Z`)
 }
 
-export async function salvarListaFrequencia(
-  dataOriginal: Date,
-  tipo: string,
-  registros: RegistroFrequencia[]
-) {
-  const dataEvento = normalizarData(dataOriginal)
-  
-  const inicioDia = new Date(dataEvento)
-  inicioDia.setUTCHours(0, 0, 0, 0)
-  
-  const fimDia = new Date(dataEvento)
-  fimDia.setUTCHours(23, 59, 59, 999)
-
+export async function salvarListaFrequencia(dataStr: Date | string, tipo: string, registros: any[]) {
   try {
+    const data = new Date(dataStr)
+
+    const startOfDay = new Date(data.getFullYear(), data.getMonth(), data.getDate(), 0, 0, 0)
+    const endOfDay = new Date(data.getFullYear(), data.getMonth(), data.getDate(), 23, 59, 59)
+
     await prisma.$transaction(async (tx) => {
       await tx.frequencia.deleteMany({
         where: {
-            tipo: tipo,
-            data: {
-                gte: inicioDia,
-                lte: fimDia
-            },
-            alunoId: { in: registros.map(r => r.alunoId) }
+          tipo: tipo,
+          data: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
         }
       })
 
-      // Preparar dados para inserção em lote
-      const dadosParaInserir = registros.map(reg => ({
-        alunoId: reg.alunoId,
-        data: dataEvento, 
-        tipo: tipo,
-        status: reg.status,
-        observacao: reg.observacao
-      }))
-
-      // Usar createMany para inserir todos os registros de uma vez
-      await tx.frequencia.createMany({
-        data: dadosParaInserir
-      })
-    }, {
-      timeout: 10000 // Aumentar timeout para 10 segundos
+      if (registros.length > 0) {
+        await tx.frequencia.createMany({
+          data: registros.map(r => ({
+            alunoId: r.alunoId,
+            data: startOfDay, 
+            tipo: tipo,
+            status: r.status,
+            observacao: r.observacao || null
+          }))
+        })
+      }
     })
 
     revalidatePath('/admin/frequencia')
-    return { success: true, message: 'Frequência salva e padronizada com sucesso!' }
+    return { success: true, message: 'Chamada guardada com sucesso!' }
   } catch (error) {
-    console.error('Erro ao salvar frequência:', error)
-    return { success: false, message: 'Erro ao salvar dados.' }
+    console.error("Erro ao salvar frequência:", error)
+    return { success: false, message: 'Erro ao guardar a chamada.' }
   }
 }
 

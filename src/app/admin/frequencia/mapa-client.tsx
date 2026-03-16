@@ -56,7 +56,7 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
             </th>
 
             {datas.map(d => {
-              const [mes, dia] = d.split('-')
+              const [ano, mes, dia] = d.split('-')
               const urlEdicao = `/admin/frequencia/lancamento?data=${d}&tipo=${tipo}`
 
               return (
@@ -70,13 +70,11 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
                         href={urlEdicao}
                         className="flex flex-col items-center justify-center hover:bg-primary/10 rounded cursor-pointer py-1 transition-colors group"
                       >
-                        <span className="font-bold text-foreground">{dia}</span>
-                        <span className="text-[10px]">{mes}</span>
-                        <Edit2 className="w-3 h-3 mt-1 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                        <span className="font-bold text-foreground">{dia}/{mes}/{ano}</span>
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Editar chamada do dia {dia}/{mes}</p>
+                      <p>Editar chamada do dia {dia}/{mes}/{ano}</p>
                     </TooltipContent>
                   </Tooltip>
                 </th>
@@ -89,7 +87,7 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
           {alunos.map(aluno => (
             <tr key={aluno.id} className="hover:bg-muted/5 group border-b last:border-0">
               <td className="p-3 font-medium border-r sticky left-0 bg-background group-hover:bg-muted/5 z-20 whitespace-nowrap shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
-                                 {aluno.graduacao} GM {aluno.nomeDeGuerra}
+                {aluno.graduacao} GM {aluno.nomeDeGuerra}
               </td>
 
               {datas.map(d => {
@@ -104,11 +102,11 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
                       className={cn(
                         'w-8 h-8 mx-auto rounded flex items-center justify-center transition-all',
                         status === 'PRESENTE' &&
-                          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                         status === 'FALTA' &&
-                          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                         status === 'JUSTIFICADA' &&
-                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                         !status && 'text-muted-foreground/10 hover:text-muted-foreground'
                       )}
                     >
