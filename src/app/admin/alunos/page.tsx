@@ -15,7 +15,8 @@ import { Plus, Users, UserCheck, UserMinus, ShieldAlert, ArrowDownAZ, Hash, Meda
 import { AlunoActions } from "./aluno-actions";
 import { Badge } from "@/components/ui/badge";
 import { AlunoFiltros } from "./aluno-filtros";
-import { FotoHover } from "@/components/ui/foto-hover"; 
+import { FotoHover } from "@/components/ui/foto-hover";
+import { NomeFormatado } from '@/components/ui/nome-formatado'
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -44,7 +45,7 @@ export default async function AdminAlunosPage(props: PageProps) {
   const anosDisponiveis = Array.from({ length: anoAtual - 2015 + 1 }, (_, i) => anoAtual - i);
 
   let anoFilterClause: Prisma.UsuarioWhereInput = {};
-  
+
   if (anoFilter !== 'todos') {
     const anoNum = parseInt(anoFilter);
     anoFilterClause = {
@@ -77,11 +78,11 @@ export default async function AdminAlunosPage(props: PageProps) {
     };
   }
 
-const whereClause: Prisma.UsuarioWhereInput = {
+  const whereClause: Prisma.UsuarioWhereInput = {
     status: statusFilter === 'TODOS' ? undefined : (statusFilter as StatusUsuario),
-    
+
     perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
-    ...anoFilterClause 
+    ...anoFilterClause
   };
   const alunos = await prisma.usuario.findMany({
     where: whereClause,
@@ -96,10 +97,10 @@ const whereClause: Prisma.UsuarioWhereInput = {
     orderBy: orderByClause,
   });
 
-const baseStatsWhere: Prisma.UsuarioWhereInput = {
-    
+  const baseStatsWhere: Prisma.UsuarioWhereInput = {
+
     perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
-    ...anoFilterClause 
+    ...anoFilterClause
   };
 
   const totalAlunos = await prisma.usuario.count({ where: baseStatsWhere });
@@ -205,34 +206,38 @@ const baseStatsWhere: Prisma.UsuarioWhereInput = {
                   return (
                     <TableRow key={aluno.id} className={isInativo ? 'opacity-60 bg-muted/30' : ''}>
                       <TableCell className="text-center align-middle">
-                        <FotoHover 
-                          src={aluno.fotoUrl} 
-                          alt={aluno.nome} 
+                        <FotoHover
+                          src={aluno.fotoUrl}
+                          alt={aluno.nome}
                         />
                       </TableCell>
-                      
+
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {isInativo && (
                             <span title="Inativo/Desligado">
                               <ShieldAlert className="w-4 h-4 text-destructive" />
                             </span>
-                          )}                          
-                          <Link href={`/admin/alunos/${aluno.perfilAluno?.id}`} className="hover:underline font-semibold text-primary">
-                            {aluno.nome}
+                          )}
+                          <Link
+                            href={`/admin/alunos/${aluno.perfilAluno?.id}`}
+                            className="hover:underline"
+                          >
+                            <NomeFormatado
+                              nomeCompleto={aluno.nome}
+                              nomeDeGuerra={aluno.nomeDeGuerra}
+                            />
                           </Link>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{aluno.perfilAluno?.turma?.nome || 'Sem Turma'}</Badge>
-                      </TableCell>
+                    
+                      <TableCell className="font-mono">{aluno.perfilAluno?.turma?.nome || 'Sem Turma'}</TableCell>
+
                       <TableCell className="font-mono">{aluno.perfilAluno?.numero || 'N/A'}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">{aluno.cpf}</TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center rounded-md bg-secondary/50 px-2 py-1 text-xs font-semibold uppercase ring-1 ring-inset ring-secondary">
-                          {aluno.perfilAluno?.cargo?.nome || 'Sem Cargo'}
-                        </span>
-                      </TableCell>
+                      <TableCell className="font-mono">{aluno.cpf}</TableCell>
+                      <TableCell className="font-mono">{aluno.perfilAluno?.cargo?.nome || 'Sem Cargo'}</TableCell>
+                   
+                      
                       <TableCell className="text-right">
                         <AlunoActions aluno={aluno} />
                       </TableCell>
