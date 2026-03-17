@@ -69,7 +69,14 @@ export default async function DashboardPage() {
 
   const profileId = user.perfilAluno?.id;
 
-  
+  const blocoAtivo = profileId ? await prisma.cargoHistory.findFirst({
+    where: {
+      alunoId: profileId,
+      status: "ATIVO"
+    },
+    select: { id: true }
+  }) : null;
+
   const [
     qesItems, 
     latestAnnotations, 
@@ -84,18 +91,18 @@ export default async function DashboardPage() {
       orderBy: { createdAt: 'desc' },
     }),
     
-    
     profileId ? prisma.anotacao.findMany({
-      where: { alunoId: profileId },
+      where: { 
+        alunoId: profileId,
+        blocoCargoId: blocoAtivo?.id || null
+      },
       include: { tipo: true },
       orderBy: { data: 'desc' },
       take: 3,
     }) : [],
     
-  
     getRankingSnippet(user),
     
-
     prisma.comunicacaoInterna.findMany({
       take: 3,
       orderBy: [
@@ -109,7 +116,6 @@ export default async function DashboardPage() {
       orderBy: { dataPublicacao: 'desc' }
     }),
 
-  
     profileId ? prisma.escala.findMany({
       where: {
         status: 'PUBLICADA',

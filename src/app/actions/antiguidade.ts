@@ -31,6 +31,7 @@ export async function getAlmanaque() {
         },
         usuario: {
           select: {
+            nomeDeGuerra: true,
             nome: true,
             dataNascimento: true,
             cpf: true

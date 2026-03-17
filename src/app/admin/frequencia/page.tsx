@@ -5,6 +5,7 @@ import { FrequenciaFiltros } from './filtros'
 import { Button } from '@/components/ui/Button'
 import { CheckSquare } from 'lucide-react'
 import Link from 'next/link'
+import { Download } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Controle de Frequência' }
 
@@ -49,6 +50,13 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
 
         <div className="flex flex-wrap gap-2 items-center">
           <FrequenciaFiltros />
+
+          <Button variant="outline" asChild>
+            <a href={`/api/exportar-frequencia-excel?ano=${anoSelecionado}`} download>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar {anoSelecionado}
+            </a>
+          </Button>
 
           <Button asChild>
             <Link href={`/admin/frequencia/lancamento?mes=${mesSelecionado}&ano=${anoSelecionado}&tipo=${tipoSelecionado}&semana=${semanaSelecionada}`}>

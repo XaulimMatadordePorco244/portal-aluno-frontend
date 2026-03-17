@@ -4,18 +4,18 @@ import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { criarNotificacao } from '@/actions/notificacoes';
+import { MotivoPromocao, MotivoDespromocao } from '@prisma/client';
 
 
-export type TipoTransicao = 'PROMOCAO' | 'DESPROMOCAO' | 'CURSO' | 'BRAVURA' | 'CORRECAO';
+export type TipoTransicao = 'PROMOCAO' | 'DESPROMOCAO' ;
 
 interface TransicaoInput {
     alunoIds: string[];
     tipo: TipoTransicao;
     cargoDestinoId?: string; 
-    motivo: string;
-    modalidadePromocao?: string;
+    motivo: MotivoPromocao | MotivoDespromocao; 
+    descricao?: string;
 }
-
 
 export async function processarTransicaoEmMassa(data: TransicaoInput) {
     const admin = await getCurrentUserWithRelations();
@@ -42,14 +42,19 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
             let novoCargoId = null;
             const conceitoNovo = 7.0;
 
-            if (data.tipo === 'CURSO' || data.tipo === 'BRAVURA' || data.tipo === 'CORRECAO') {
-                if (!data.cargoDestinoId) throw new Error(`Cargo de destino obrigatório para ${data.tipo}`);
+            const requiresCargoDestino = 
+                data.motivo === 'TERMINO_CURSO' || 
+                data.motivo === 'BRAVURA' || 
+                data.motivo === 'CORRECAO_SISTEMA';
+
+            if (requiresCargoDestino) {
+                if (!data.cargoDestinoId) throw new Error(`Cargo de destino obrigatório para a modalidade ${data.motivo}`);
                 novoCargoId = data.cargoDestinoId;
 
             } else if (data.tipo === 'PROMOCAO') {
                 if (!aluno.cargo) throw new Error(`Aluno ${aluno.usuario.nome} não tem cargo inicial para ser promovido.`);
                 const currentIndex = todosCargos.findIndex(c => c.id === aluno.cargoId);
-                const targetIndex = currentIndex - 1;
+                const targetIndex = currentIndex - 1; 
 
                 if (targetIndex < 0) throw new Error(`Aluno ${aluno.usuario.nome} já está no topo!`);
                 novoCargoId = todosCargos[targetIndex].id;
@@ -57,13 +62,14 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
             } else if (data.tipo === 'DESPROMOCAO') {
                 if (!aluno.cargo) throw new Error(`Aluno ${aluno.usuario.nome} não tem cargo para ser despromovido.`);
                 const currentIndex = todosCargos.findIndex(c => c.id === aluno.cargoId);
-                const targetIndex = currentIndex + 1;
+                const targetIndex = currentIndex + 1; 
 
                 if (targetIndex >= todosCargos.length) throw new Error(`Aluno ${aluno.usuario.nome} já está no cargo mais baixo!`);
                 novoCargoId = todosCargos[targetIndex].id;
             }
 
             const novoCargoObj = todosCargos.find(c => c.id === novoCargoId);
+            const motivoFormatado = data.descricao ? `${data.motivo}: ${data.descricao}` : data.motivo;
 
             operations.push(prisma.cargoHistory.updateMany({
                 where: { alunoId: aluno.id, status: 'ATIVO' },
@@ -79,12 +85,12 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
                     conceitoAtual: conceitoNovo,
                     dataInicio: new Date(),
                     status: 'ATIVO',
-                    motivo: data.motivo,
+                    motivo: motivoFormatado,
                     logs: {
                         create: {
                             adminId: admin.id,
-                            tipo: data.tipo === 'PROMOCAO' ? 'PROMOCAO' : data.tipo === 'DESPROMOCAO' ? 'DESPROMOCAO' : 'REVERSAO',
-                            motivo: `Transição em massa: ${data.tipo}. ${data.motivo}`
+                            tipo: data.tipo,
+                            motivo: `Ação Manual: ${data.tipo} por ${data.motivo}. ${data.descricao || ''}`
                         }
                     }
                 }
@@ -98,7 +104,7 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
                     foraDeData: false,
                     ...(data.tipo === 'PROMOCAO' && {
                         dataUltimaPromocao: new Date(),
-                        modalidadeUltimaPromocao: data.modalidadePromocao || 'ANTIGUIDADE',
+                        modalidadeUltimaPromocao: data.motivo, 
                     })
                 }
             }));

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
@@ -80,7 +80,7 @@ export default async function NotasEscolaresPage({
       cargo: aluno.cargo,
       boletim,
       id: aluno.id,
-      nomeDeGuerra: user.nomeDeGuerra
+      nomeDeGuerra: aluno.usuario.nomeDeGuerra
     };
   });
 
@@ -144,7 +144,7 @@ export default async function NotasEscolaresPage({
                       <span className="font-medium text-sm flex items-center gap-1.5">
                         {nomeDeGuerra ? `${cargo?.abreviacao || 'AL'} GM ${nomeDeGuerra}` : usuario.nome}
                       </span>
-                      <span className="text-xs text-muted-foreground truncate max-w-[150px]">{usuario.nome}</span>
+                      <span className="text-xs text-muted-foreground truncate ">{usuario.nome}</span>
                     </div>
                   </div>
                 </TableCell>
