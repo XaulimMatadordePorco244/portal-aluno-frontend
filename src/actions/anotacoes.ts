@@ -142,11 +142,7 @@ export async function createAnotacao(prevState: FormState, formData: FormData): 
       const blocoCargo = await prisma.cargoHistory.findFirst({
         where: {
           alunoId: alunoId,
-          dataInicio: { lte: data },
-          OR: [
-            { dataFim: { gte: data } },
-            { dataFim: null }
-          ]
+          status: "ATIVO" 
         },
         select: { id: true }
       });
@@ -309,7 +305,6 @@ export async function deleteAnotacao(anotacaoId: string, alunoId?: string) {
     await prisma.anotacao.delete({
       where: { id: anotacaoId }
     });
-
 
     if (targetAlunoId) {
       const aluno = await prisma.perfilAluno.findUnique({
