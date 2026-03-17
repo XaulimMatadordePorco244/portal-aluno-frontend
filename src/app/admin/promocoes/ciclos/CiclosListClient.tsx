@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    criarCicloPromocao, 
-    gerarQuadroDeAcesso, 
-    apagarCicloPromocao, 
-    encerrarCicloPromocao 
-} from '@/app/actions/transicoes'; 
+import {
+    criarCicloPromocao,
+    gerarQuadroDeAcesso,
+    apagarCicloPromocao,
+    encerrarCicloPromocao
+} from '@/app/actions/transicoes';
 
 export interface CicloListagem {
     id: string;
@@ -15,7 +15,7 @@ export interface CicloListagem {
     dataInicio?: Date | string;
     dataFim?: Date | string | null;
     status: string;
-    _count: {        
+    _count: {
         candidatos: number;
     };
 }
@@ -30,7 +30,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
 
         setIsCreating(true);
         const result = await criarCicloPromocao(nome);
-        
+
         if (result.success) {
             router.push(`/admin/promocoes/${result.cicloId}`);
         } else {
@@ -45,7 +45,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
 
         setLoadingId(cicloId);
         const result = await gerarQuadroDeAcesso(cicloId);
-        
+
         if (result.success) {
             router.push(`/admin/promocoes/${cicloId}`);
         } else {
@@ -108,23 +108,23 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
 
                     return (
                         <div key={ciclo.id} className="bg-card text-card-foreground border border-border rounded-xl shadow-sm p-6 flex flex-col justify-between transition-colors relative group">
-                            
+
                             <div className="absolute top-4 right-4 flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {!isFechado && (
-                                    <button 
+                                    <button
                                         onClick={() => handleEncerrar(ciclo.id)}
                                         title="Encerrar Ciclo"
                                         className="p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                                     </button>
                                 )}
-                                <button 
+                                <button
                                     onClick={() => handleApagar(ciclo.id)}
                                     title="Apagar Ciclo"
                                     className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                                 </button>
                             </div>
 
@@ -132,18 +132,17 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
                                 <div className="flex justify-between items-start mb-4 pr-16">
                                     <h2 className="text-xl font-bold line-clamp-2">{ciclo.nome}</h2>
                                 </div>
-                                
-                                <span className={`inline-flex px-2 py-1 mb-4 text-xs font-bold rounded-full ${
-                                    isFechado 
-                                        ? 'bg-destructive/10 text-destructive' 
+
+                                <span className={`inline-flex px-2 py-1 mb-4 text-xs font-bold rounded-full ${isFechado
+                                        ? 'bg-destructive/10 text-destructive'
                                         : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                }`}>
+                                    }`}>
                                     {isFechado ? 'FECHADO' : 'ABERTO'}
                                 </span>
-                                
+
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    {temCandidatos 
-                                        ? `${ciclo._count.candidatos} alunos no quadro de aptos.` 
+                                    {temCandidatos
+                                        ? `${ciclo._count.candidatos} alunos no quadro de aptos.`
                                         : 'Quadro de alunos aptos ainda não gerado.'}
                                 </p>
                             </div>
@@ -173,3 +172,4 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
         </div>
     );
 }
+

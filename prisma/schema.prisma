@@ -1007,3 +1007,18 @@ enum StatusPerfilAluno {
   ATIVO        
   INATIVO       
 }
+
+enum MotivoPromocao {
+  ANTIGUIDADE
+  BRAVURA
+  TERMINO_CURSO
+  MERITO_ESCOLAR
+  MERITO_INTELECTUAL
+}
+
+enum MotivoDespromocao {
+  INDISCIPLINA
+  INSUBORDINACAO
+  REPROVACAO_ESCOLAR
+  CORRECAO_SISTEMA
+}
