@@ -9,14 +9,12 @@ export const metadata: Metadata = {
   title: "Classificação Geral | Admin",
 };
 
-
 const getRankingCacheado = unstable_cache(
   async () => {
     const alunos = await prisma.perfilAluno.findMany({
       where: {
         usuario: {
           status: 'ATIVO'
-
         },
         status: 'ATIVO',
         cargoId: { not: null }
@@ -24,7 +22,13 @@ const getRankingCacheado = unstable_cache(
       include: {
         usuario: { select: { nome: true, nomeDeGuerra: true } },
         cargo: true,
-        anotacoesRecebidas: { select: { pontos: true } }
+        historicoCargos: {
+          where: { status: 'ATIVO' },
+          select: {
+            conceitoInicial: true,
+            anotacoes: { select: { pontos: true } }
+          }
+        }
       }
     });
 
@@ -35,12 +39,15 @@ const getRankingCacheado = unstable_cache(
       let foNeg = 0;
       let somaTotalAnotacoes = 0;
 
-      const rawInicial = aluno.conceitoInicial;
+      const blocoAtivo = aluno.historicoCargos[0];
+      const anotacoesValidas = blocoAtivo?.anotacoes || [];
+
+      const rawInicial = blocoAtivo?.conceitoInicial ?? aluno.conceitoInicial;
       const conceitoInicial = rawInicial
         ? parseFloat(String(rawInicial).replace(',', '.'))
         : 10.0;
 
-      for (const anotacao of aluno.anotacoesRecebidas) {
+      for (const anotacao of anotacoesValidas) {
         const pontos = Number(anotacao.pontos);
         somaTotalAnotacoes += pontos;
 

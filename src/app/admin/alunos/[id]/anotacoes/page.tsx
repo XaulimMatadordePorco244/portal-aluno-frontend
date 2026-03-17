@@ -28,8 +28,19 @@ export default async function AdminStudentDetailsPage({ params }: PageProps) {
 
   const conceitoAtual = await recalcularConceitoAluno(alunoId);
 
+  const blocoAtivo = await prisma.cargoHistory.findFirst({
+    where: {
+      alunoId: alunoId,
+      status: "ATIVO"
+    },
+    select: { id: true }
+  });
+
   const anotacoes = await prisma.anotacao.findMany({
-    where: { alunoId: alunoId },
+    where: { 
+      alunoId: alunoId,
+      blocoCargoId: blocoAtivo?.id || null 
+    },
     include: {
       tipo: true,
       autor: {
