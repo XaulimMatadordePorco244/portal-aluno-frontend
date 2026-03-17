@@ -24,8 +24,19 @@ async function getAlunoData() {
 
   const novoConceito = await recalcularConceitoAluno(perfilId);
 
+  const blocoAtivo = await prisma.cargoHistory.findFirst({
+    where: {
+      alunoId: perfilId,
+      status: "ATIVO"
+    },
+    select: { id: true }
+  });
+
   const anotacoes = await prisma.anotacao.findMany({
-    where: { alunoId: perfilId },
+    where: { 
+      alunoId: perfilId,
+      blocoCargoId: blocoAtivo?.id || null 
+    },
     include: {
       tipo: true,
       autor: {

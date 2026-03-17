@@ -12,6 +12,17 @@ export interface AlunoSimples {
     cargo: { id: string; nome: string; precedencia?: number; categoria?: string }; // Adicionado categoria
 }
 
+type MotivoTransicaoEnum = 
+  | 'ANTIGUIDADE' 
+  | 'BRAVURA' 
+  | 'TERMINO_CURSO' 
+  | 'MERITO_ESCOLAR' 
+  | 'MERITO_INTELECTUAL'
+  | 'INDISCIPLINA' 
+  | 'INSUBORDINACAO' 
+  | 'REPROVACAO_ESCOLAR' 
+  | 'CORRECAO_SISTEMA';
+
 const motivosPromocao = [
     { value: 'ANTIGUIDADE', label: 'Antiguidade' },
     { value: 'BRAVURA', label: 'Ato de Bravura' },
@@ -135,7 +146,7 @@ export default function AcaoManualClient({ alunos }: { alunos: AlunoSimples[] })
             alunoIds: alunosSelecionadosIds,
             tipo: tipoParaAction,
             cargoDestinoId: cargoDestinoFinal?.id, 
-            motivo: motivo as any, 
+            motivo: motivo as MotivoTransicaoEnum, 
             descricao: descricao 
         };
 

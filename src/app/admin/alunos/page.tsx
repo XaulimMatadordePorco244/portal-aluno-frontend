@@ -13,7 +13,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users, UserCheck, UserMinus, ShieldAlert, ArrowDownAZ, Hash, Medal } from "lucide-react";
 import { AlunoActions } from "./aluno-actions";
-import { Badge } from "@/components/ui/badge";
 import { AlunoFiltros } from "./aluno-filtros";
 import { FotoHover } from "@/components/ui/foto-hover";
 import { NomeFormatado } from '@/components/ui/nome-formatado'
