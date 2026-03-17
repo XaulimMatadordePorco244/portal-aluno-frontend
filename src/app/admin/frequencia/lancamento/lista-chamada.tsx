@@ -83,6 +83,12 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
     toast.success('Todos marcados como presente!')
   }
 
+  const limparTudo = () => {
+    setChamada({})
+    setObservacoes({})
+    toast.success('Todos os registros foram limpos da tela!')
+  }
+
   const salvar = async () => {
     setLoading(true)
 
@@ -91,10 +97,6 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
       status,
       observacao: observacoes[alunoId] || null
     }))
-
-
-
-
 
     const res = await salvarListaFrequencia(data, tipo, registros)
     if (res.success) {
@@ -160,15 +162,15 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
               Atividade
             </span>
             <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] cursor-pointer">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="GERAL">Geral (Dia Comum)</SelectItem>
-                <SelectItem value="INST_CUNHA">Inst. Cunha</SelectItem>
-                <SelectItem value="INST_JOSIANE">Inst. Josiane</SelectItem>
-                <SelectItem value="INST_KAREN">Inst. Karen</SelectItem>
-                <SelectItem value="INST_MENDONCA">Inst. Mendonça</SelectItem>
+                <SelectItem value="GERAL" className='cursor-pointer'>Geral (Dia Comum)</SelectItem>
+                <SelectItem value="INST_CUNHA" className='cursor-pointer'>Inst. Cunha</SelectItem>
+                <SelectItem value="INST_JOSIANE" className='cursor-pointer'>Inst. Josiane</SelectItem>
+                <SelectItem value="INST_KAREN" className='cursor-pointer'>Inst. Karen</SelectItem>
+                <SelectItem value="INST_MENDONCA" className='cursor-pointer'>Inst. Mendonça</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -205,11 +207,19 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
           />
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+          <Button
+            variant="outline"
+            onClick={limparTudo}
+            className="flex-1 md:flex-none cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 border-red-300 dark:border-red-800/50"
+          >
+            <Eraser className="mr-2 h-4 w-4 text-red-500" />
+            Limpar Tudo
+          </Button>
           <Button
             variant="outline"
             onClick={marcarTodosPresentes}
-            className="flex-1 md:flex-none"
+            className="flex-1 md:flex-none hover:bg-emerald-50 cursor-pointer dark:hover:bg-emerald-950/30 text-emerald-600 border-emerald-200 dark:border-emerald-800/50"
           >
             <CheckCheck className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             Todos Presentes
@@ -217,7 +227,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
           <Button
             onClick={salvar}
             disabled={loading}
-            className="flex-1 md:flex-none min-w-[140px]"
+            className="flex-1 md:flex-none min-w-[140px] cursor-pointer hover:bg-emerald-600"
           >
             <Save className="mr-2 h-4 w-4" />
             {loading ? 'Salvando...' : 'Salvar Chamada'}
@@ -232,16 +242,16 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
             <div
               key={aluno.id}
               className={cn(
-                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm transition-colors',
+                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm transition-colors ',
                 !status
-                  ? 'bg-muted/30 border-border'
+                  ? 'bg-muted/30 border-border '
                   : status === 'FALTA'
                     ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
                     : status === 'JUSTIFICADA'
                       ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
                       : status === 'PRESENTE'
-                        ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50'
-                        : 'bg-card'
+                        ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50 '
+                        : 'bg-card '
               )}
             >
               <div className="flex-1 min-w-0">
@@ -277,7 +287,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'PRESENTE'
                       ? 'bg-emerald-600 text-white dark:bg-emerald-500'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
                   )}
                 >
                   P
@@ -288,7 +298,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'FALTA'
                       ? 'bg-red-600 text-white dark:bg-red-500'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
                   )}
                 >
                   F
@@ -299,7 +309,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                     'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
                     status === 'JUSTIFICADA'
                       ? 'bg-amber-500 text-white dark:bg-amber-400'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
                   )}
                 >
                   J
@@ -312,7 +322,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
                         'h-8 w-8 rounded flex items-center justify-center transition-colors',
                         observacoes[aluno.id]
                           ? 'bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/50'
-                          : 'text-gray-400 hover:bg-muted dark:text-gray-500'
+                          : 'text-gray-400 hover:bg-muted dark:text-gray-500 cursor-pointer'
                       )}
                     >
                       <MessageSquare className="w-4 h-4" />
