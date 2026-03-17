@@ -35,14 +35,14 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
-      <div className="grow flex-col flex-1">
+      <div className="flex flex-col flex-1">
         <AdminHeader userName={displayName} userImage={user.fotoUrl} />
         <main className="flex-1 p-6 md:p-8 overflow-auto">
           <Container>
             {children}
           </Container>
         </main>
-              <Footer />
+        <Footer />
       </div>
     </div>
   );

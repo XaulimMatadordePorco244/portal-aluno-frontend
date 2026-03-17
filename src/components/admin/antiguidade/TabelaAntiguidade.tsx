@@ -2,6 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { NomeFormatado } from "@/components/ui/nome-formatado";
 
 const exibirDataBR = (date: string | Date | null | undefined) => {
   if (!date) return '-';
@@ -10,10 +11,10 @@ const exibirDataBR = (date: string | Date | null | undefined) => {
       const [ano, mes, dia] = date.split('-');
       return `${dia}/${mes}/${ano}`;
     }
-    
+
     const d = new Date(date);
     if (isNaN(d.getTime())) return '-';
-    
+
     return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   } catch {
     return '-';
@@ -25,14 +26,15 @@ export interface AlunoAntiguidade {
   anoIngresso?: number | null;
   dataMatricula?: string | Date | null;
   dataUltimaPromocao?: string | Date | null;
-  nomeDeGuerra?: string | null;
   modalidadeUltimaPromocao?: string | null;
+  nomeDeGuerra?: string | null; 
   usuario?: {
     nome: string;
+    nomeDeGuerra?: string | null; 
   } | null;
   cargo: {
     nome: string;
-    tipo?: string; 
+    tipo?: string;
   };
 }
 
@@ -53,18 +55,18 @@ export default function TabelaAntiguidade({ dados }: { dados: AlunoAntiguidade[]
           </TableHeader>
           <TableBody>
             {dados.map((aluno, index) => {
-  
-              const rowColorClass = ""; 
-              
+              const rowColorClass = "";
+
+              const nomeGuerraCorreto = aluno.usuario?.nomeDeGuerra || aluno.nomeDeGuerra;
+
               return (
                 <TableRow key={aluno.id} className="hover:bg-muted/50 border-b border-border text-xs sm:text-sm transition-colors">
-                  
                   <TableCell className="text-center font-medium bg-muted/20 border-r border-border p-2 text-foreground">
                     {index + 1}º
                   </TableCell>
 
                   <TableCell className="text-center font-medium border-r border-border p-2 text-foreground whitespace-nowrap">
-                     {aluno.anoIngresso || (aluno.dataMatricula ? new Date(aluno.dataMatricula).getFullYear() : '-')}
+                    {aluno.anoIngresso || (aluno.dataMatricula ? new Date(aluno.dataMatricula).getFullYear() : '-')}
                   </TableCell>
 
                   <TableCell className="text-center border-r border-border p-2 whitespace-nowrap">
@@ -80,7 +82,10 @@ export default function TabelaAntiguidade({ dados }: { dados: AlunoAntiguidade[]
                   </TableCell>
 
                   <TableCell className="text-center font-medium uppercase border-r border-border p-2 truncate max-w-[180px] sm:max-w-none text-foreground">
-                    {aluno.nomeDeGuerra || aluno.usuario?.nome || '-'}
+                    <NomeFormatado
+                      nomeCompleto={aluno.usuario?.nome || '-'}
+                      nomeDeGuerra={nomeGuerraCorreto} 
+                    />
                   </TableCell>
 
                   <TableCell className="text-center p-2 bg-muted/10 whitespace-nowrap">
@@ -88,7 +93,6 @@ export default function TabelaAntiguidade({ dados }: { dados: AlunoAntiguidade[]
                       {aluno.modalidadeUltimaPromocao || '-'}
                     </span>
                   </TableCell>
-                  
                 </TableRow>
               );
             })}
