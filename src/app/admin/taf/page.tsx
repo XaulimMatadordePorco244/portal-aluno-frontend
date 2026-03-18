@@ -50,7 +50,7 @@ export default async function TafDashboardPage({ searchParams }: PageProps) {
   const aprovados = alunos.filter(a => a.tafs.length > 0 && a.tafs[0].mediaFinal >= 6).length
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Painel TAF</h1>

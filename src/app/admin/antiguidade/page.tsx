@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getAlmanaque } from "@/app/actions/antiguidade";
 import TabelaAntiguidade from "@/components/admin/antiguidade/TabelaAntiguidade";
+import BotaoExtratoAntiguidade from "./BotaoExtratoAntiguidade"; 
 
 export default async function Page() {
   const [comandante, subComandante, efetivoResponse] = await Promise.all([
@@ -40,6 +41,7 @@ export default async function Page() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Antiguidade</h1>
         </div>
+        <BotaoExtratoAntiguidade efetivo={efetivo} />
       </div>
 
       <div className="flex flex-col gap-4">
