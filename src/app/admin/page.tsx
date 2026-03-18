@@ -65,7 +65,7 @@ async function getDashboardStats() {
                 }
             }
         )
-                
+
     ]);
 
     const tafsRegistrados = await prisma.tafDesempenho.groupBy({
@@ -80,8 +80,8 @@ async function getDashboardStats() {
     const notasPendentes = Math.max(0, totalAlunos - notasRegistradas);
 
     const aniversariantesMes = todosUsuarios
-        .filter(u => u.dataNascimento?.getMonth() === mesAtual)
-        .sort((a, b) => (a.dataNascimento?.getDate() || 0) - (b.dataNascimento?.getDate() || 0));
+        .filter(u => u.dataNascimento?.getUTCMonth() === mesAtual)
+        .sort((a, b) => (a.dataNascimento?.getUTCDate() || 0) - (b.dataNascimento?.getUTCDate() || 0));
 
     return {
         totalAlunos, faltasHoje, ciclosAbertos, riscoEscolar,
@@ -290,7 +290,7 @@ export default async function AdminDashboardPage() {
                         ) : (
                             <div className="space-y-4">
                                 {stats.aniversariantesMes.map((usuario) => {
-                                    const dia = usuario.dataNascimento ? format(usuario.dataNascimento, "dd") : "--";
+                                    const dia = usuario.dataNascimento ? String(usuario.dataNascimento.getUTCDate()).padStart(2, '0') : "--";
                                     const nomeGuerra = usuario.nomeDeGuerra || usuario.nome.split(' ')[0];
                                     const cargo = usuario.perfilAluno?.cargo?.abreviacao || '';
 

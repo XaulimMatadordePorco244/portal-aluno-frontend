@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
-import { Cake, Sparkles } from "lucide-react";
-import { FotoHover } from "@/components/ui/foto-hover"; 
+import { Cake } from "lucide-react";
+import { FotoHover } from "@/components/ui/foto-hover";
 
 interface Props {
   mesSelecionado: number;
@@ -24,8 +24,8 @@ export async function AniversariantesList({ mesSelecionado }: Props) {
     .sort((a, b) => a.dataNascimento!.getUTCDate() - b.dataNascimento!.getUTCDate());
 
   const hoje = new Date();
-  const diaDeHoje = hoje.getUTCDate();
-  const mesDeHoje = hoje.getUTCMonth();
+  const diaDeHoje = hoje.getDate(); 
+  const mesDeHoje = hoje.getMonth();
 
   if (aniversariantes.length === 0) {
     return (
@@ -39,7 +39,10 @@ export async function AniversariantesList({ mesSelecionado }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {aniversariantes.map((user) => {
-        const fazHoje = user.dataNascimento!.getUTCDate() === diaDeHoje && mesSelecionado === mesDeHoje;
+        const diaNascimento = user.dataNascimento!.getUTCDate();
+        const mesNascimento = user.dataNascimento!.getUTCMonth();
+        
+        const fazHoje = diaNascimento === diaDeHoje && mesNascimento === mesDeHoje;
         
         const nomeFormatado = user.perfilAluno 
           ? `${user.perfilAluno.cargo?.abreviacao || ''} GM ${user.nomeDeGuerra}`
@@ -52,40 +55,49 @@ export async function AniversariantesList({ mesSelecionado }: Props) {
         return (
           <div 
             key={user.id} 
-            className={`relative top-0 rounded-2xl border ${
+            // AQUI FOI A CORREÇÃO! Removido o 'hover:-translate-y-1'.
+            // Agora usamos apenas sombras para dar o efeito de hover sem quebrar o CSS position: fixed!
+            className={`relative rounded-2xl border transition-all duration-300 ${
               fazHoje 
-                ? 'border-primary shadow-lg shadow-primary/20 bg-card hover:-top-1 hover:shadow-xl hover:shadow-primary/30' 
-                : 'border-border/60 bg-card hover:border-border hover:-top-1 hover:shadow-lg'
-            } p-6 flex flex-col items-center text-center transition-all duration-300`}
+                ? 'border-primary/60 shadow-md bg-primary/5 hover:shadow-lg' 
+                : 'border-border/60 bg-card hover:border-primary/40 hover:shadow-md'
+            } p-6 flex flex-col items-center text-center`}
           >
             {fazHoje && (
-              <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-orange-400 via-pink-500 to-primary rounded-t-2xl" />
+              <div className="absolute top-0 inset-x-0 h-1.5 bg-primary rounded-t-2xl animate-in fade-in duration-700" />
             )}
             
-            <div className={`mb-4 rounded-full p-1 transition-colors ${fazHoje ? 'bg-primary/20' : 'bg-transparent'}`}>
+            <div className={`mb-4 rounded-full p-1.5 transition-colors ${fazHoje ? 'bg-primary/10' : 'bg-transparent'}`}>
+              
               <FotoHover 
                 src={user.fotoUrl} 
                 alt={user.nome}
                 size={96} 
-                className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-background shadow-md" 
+                className={`w-20 h-20 sm:w-24 sm:h-24 ${fazHoje ? 'border-primary/40' : 'border-background'}`} 
               />
+
             </div>
             
-            <h3 className="font-bold text-lg leading-tight mb-1 text-foreground">
+            <h3 className={`font-bold text-lg leading-tight mb-1 ${fazHoje ? 'text-primary' : 'text-foreground'}`}>
               {nomeFormatado}
-              {fazHoje && <Sparkles className="inline-block ml-1 h-4 w-4 text-yellow-500 animate-pulse" />}
             </h3>
             
             <p className="text-sm text-muted-foreground font-mono font-medium mb-4">
               {numeroAluno}
             </p>
             
-            <div className={`mt-auto w-full py-2 rounded-lg text-sm font-bold transition-colors ${
+            <div className={`mt-auto w-full flex justify-center items-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
               fazHoje 
-                ? 'bg-primary/10 text-primary' 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
                 : 'bg-muted text-muted-foreground'
             }`}>
-              {fazHoje ? "É HOJE!" : `Dia ${user.dataNascimento!.getUTCDate()}`}
+              {fazHoje ? (
+                <>
+                  <Cake className="w-4 h-4" /> É HOJE
+                </>
+              ) : (
+                `Dia ${String(diaNascimento).padStart(2, '0')}`
+              )}
             </div>
           </div>
         );
