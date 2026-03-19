@@ -1014,6 +1014,7 @@ enum MotivoPromocao {
   TERMINO_CURSO
   MERITO_ESCOLAR
   MERITO_INTELECTUAL
+  MERECIMENTO
 }
 
 enum MotivoDespromocao {
