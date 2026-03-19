@@ -68,7 +68,7 @@ export default function ConfiguracoesPage() {
                 </Card>
             </Link>
 
-            <Link href="/admin/configuracoes/vagas">
+            <Link href="/admin/vagas">
                 <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full border-l-4 border-l-emerald-500">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">

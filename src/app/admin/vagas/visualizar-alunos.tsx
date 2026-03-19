@@ -45,9 +45,7 @@ interface Props {
 }
 
 export function VisualizarAlunosDialog({ titulo, alunos }: Props) {
-  const alunosOrdenados = [...alunos].sort((a, b) =>
-    (a.numero || 9999) - (b.numero || 9999)
-  )
+  const alunosOrdenados = alunos;
 
   return (
     <Sheet>

@@ -100,6 +100,8 @@ export function AdminSidebar() {
     { href: "/admin/dados-escolares", label: "Dados Escolares", icon: GraduationCap },
     { href: "/admin/materiais", label: "Materiais Auxiliares", icon: BookOpen },
     { href: "/admin/atividades", label: "Atividades", icon: ClipboardList },
+        { href: "/admin/vagas", label: "Quadro de Vagas", icon: Settings },
+
   ];
 
   const avaliacoesLinks = [
