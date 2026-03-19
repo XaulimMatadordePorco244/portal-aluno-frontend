@@ -207,7 +207,7 @@ export default async function AnotacoesDashboardPage({
             </p>
           </div>
           <Link href="/admin/anotacoes/new">
-            <Button size="sm" className="gap-2 h-10 px-5">
+            <Button size="sm" className="gap-2 h-10 px-5 cursor-pointer ">
               <PlusCircle className="h-4 w-4" /> Nova Anotação
             </Button>
           </Link>
@@ -222,7 +222,7 @@ export default async function AnotacoesDashboardPage({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 border-muted-foreground/20"
+                className="h-10 w-10 border-muted-foreground/20 cursor-pointer"
               >
                 <Filter className="h-4 w-4 text-muted-foreground" />
               </Button>
@@ -233,17 +233,17 @@ export default async function AnotacoesDashboardPage({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="?sentido=pos" className="w-full">
+                <Link href="?sentido=pos" className="w-full cursor-pointer">
                   Apenas Positivas
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="?sentido=neg" className="w-full">
+                <Link href="?sentido=neg" className="w-full cursor-pointer">
                   Apenas Negativas
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/admin/anotacoes" className="w-full">
+                <Link href="/admin/anotacoes" className="w-full cursor-pointer">
                   Limpar Filtros
                 </Link>
               </DropdownMenuItem>
@@ -369,7 +369,7 @@ export default async function AnotacoesDashboardPage({
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          className="h-8 w-8 p-0 text-muted-foreground"
+                          className="h-8 w-8 p-0 text-muted-foreground cursor-pointer"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>

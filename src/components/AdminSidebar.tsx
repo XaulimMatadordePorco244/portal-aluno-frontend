@@ -126,7 +126,7 @@ export function AdminSidebar() {
       <Button
         variant="outline"
         size="icon"
-        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full shadow-md bg-background border hover:bg-muted p-0"
+        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full shadow-md bg-background border hover:bg-muted p-0 cursor-pointer"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
