@@ -929,6 +929,7 @@ enum StatusFrequencia {
 
 enum TipoEvento {
   FERIADO
+  AULA
   AULA_EXTRA
   CANCELADO
   EVENTO
