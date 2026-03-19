@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   PlusCircle,
-  Search,
   MoreHorizontal,
   Edit2,
   UserCheck,
@@ -22,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/Input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Prisma, CargoHistoryStatus } from "@prisma/client";
 import { DeleteAnotacaoButton } from "@/app/admin/anotacoes/delete-button";
+import SearchAnotacoes from "./SearchAnotacoes";
 
 type AnotacaoWithRelations = Prisma.AnotacaoGetPayload<{
   include: {
@@ -82,10 +81,13 @@ type WhereCondition = {
     status: CargoHistoryStatus;
   };
   AND?: Array<{
-    OR?: Array<{
-      aluno?: { nomeDeGuerra?: { contains: string } };
-      detalhes?: { contains: string };
-    }>;
+    aluno?: {
+      usuario?: {
+        nomeDeGuerra?: {
+          contains: string;
+        };
+      };
+    };
     pontos?: { gt?: number; lt?: number };
   }>;
 };
@@ -115,10 +117,13 @@ export default async function AnotacoesDashboardPage({
 
   if (q) {
     whereCondition.AND?.push({
-      OR: [
-        { aluno: { nomeDeGuerra: { contains: q } } },
-        { detalhes: { contains: q } },
-      ],
+      aluno: {
+        usuario: {
+          nomeDeGuerra: { 
+            contains: q, 
+          }
+        }
+      }
     });
   }
 
@@ -191,7 +196,7 @@ export default async function AnotacoesDashboardPage({
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto  space-y-6">
+      <div className="container mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="space-y-0.5">
             <h1 className="text-2xl font-medium tracking-tight text-foreground">
@@ -209,20 +214,8 @@ export default async function AnotacoesDashboardPage({
         </div>
 
         <div className="flex items-center gap-3">
-          <form className="relative flex-1 max-w-md flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-              <Input
-                name="q"
-                defaultValue={q}
-                placeholder="Pesquisar aluno..."
-                className="pl-9 h-10 border-muted-foreground/20 bg-background focus-visible:ring-1"
-              />
-            </div>
-            <Button type="submit" variant="secondary" className="h-10">
-              Buscar
-            </Button>
-          </form>
+          
+          <SearchAnotacoes defaultValue={q} />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
