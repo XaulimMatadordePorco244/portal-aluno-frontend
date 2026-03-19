@@ -85,18 +85,25 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
 
         <tbody>
           {alunos.map(aluno => (
+
             <tr key={aluno.id} className="hover:bg-muted/5 group border-b last:border-0">
+
               <td className="p-3 font-medium border-r sticky left-0 bg-background group-hover:bg-muted/5 z-20 whitespace-nowrap shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                <Link
+                  href={`/admin/alunos/${aluno.id}/frequencia`}
+                  className="cursor-pointer "
+                >
                 {aluno.graduacao} GM {aluno.nomeDeGuerra}
+                </Link>
               </td>
 
-              {datas.map(d => {
+              {
+              datas.map(d => {
                 const status = getStatus(aluno.id, d)
                 return (
                   <td
                     key={`${aluno.id}-${d}`}
-                    onClick={() => handleClick(aluno.id, d)}
-                    className="p-1 border-r text-center cursor-pointer hover:bg-muted/20 transition-colors select-none"
+                    className="p-1 border-r text-center"
                   >
                     <div
                       className={cn(
@@ -117,11 +124,12 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
                     </div>
                   </td>
                 )
-              })}
+              })
+            }
             </tr>
           ))}
-        </tbody>
-      </table>
-    </TooltipProvider>
+      </tbody>
+    </table>
+    </TooltipProvider >
   )
 }
