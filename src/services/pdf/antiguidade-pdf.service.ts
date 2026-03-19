@@ -1,5 +1,7 @@
 import { gerarRelatorioAntiguidade, AntiguidadeReportData } from '@/lib/pdf/antiguidade.template';
 
+
+
 export const antiguidadePdfService = {
   generate: async (data: AntiguidadeReportData) => {
     try {

@@ -16,8 +16,23 @@ const exibirDataBR = (date: string | Date | null | undefined) => {
   }
 };
 
+export interface DadosAlunoAntiguidade {
+  anoIngresso?: number | string | null;
+  dataMatricula?: Date | string | null;
+  dataUltimaPromocao?: Date | string | null;
+  nomeDeGuerra?: string | null;
+  modalidadeUltimaPromocao?: string | null;
+  cargo?: {
+    nome?: string | null;
+  } | null;
+  usuario?: {
+    nome?: string | null;
+    nomeDeGuerra?: string | null;
+  } | null;
+}
+
 export interface AntiguidadeReportData {
-  efetivo: any[]; 
+  efetivo: DadosAlunoAntiguidade[]; 
 }
 
 export const gerarRelatorioAntiguidade = async (data: AntiguidadeReportData) => {
@@ -40,6 +55,7 @@ export const gerarRelatorioAntiguidade = async (data: AntiguidadeReportData) => 
   const tableData = data.efetivo.map((aluno, index) => {
     const ingresso = aluno.anoIngresso || (aluno.dataMatricula ? new Date(aluno.dataMatricula).getFullYear() : '-');
     const nomeGuerraCorreto = aluno.usuario?.nomeDeGuerra || aluno.nomeDeGuerra || aluno.usuario?.nome || '-';
+
 
     return [
       String(`${index + 1}º`),

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button"; 
 import { FileDown } from "lucide-react";
 import { antiguidadePdfService } from "@/services/pdf/antiguidade-pdf.service";
+import { DadosAlunoAntiguidade } from "@/lib/pdf/antiguidade.template";
 
 interface Props {
-  efetivo: any[]; 
+  efetivo: DadosAlunoAntiguidade[]; 
 }
 
 export default function BotaoExtratoAntiguidade({ efetivo }: Props) {
