@@ -17,6 +17,9 @@ import { AlunoFiltros } from "./aluno-filtros";
 import { FotoHover } from "@/components/ui/foto-hover";
 import { NomeFormatado } from '@/components/ui/nome-formatado'
 
+// Importe o novo componente criado
+import { FiltroCargo } from "./filtro-cargo"; 
+
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 };
@@ -25,9 +28,11 @@ export default async function AdminAlunosPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
   const sort = searchParams.sort || 'nome';
-  const statusFilter = (searchParams.status as StatusUsuario | 'TODOS') || 'TODOS';
+  // ALTERAÇÃO 1: Deixa 'ATIVO' como padrão se não houver filtro na URL
+  const statusFilter = searchParams.status ? (searchParams.status as StatusUsuario | 'TODOS') : 'ATIVO';
   const turmaFilter = searchParams.turmaId || 'todas';
   const anoFilter = searchParams.ano || 'todos';
+  const cargoFilter = searchParams.cargoId || 'todos'; // NOVO FILTRO
 
   let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' };
   if (sort === 'numero') orderByClause = { perfilAluno: { numero: 'asc' } };
@@ -38,7 +43,11 @@ export default async function AdminAlunosPage(props: PageProps) {
     { dataNascimento: 'asc' }
   ];
 
-  const turmas = await prisma.turma.findMany({ orderBy: { ano: 'desc' } });
+  // Buscando turmas e cargos para os filtros
+  const [turmas, cargos] = await Promise.all([
+    prisma.turma.findMany({ orderBy: { ano: 'desc' } }),
+    prisma.cargo.findMany({ orderBy: { precedencia: 'asc' } })
+  ]);
 
   const anoAtual = new Date().getFullYear();
   const anosDisponiveis = Array.from({ length: anoAtual - 2015 + 1 }, (_, i) => anoAtual - i);
@@ -77,12 +86,24 @@ export default async function AdminAlunosPage(props: PageProps) {
     };
   }
 
-  const whereClause: Prisma.UsuarioWhereInput = {
-    status: statusFilter === 'TODOS' ? undefined : (statusFilter as StatusUsuario),
+  // ALTERAÇÃO 2: Reconstruindo o where do perfilAluno para suportar múltiplos filtros (Turma e Cargo)
+  const perfilAlunoWhere: Prisma.PerfilAlunoWhereInput = {};
+  if (turmaFilter !== 'todas') perfilAlunoWhere.turmaId = turmaFilter;
+  if (cargoFilter !== 'todos') perfilAlunoWhere.cargoId = cargoFilter;
 
-    perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
+  // Se não tem filtro específico, garante que retorne apenas usuários com PerfilAluno
+  const perfilAlunoClause = Object.keys(perfilAlunoWhere).length > 0 ? perfilAlunoWhere : { isNot: null };
+
+  const baseStatsWhere: Prisma.UsuarioWhereInput = {
+    perfilAluno: perfilAlunoClause,
     ...anoFilterClause
   };
+
+  const whereClause: Prisma.UsuarioWhereInput = {
+    status: statusFilter === 'TODOS' ? undefined : (statusFilter as StatusUsuario),
+    ...baseStatsWhere
+  };
+
   const alunos = await prisma.usuario.findMany({
     where: whereClause,
     include: {
@@ -95,12 +116,6 @@ export default async function AdminAlunosPage(props: PageProps) {
     },
     orderBy: orderByClause,
   });
-
-  const baseStatsWhere: Prisma.UsuarioWhereInput = {
-
-    perfilAluno: turmaFilter !== 'todas' ? { turmaId: turmaFilter } : { isNot: null },
-    ...anoFilterClause
-  };
 
   const totalAlunos = await prisma.usuario.count({ where: baseStatsWhere });
   const totalAtivos = await prisma.usuario.count({ where: { ...baseStatsWhere, status: 'ATIVO' } });
@@ -133,7 +148,7 @@ export default async function AdminAlunosPage(props: PageProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalAlunos}</div>
+            <div className="text-2xl font-bold">{alunos.length}</div>
             <p className="text-xs text-muted-foreground">Baseado nos filtros acima</p>
           </CardContent>
         </Card>
@@ -166,7 +181,12 @@ export default async function AdminAlunosPage(props: PageProps) {
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <CardTitle>Listagem do Efetivo</CardTitle>
 
-            <div className="flex gap-2 text-sm bg-muted/50 p-1 rounded-md">
+            <div className="flex flex-wrap gap-2 text-sm bg-muted/50 p-1 rounded-md items-center">
+              {/* NOVO FILTRO DE CARGO */}
+              <FiltroCargo cargos={cargos} cargoAtual={cargoFilter} />
+              
+              <div className="w-px h-6 bg-border mx-1"></div> {/* Divisor visual */}
+
               <Link href={buildUrl({ sort: 'nome' })}>
                 <Button variant={sort === 'nome' ? 'default' : 'ghost'} size="sm" className="h-8">
                   <ArrowDownAZ className="mr-2 h-4 w-4" /> Nome
@@ -190,6 +210,8 @@ export default async function AdminAlunosPage(props: PageProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {/* ALTERAÇÃO 3: Coluna de Enumeração (#) */}
+                  <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead className="w-16 text-center">Foto</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Turma</TableHead>
@@ -200,10 +222,16 @@ export default async function AdminAlunosPage(props: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alunos.map((aluno) => {
+                {/* ALTERAÇÃO 3: Passando o index no .map() */}
+                {alunos.map((aluno, index) => {
                   const isInativo = aluno.status === 'INATIVO';
                   return (
                     <TableRow key={aluno.id} className={isInativo ? 'opacity-60 bg-muted/30' : ''}>
+                      {/* ALTERAÇÃO 3: Exibindo a Enumeração */}
+                      <TableCell className="text-center text-xs text-muted-foreground font-medium">
+                        {index + 1}
+                      </TableCell>
+
                       <TableCell className="text-center align-middle">
                         <FotoHover
                           src={aluno.fotoUrl}
@@ -231,7 +259,6 @@ export default async function AdminAlunosPage(props: PageProps) {
                       </TableCell>
                     
                       <TableCell className="font-mono">{aluno.perfilAluno?.turma?.nome || 'Sem Turma'}</TableCell>
-
                       <TableCell className="font-mono">{aluno.perfilAluno?.numero || 'N/A'}</TableCell>
                       <TableCell className="font-mono">{aluno.cpf}</TableCell>
                       <TableCell className="font-mono">{aluno.perfilAluno?.cargo?.nome || 'Sem Cargo'}</TableCell>
@@ -245,7 +272,7 @@ export default async function AdminAlunosPage(props: PageProps) {
                 })}
                 {alunos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
                       Nenhum aluno encontrado para os filtros selecionados.
                     </TableCell>
                   </TableRow>
