@@ -7,15 +7,12 @@ import {
   CardHeader, 
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Users, 
   Eye,
   AlertCircle,
   BarChart3
 } from 'lucide-react';
-import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import CargoList from '@/components/cargos/CargoList';
@@ -99,14 +96,6 @@ export default async function ConfiguracaoCargosPage() {
             Configure a hierarquia, precedência e divisas do sistema.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/alunos/cargos">
-            <Button variant="outline" className="gap-2">
-              <Users className="h-4 w-4" />
-              Gerenciar Alunos
-            </Button>
-          </Link>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -177,11 +166,7 @@ export default async function ConfiguracaoCargosPage() {
             <Eye className="h-4 w-4" />
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="adicionar" className="gap-2">
-            <div className="flex items-center gap-2">
-                Adicionar Novo
-            </div>
-          </TabsTrigger>
+
           <TabsTrigger value="estatisticas" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             Relatórios
