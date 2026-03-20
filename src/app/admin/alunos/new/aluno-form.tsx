@@ -14,48 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from 'lucide-react';
 import { AvatarUpload } from '@/components/admin/avatar-upload';
 
-export interface AlunoEditado {
-  id: string;
-  nome: string;
-  nomeDeGuerra: string | null;
-  cpf: string;
-  email: string | null;
-  telefone: string | null;
-  rg: string | null;
-  rgEstadoEmissor: string | null;
-  fotoUrl: string | null;
-  dataNascimento: Date | string | null;
-  genero: 'MASCULINO' | 'FEMININO' | null;
-  perfilAluno: {
-    numero: string | null;      
-    cargoId: string | null;    
-    companhiaId: string | null; 
-    foraDeData: boolean;
-    tipagemSanguinea: string | null;
-    aptidaoFisicaStatus: string | null;
-    aptidaoFisicaLaudo: boolean;
-    aptidaoFisicaObs: string | null;
-    endereco: string | null;
-    escolaId: string | null;
-    serieEscolar: string | null;
-    turno: string | null;
-    turmaEscolar: string | null;
-    fazCursoExterno: boolean;
-    cursoExternoDescricao: string | null;
-    termoResponsabilidadeAssinado: boolean;
-    responsavelNome: string | null;
-    responsavelCpf: string | null;
-    responsavelParentesco: string | null;
-    responsavelTelefone: string | null;
-    responsavelEmail: string | null;
-  } | null;
-}
+
 
 interface AlunoFormProps {
   cargos: { id: string, nome: string }[];
   companhias: { id: string, nome: string }[];
   escolas: { id: string, nome: string }[];
-  aluno: AlunoEditado;
 }
 
 function SubmitButton() {
@@ -73,21 +37,24 @@ function ErrorMsg({ error }: { error?: string[] }) {
   return <p className="text-xs text-destructive mt-1 font-medium">{error[0]}</p>;
 }
 
-export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: AlunoFormProps) {
+export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProps) {
   const [state, formAction] = useActionState(createAluno, undefined);
   const [cursoExterno, setCursoExterno] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
+  const aluno = { perfilAluno: {} } as any;
 
   useEffect(() => {
     if (state?.formData) {
       setCursoExterno(state.formData.fazCursoExterno === 'on');
-    } else if (aluno.perfilAluno?.fazCursoExterno) {
-      setCursoExterno(true);
+    } else {
+      setCursoExterno(false);
     }
-  }, [state, aluno]);
+  }, [state]);
 
   const handleSubmit = (formData: FormData) => {
-    formData.append("id", aluno.id);
+    if (aluno.id) {
+      formData.append("id", aluno.id);
+    }
     if (profilePic) {
       formData.append("fotoPerfil", profilePic);
     }
@@ -96,9 +63,6 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
 
   const getBirthDate = () => {
     if (state?.formData?.dataNascimento) return state.formData.dataNascimento as string;
-    if (aluno.dataNascimento) {
-      return new Date(aluno.dataNascimento).toISOString().split('T')[0];
-    }
     return "";
   };
 
@@ -290,10 +254,11 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label>Escola <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Select name="escolaId" defaultValue={(state?.formData?.escolaId as string) ?? (aluno.perfilAluno?.escolaId || "")}>
-              <SelectTrigger className={state?.errors?.escolaId ? "border-destructive focus-visible:ring-destructive" : ""}>
+              {/* 👇 Aqui adicionamos [&>span]:truncate */}
+              <SelectTrigger className={`[&>span]:truncate ${state?.errors?.escolaId ? "border-destructive focus-visible:ring-destructive" : ""}`}>
                 <SelectValue placeholder="Selecione a Escola" />
               </SelectTrigger>
               <SelectContent>
@@ -303,10 +268,10 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
             <ErrorMsg error={state?.errors?.escolaId} />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label>Série Escolar <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Select name="serieEscolar" defaultValue={(state?.formData?.serieEscolar as string) ?? (aluno.perfilAluno?.serieEscolar || "")}>
-              <SelectTrigger><SelectValue placeholder="Selecione a Série" /></SelectTrigger>
+              <SelectTrigger className="[&>span]:truncate"><SelectValue placeholder="Selecione a Série" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="QUARTO_ANO_FUNDAMENTAL">4º Ano do Ensino Fundamental</SelectItem>
                 <SelectItem value="QUINTO_ANO_FUNDAMENTAL">5º Ano do Ensino Fundamental</SelectItem>
@@ -322,10 +287,10 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label>Turno <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Select name="turno" defaultValue={(state?.formData?.turno as string) ?? (aluno.perfilAluno?.turno || "")}>
-              <SelectTrigger><SelectValue placeholder="Selecione o Turno" /></SelectTrigger>
+              <SelectTrigger className="[&>span]:truncate"><SelectValue placeholder="Selecione o Turno" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="MATUTINO">Matutino</SelectItem>
                 <SelectItem value="VESPERTINO">Vespertino</SelectItem>
@@ -335,7 +300,7 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label htmlFor="turmaEscolar">Turma (Ex: A, B) <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Input 
               id="turmaEscolar" name="turmaEscolar" placeholder="Ex: A" 

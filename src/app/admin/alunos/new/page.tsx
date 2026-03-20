@@ -25,7 +25,7 @@ export default async function NewAlunoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AlunoForm cargos={cargos} companhias={companhias} escolas={escolas} />
+          <AlunoForm cargos={cargos} companhias={companhias} escolas={escolas}  />
         </CardContent>
       </Card>
     </div>
