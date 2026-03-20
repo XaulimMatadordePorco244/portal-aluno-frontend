@@ -19,7 +19,26 @@ import { deleteSuspensao } from "@/actions/suspensao";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-type SuspensaoData = any;
+interface SuspensaoData {
+  id: string;
+  dataOcorrencia: Date;
+  dias: number;
+  pontosRetirados: number;
+  detalhes: string;
+  visualizadoEm: Date | null;
+  tipo?: {
+    titulo: string;
+  } | null;
+  aluno: {
+    nomeDeGuerra?: string;
+    cargo: {
+      abreviacao: string;
+    } | null;
+    usuario: {
+      nome: string;
+    };
+  };
+}
 
 export default function SuspensoesClient({ suspensoes }: { suspensoes: SuspensaoData[] }) {
   const router = useRouter();

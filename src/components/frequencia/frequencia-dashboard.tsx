@@ -18,7 +18,7 @@ interface ItemCalendario {
     status?: 'PRESENTE' | 'FALTA' | 'JUSTIFICADA'
     tipoAula?: string
     titulo?: string
-    tipoEvento?: 'FERIADO' | 'AULA_EXTRA' | 'CANCELADO' | 'EVENTO'
+    tipoEvento?: 'FERIADO' | 'AULA_EXTRA' | 'CANCELADO' | 'EVENTO' | 'AULA'
     descricao?: string | null
     observacao?: string | null
 }

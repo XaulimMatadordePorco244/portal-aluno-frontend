@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown, UserCheck, Keyboard, Clock, Calendar, AlertOctagon, Info } from 'lucide-react';
+import { Award, ThumbsUp, ThumbsDown, Megaphone, Filter, FileDown, UserCheck, Keyboard, Clock, Calendar, AlertOctagon } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWithRelations } from '@/lib/auth';
@@ -267,7 +267,6 @@ export default function EvaluationsClient({
             const isSuspensao = item.type === 'suspensao';
             const isPositive = item.pontos > 0;
             const isNegative = item.pontos < 0 && !isSuspensao;
-            const isNeutral = item.pontos === 0;
 
             return (
               <AccordionItem

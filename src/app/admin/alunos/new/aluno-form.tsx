@@ -41,7 +41,41 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
   const [state, formAction] = useActionState(createAluno, undefined);
   const [cursoExterno, setCursoExterno] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
-  const aluno = { perfilAluno: {} } as any;
+  const aluno: {
+    id?: string;
+    nome?: string;
+    nomeDeGuerra?: string;
+    cpf?: string;
+    email?: string;
+    telefone?: string;
+    rg?: string;
+    rgEstadoEmissor?: string;
+    dataNascimento?: string | Date;
+    genero?: string;
+    perfilAluno?: {
+      numero?: string;
+      cargoId?: string;
+      companhiaId?: string;
+      foraDeData?: boolean;
+      tipagemSanguinea?: string;
+      aptidaoFisicaStatus?: string;
+      aptidaoFisicaLaudo?: boolean;
+      aptidaoFisicaObs?: string;
+      endereco?: string;
+      escolaId?: string;
+      serieEscolar?: string;
+      turno?: string;
+      turmaEscolar?: string;
+      fazCursoExterno?: boolean;
+      cursoExternoDescricao?: string;
+      termoResponsabilidadeAssinado?: boolean;
+      responsavelNome?: string;
+      responsavelCpf?: string;
+      responsavelParentesco?: string;
+      responsavelTelefone?: string;
+      responsavelEmail?: string;
+    };
+  } = { perfilAluno: {} };
 
   useEffect(() => {
     if (state?.formData) {

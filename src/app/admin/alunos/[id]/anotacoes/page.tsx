@@ -86,10 +86,10 @@ export default async function AdminStudentDetailsPage({ params }: PageProps) {
   return (
     <div >
       <AdminStudentHistoryClient 
-        student={perfilAluno as any} 
+        student={perfilAluno}
         conceitoAtual={conceitoAtual}
-        anotacoes={anotacoes as any}
-        suspensoes={suspensoes as any} 
+        anotacoes={anotacoes}
+        suspensoes={suspensoes} 
       />
     </div>
   );

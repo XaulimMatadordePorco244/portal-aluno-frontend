@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useActionState } from 'react';
+import {  useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';

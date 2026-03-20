@@ -14,10 +14,34 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
+interface Aluno {
+  id: string;
+  nome: string;
+  nomeDeGuerra: string | null;
+  perfilAluno: {
+    id: string;
+    cargo: {
+      abreviacao: string;
+    } | null;
+  } | null;
+}
+
+interface Usuario {
+  id: string;
+  nome: string;
+  role: string;
+}
+
+interface TipoSuspensao {
+  id: string;
+  titulo: string;
+  descricao: string;
+}
+
 interface SuspensaoFormProps {
-  alunos: any[];
-  usuarios: any[];
-  tipos: any[];
+  alunos: Aluno[];
+  usuarios: Usuario[];
+  tipos: TipoSuspensao[];
   initialData?: {
     id: string;
     alunoId: string;
@@ -37,7 +61,7 @@ export default function SuspensaoForm({ alunos, usuarios, tipos, initialData }: 
 
   const isEditing = !!initialData;
 
-  const [selectedAluno, setSelectedAluno] = useState<any | null>(null);
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null);
   const [dataOcorrencia, setDataOcorrencia] = useState<string>('');
   const [dias, setDias] = useState<string>('');
   const [pontos, setPontos] = useState<string>('');
@@ -47,7 +71,7 @@ export default function SuspensaoForm({ alunos, usuarios, tipos, initialData }: 
   const [isExterno, setIsExterno] = useState(false);
   const [quemAplicouId, setQuemAplicouId] = useState<string>('AUTOR_LOGADO');
   const [quemAplicouNome, setQuemAplicouNome] = useState<string>('');
-  const [selectedObserver, setSelectedObserver] = useState<any | null>(null);
+  const [selectedObserver, setSelectedObserver] = useState<Usuario | null>(null);
 
   const [isAlunoComboboxOpen, setIsAlunoComboboxOpen] = useState(false);
   const [isObserverComboboxOpen, setIsObserverComboboxOpen] = useState(false);
@@ -89,7 +113,7 @@ export default function SuspensaoForm({ alunos, usuarios, tipos, initialData }: 
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append("alunoId", selectedAluno.perfilAluno.id);
+      formData.append("alunoId", selectedAluno?.perfilAluno?.id || "");
       formData.append("data", `${dataOcorrencia}T12:00:00.000Z`);
       formData.append("dias", dias);
       formData.append("pontos", pontos);
@@ -255,7 +279,7 @@ export default function SuspensaoForm({ alunos, usuarios, tipos, initialData }: 
                       Eu mesmo (Lançador)
                     </CommandItem>
                     <CommandGroup heading="Equipa de Comando">
-                      {staffMembers.map((staff: any) => (
+                      {staffMembers.map((staff: Usuario) => (
                         <CommandItem key={staff.id} onSelect={() => { setQuemAplicouId(staff.id); setSelectedObserver(staff); setIsObserverComboboxOpen(false); }}>
                           {staff.nome}
                         </CommandItem>

@@ -28,11 +28,11 @@ export default async function AdminAlunosPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
   const sort = searchParams.sort || 'nome';
-  // ALTERAÇÃO 1: Deixa 'ATIVO' como padrão se não houver filtro na URL
+  
   const statusFilter = searchParams.status ? (searchParams.status as StatusUsuario | 'TODOS') : 'ATIVO';
   const turmaFilter = searchParams.turmaId || 'todas';
   const anoFilter = searchParams.ano || 'todos';
-  const cargoFilter = searchParams.cargoId || 'todos'; // NOVO FILTRO
+  const cargoFilter = searchParams.cargoId || 'todos'; 
 
   let orderByClause: Prisma.UsuarioOrderByWithRelationInput | Prisma.UsuarioOrderByWithRelationInput[] = { nome: 'asc' };
   if (sort === 'numero') orderByClause = { perfilAluno: { numero: 'asc' } };
@@ -43,7 +43,6 @@ export default async function AdminAlunosPage(props: PageProps) {
     { dataNascimento: 'asc' }
   ];
 
-  // Buscando turmas e cargos para os filtros
   const [turmas, cargos] = await Promise.all([
     prisma.turma.findMany({ orderBy: { ano: 'desc' } }),
     prisma.cargo.findMany({ orderBy: { precedencia: 'asc' } })
@@ -86,12 +85,10 @@ export default async function AdminAlunosPage(props: PageProps) {
     };
   }
 
-  // ALTERAÇÃO 2: Reconstruindo o where do perfilAluno para suportar múltiplos filtros (Turma e Cargo)
-  const perfilAlunoWhere: Prisma.PerfilAlunoWhereInput = {};
+   const perfilAlunoWhere: Prisma.PerfilAlunoWhereInput = {};
   if (turmaFilter !== 'todas') perfilAlunoWhere.turmaId = turmaFilter;
   if (cargoFilter !== 'todos') perfilAlunoWhere.cargoId = cargoFilter;
 
-  // Se não tem filtro específico, garante que retorne apenas usuários com PerfilAluno
   const perfilAlunoClause = Object.keys(perfilAlunoWhere).length > 0 ? perfilAlunoWhere : { isNot: null };
 
   const baseStatsWhere: Prisma.UsuarioWhereInput = {
@@ -182,10 +179,9 @@ export default async function AdminAlunosPage(props: PageProps) {
             <CardTitle>Listagem do Efetivo</CardTitle>
 
             <div className="flex flex-wrap gap-2 text-sm bg-muted/50 p-1 rounded-md items-center">
-              {/* NOVO FILTRO DE CARGO */}
               <FiltroCargo cargos={cargos} cargoAtual={cargoFilter} />
               
-              <div className="w-px h-6 bg-border mx-1"></div> {/* Divisor visual */}
+              <div className="w-px h-6 bg-border mx-1"></div> 
 
               <Link href={buildUrl({ sort: 'nome' })}>
                 <Button variant={sort === 'nome' ? 'default' : 'ghost'} size="sm" className="h-8">
@@ -210,7 +206,6 @@ export default async function AdminAlunosPage(props: PageProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {/* ALTERAÇÃO 3: Coluna de Enumeração (#) */}
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead className="w-16 text-center">Foto</TableHead>
                   <TableHead>Nome</TableHead>
@@ -222,12 +217,10 @@ export default async function AdminAlunosPage(props: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* ALTERAÇÃO 3: Passando o index no .map() */}
                 {alunos.map((aluno, index) => {
                   const isInativo = aluno.status === 'INATIVO';
                   return (
                     <TableRow key={aluno.id} className={isInativo ? 'opacity-60 bg-muted/30' : ''}>
-                      {/* ALTERAÇÃO 3: Exibindo a Enumeração */}
                       <TableCell className="text-center text-xs text-muted-foreground font-medium">
                         {index + 1}
                       </TableCell>

@@ -1,9 +1,7 @@
 'use client'
 
-import { alternarFrequencia } from './actions'
 import { Check, X, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
 import Link from 'next/link'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -36,15 +34,6 @@ export function MapaFrequenciaClient({ alunos, frequencias, datas, tipo }: Props
     return reg ? reg.status : null
   }
 
-  const handleClick = async (alunoId: string, dataIso: string) => {
-    const statusAtual = getStatus(alunoId, dataIso)
-    try {
-      await alternarFrequencia(alunoId, dataIso, tipo, statusAtual)
-      toast.success('Atualizado')
-    } catch {
-      toast.error('Erro ao atualizar')
-    }
-  }
 
   return (
     <TooltipProvider>

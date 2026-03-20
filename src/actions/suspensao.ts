@@ -18,7 +18,7 @@ const SuspensaoSchema = z.object({
   quemAplicouNome: z.string().optional().nullable(),
 });
 
-export async function createSuspensao(prevState: any, formData: FormData) {
+export async function createSuspensao(prevState: unknown, formData: FormData) {
   try {
     const user = await getCurrentUserWithRelations();
     if (!user || user.role !== "ADMIN") {
@@ -176,23 +176,9 @@ export async function updateSuspensao(id: string, formData: FormData) {
       return { success: false, errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { alunoId, data, dias, pontos, detalhes, quemAplicouId, quemAplicouNome, tipoId } = validatedFields.data;
+    const { alunoId} = validatedFields.data;
 
     const suspensaoAntiga = await prisma.suspensao.findUnique({ where: { id }, select: { alunoId: true } });
-
-    const suspensaoNova = await prisma.suspensao.update({
-      where: { id },
-      data: {
-        alunoId,
-        dataOcorrencia: data,
-        dias,
-        pontosRetirados: pontos,
-        detalhes,
-        tipoId,
-        quemAplicouId,
-        quemAplicouNome
-      }
-    });
 
     if (suspensaoAntiga && suspensaoAntiga.alunoId !== alunoId) {
       await recalcularConceitoAluno(suspensaoAntiga.alunoId);

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/accordion";
 import { 
   Award, Filter, Pencil, Trash2, FileDown, 
-  UserCheck, Keyboard, Clock, Calendar, Megaphone, ThumbsUp, ThumbsDown, AlertOctagon, Info
+  UserCheck, Keyboard, Clock, Calendar, Megaphone, ThumbsUp, ThumbsDown, AlertOctagon
 } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,6 +40,21 @@ type SuspensaoComRelacoes = Prisma.SuspensaoGetPayload<{
   }
 }>;
 
+type StudentWithRelations = Prisma.PerfilAlunoGetPayload<{
+  include: {
+    usuario: true;
+    cargo: true;
+    funcao: true;
+    companhia: true;
+  }
+}>;
+
+type UsuarioRelacionado = Prisma.UsuarioGetPayload<{
+  include: {
+    perfilAluno: { include: { cargo: true } }
+  }
+}>;
+
 type AnnotationFilterType = 'Todos' | 'Elogio' | 'Punição' | 'FO+' | 'FO-' | 'Suspensão';
 
 const InfoPill = ({ label, count, points }: { label: string; count: number; points: number }) => (
@@ -59,7 +74,7 @@ export default function AdminStudentHistoryClient({
   anotacoes,
   suspensoes
 }: { 
-  student: any;
+  student: StudentWithRelations;
   conceitoAtual: number;
   anotacoes: AnotacaoComRelacoes[];
   suspensoes: SuspensaoComRelacoes[];
@@ -75,12 +90,12 @@ export default function AdminStudentHistoryClient({
   const nomeDeGuerra = student.usuario.nomeDeGuerra || student.usuario.nome;
   const identificacaoAluno = `${cargo} GM ${nomeDeGuerra}`.trim();
 
-  const formatarNome = (usuario: any | null | undefined) => {
+  const formatarNome = (usuario: UsuarioRelacionado | null | undefined) => { 
     if (!usuario) return "Sistema";
     const perfil = usuario.perfilAluno;
     if (perfil) {
         const cargoStr = perfil.cargo?.abreviacao || '';
-        const nomeStr = perfil.nomeDeGuerra || usuario.nome.split(' ')[0];
+        const nomeStr = usuario.nomeDeGuerra || usuario.nome.split(' ')[0];
         return `${cargoStr} GM ${nomeStr}`.trim();
     }
     return usuario.nome;
@@ -185,7 +200,7 @@ export default function AdminStudentHistoryClient({
       } else {
         toast.error(result.message || "Erro ao apagar");
       }
-    } catch (error) {
+    } catch{
       toast.error("Ocorreu um erro ao processar a exclusão.");
     } finally {
       setIsLoading(false);

@@ -36,7 +36,7 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
       return { message: `Suspensão "${titulo}" adicionada com sucesso!`, type: 'success' };
     }
 
-    const data: any = { titulo, descricao, pontos: null, abertoCoordenacao: false, categoriaAberto: null };
+    const data: { titulo: string; descricao: string; pontos: number | null; abertoCoordenacao: boolean; categoriaAberto: string | null } = { titulo, descricao, pontos: null, abertoCoordenacao: false, categoriaAberto: null };
 
     switch (selectionType) {
       case 'FO_POSITIVO': data.pontos = 0.5; break;
@@ -57,7 +57,7 @@ export async function createTipoDeAnotacao(prevState: CreateQPEState, formData: 
     revalidatePath('/admin/qpe');
     return { message: `"${titulo}" foi adicionado com sucesso!`, type: 'success' };
 
-  } catch (error: unknown) {
+  } catch {
     return { message: 'Erro no servidor ou item já existente.', type: 'error' };
   }
 }
@@ -111,10 +111,10 @@ export async function updateTipoDeAnotacao(prevState: CreateQPEState, formData: 
         },
       });
     }
-  }  catch (error: any) {
+  } catch (error: unknown) {
     console.error("🔴 ERRO AO ATUALIZAR QPE:", error); 
     
-    if (error?.code === 'P2002') {
+    if (error instanceof Error && 'code' in error && error.code === 'P2002') {
       return { 
         message: 'Já existe uma regra no QPE cadastrada com este exato título. Escolha um nome diferente.', 
         type: 'error' 

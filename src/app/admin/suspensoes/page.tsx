@@ -15,13 +15,19 @@ export default async function AdminSuspensoesPage() {
     redirect("/login");
   }
 
-  // Busca todas as suspensões com os dados do aluno e de quem lançou
   const suspensoes = await prisma.suspensao.findMany({
     include: {
+      tipo: {
+        select: { titulo: true }
+      },
       aluno: {
-        include: {
-          usuario: true,
-          cargo: true
+        select: {
+          usuario: {
+            select: { nome: true, nomeDeGuerra: true }
+          },
+          cargo: {
+            select: { abreviacao: true }
+          }
         }
       },
       quemLancou: {
@@ -29,7 +35,7 @@ export default async function AdminSuspensoesPage() {
       },
     },
     orderBy: {
-      createdAt: 'desc' // Mais recentes primeiro
+      createdAt: 'desc' 
     }
   });
 
