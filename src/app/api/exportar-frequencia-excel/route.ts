@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 
         const linhaInicioTabela = linhaAtual;
 
-        const ultimaColunaTabela = 3 + diasOrdenados.length + 3;
+        const ultimaColunaTabela = 3 + diasOrdenados.length + 4;
         aba.mergeCells(linhaAtual, 1, linhaAtual, ultimaColunaTabela);
         const tituloCell = aba.getCell(linhaAtual, 1);
         tituloCell.value = `Frequência - ${tipoNomes[tipo]} (${meses[m]}/${ano})`;
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
         linhaAtual++;
 
         const rowHeader = aba.getRow(linhaAtual);
-        const cabecalhos = ['Cargo', 'Nº', 'Nome de Guerra', ...diasOrdenados.map(d => d.toString()), 'P', 'F', 'J'];
+        const cabecalhos = ['Cargo', 'Nº', 'Nome de Guerra', ...diasOrdenados.map(d => d.toString()), 'P', 'F', 'J', '%'];
         rowHeader.values = cabecalhos;
         rowHeader.font = { bold: true };
         rowHeader.eachCell((cell) => {
@@ -127,6 +127,20 @@ export async function GET(request: Request) {
           row.getCell(4 + diasOrdenados.length).value = totalP;
           row.getCell(4 + diasOrdenados.length + 1).value = totalF;
           row.getCell(4 + diasOrdenados.length + 2).value = totalJ;
+
+          const totalRegistros = totalP + totalF + totalJ;
+          const porcentagem = totalRegistros > 0 
+            ? Math.round(((totalP + totalJ) / totalRegistros) * 100) 
+            : 0;
+
+          const cellPerc = row.getCell(4 + diasOrdenados.length + 3);
+          cellPerc.value = `${porcentagem}%`;
+          
+          if (porcentagem < 75 && totalRegistros > 0) {
+             cellPerc.font = { color: { argb: 'FFFF0000' }, bold: true };
+          } else {
+             cellPerc.font = { bold: true };
+          }
 
           row.getCell(4 + diasOrdenados.length + 1).font = { color: { argb: 'FFFF0000' }, bold: true };
 
@@ -181,7 +195,7 @@ export async function GET(request: Request) {
       aba.getColumn(2).width = 8;  
       aba.getColumn(3).width = 28; 
       
-      for (let c = 4; c <= 35; c++) {
+      for (let c = 4; c <= 40; c++) {
         aba.getColumn(c).width = 6; 
       }
     }

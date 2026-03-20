@@ -7,6 +7,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Suspensao {
+  id              String      @id @default(cuid())
+  alunoId         String
+  dataOcorrencia  DateTime
+  dias            Int         
+  pontosRetirados Float       
+  detalhes        String      @db.Text
+  
+  quemAplicouId   String?     
+  quemAplicouNome String?     
+  quemLancouId    String
+  
+  visualizadoEm   DateTime?   
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  aluno           PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  quemLancou      Usuario     @relation("SuspensaoLancada", fields: [quemLancouId], references: [id])
+  quemAplicou     Usuario?    @relation("SuspensaoAplicada", fields: [quemAplicouId], references: [id])
+
+  tipoId    String
+  tipo      TipoDeSuspensao @relation(fields: [tipoId], references: [id])
+
+  @@map("gm_suspensoes")
+}
+
+model TipoDeSuspensao {
+  id        String      @id @default(cuid())
+  titulo    String      @unique
+  descricao String      @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  suspensoes Suspensao[]
+}
+
+
+
 model GmEventoCalendario {
   id        String     @id @default(uuid())
   titulo    String
@@ -134,6 +173,9 @@ model Usuario {
   atividadesCriadas         Atividade[]          @relation("AtividadesCriadas")
   atividadesRecebidas       AtividadeAluno[]     @relation("AtividadesRecebidas")
   interacoesMaterial        InteracaoMaterial[]
+  suspensoesLancadas  Suspensao[] @relation("SuspensaoLancada")
+  suspensoesAplicadas Suspensao[] @relation("SuspensaoAplicada")
+
 
   @@map("usuarios")
 }
@@ -181,6 +223,7 @@ model PerfilAluno {
   usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
   candidatoCiclos               CandidatoCiclo[]
+  suspensoes  Suspensao[]
   status   StatusPerfilAluno @default(ATIVO)
 
   @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
@@ -723,6 +766,8 @@ model Notificacao {
   link      String?
   lida      Boolean  @default(false)
   createdAt DateTime @default(now())
+  entidadeOrigemId String?  
+  tipoEntidade     String?  
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -929,6 +974,7 @@ enum StatusFrequencia {
 
 enum TipoEvento {
   FERIADO
+  AULA
   AULA_EXTRA
   CANCELADO
   EVENTO
@@ -1014,6 +1060,7 @@ enum MotivoPromocao {
   TERMINO_CURSO
   MERITO_ESCOLAR
   MERITO_INTELECTUAL
+  MERECIMENTO
 }
 
 enum MotivoDespromocao {

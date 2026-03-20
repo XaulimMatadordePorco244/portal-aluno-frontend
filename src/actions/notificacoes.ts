@@ -7,7 +7,14 @@ import { revalidatePath } from "next/cache";
 
 
 
-export async function criarNotificacao(usuarioId: string, titulo: string, mensagem: string, linkRelacionado?: string) {
+export async function criarNotificacao(
+  usuarioId: string, 
+  titulo: string, 
+  mensagem: string, 
+  linkRelacionado?: string,
+  entidadeOrigemId?: string, 
+  tipoEntidade?: string     
+) {
   try {
     await prisma.notificacao.create({
       data: {
@@ -16,7 +23,8 @@ export async function criarNotificacao(usuarioId: string, titulo: string, mensag
         mensagem,       
         link: linkRelacionado || null,
         lida: false,
-    
+        entidadeOrigemId: entidadeOrigemId || null, 
+        tipoEntidade: tipoEntidade || null          
       }
     });
   } catch (error) {

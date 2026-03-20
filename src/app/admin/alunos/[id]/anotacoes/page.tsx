@@ -56,26 +56,41 @@ export default async function AdminStudentDetailsPage({ params }: PageProps) {
       },
       quemAnotou: {
         include: {
-          perfilAluno: {
-            include: { 
-              cargo: true,
-              funcao: true,
-              companhia: true
-            }
-          }
+          perfilAluno: { include: { cargo: true } }
         }
       }
     },
-    orderBy: {
-      data: 'desc',
+    orderBy: { data: 'desc' },
+  });
+
+  const suspensoes = await prisma.suspensao.findMany({
+    where: { 
+      alunoId: alunoId 
     },
+    include: {
+      tipo: true,
+      quemLancou: {
+        include: {
+          perfilAluno: { include: { cargo: true } }
+        }
+      },
+      quemAplicou: {
+        include: {
+          perfilAluno: { include: { cargo: true } }
+        }
+      }
+    },
+    orderBy: { dataOcorrencia: 'desc' },
   });
 
   return (
-    <AdminStudentHistoryClient 
-      perfilAluno={perfilAluno}
-      anotacoes={anotacoes}
-      conceitoAtual={conceitoAtual}
-    />
+    <div >
+      <AdminStudentHistoryClient 
+        student={perfilAluno}
+        conceitoAtual={conceitoAtual}
+        anotacoes={anotacoes}
+        suspensoes={suspensoes} 
+      />
+    </div>
   );
 }

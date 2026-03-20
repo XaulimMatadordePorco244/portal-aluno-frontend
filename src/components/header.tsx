@@ -80,6 +80,7 @@ const menuGroups = [
       { href: "/classification", label: "Classificação Geral", icon: Trophy },
       { href: "/antiguidade", label: "Antiguidade", icon: Trophy },
       { href: "/materiais", label: "Materiais Auxiliares", icon: Trophy },
+      { href: "/vagas", label: "Quadro de Vagas", icon: Trophy },
       { href: "/regulations", label: "Regulamentos", icon: Scale },
       { href: "/informativos", label: "Informativos", icon: Newspaper },
       { href: "/aniversariantes", label: "Aniversariantes", icon: Cake },

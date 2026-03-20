@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useActionState } from 'react';
+import {  useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createTipoDeAnotacao, CreateQPEState } from './actions'; 
 
-type SelectionType = '' | 'FO_POSITIVO' | 'FO_NEGATIVO' | 'ELOGIO_COORDENACAO' | 'PUNICAO_COORDENACAO' | 'ELOGIO_CUSTOM' | 'PUNICAO_CUSTOM';
+type SelectionType = '' | 'FO_POSITIVO' | 'FO_NEGATIVO' | 'ELOGIO_COORDENACAO' | 'PUNICAO_COORDENACAO' | 'ELOGIO_CUSTOM' | 'PUNICAO_CUSTOM' | 'SUSPENSAO';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -26,48 +26,33 @@ export default function CreateQPEForm() {
 
   const showCustomPontos = selectionType === 'ELOGIO_CUSTOM' || selectionType === 'PUNICAO_CUSTOM';
 
-  useEffect(() => {
-    if (state.type === 'success') {
-      formRef.current?.reset();
-      setSelectionType('');
-      setCustomPontos('');
-    }
-  }, [state]);
-
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
-      {}
-      <input type="hidden" name="selectionType" value={selectionType} />
-
-      <div>
-        <Label htmlFor="titulo">Título</Label>
-        <Input id="titulo" name="titulo" required placeholder="Ex: SER CAMARADA" className="mt-1"/>
-      </div>
-      
-      <div>
-        <Label htmlFor="descricao">Descrição</Label>
-        <Textarea id="descricao" name="descricao" required placeholder="Descrição detalhada do item..." className="mt-1"/>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+    <form action={formAction} ref={formRef} className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="tipo">Tipo de Item</Label>
-          <Select onValueChange={(v) => setSelectionType(v as SelectionType)} value={selectionType} required>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione o tipo..." />
-            </SelectTrigger>
+          <Label htmlFor="titulo">Título / Infração</Label>
+          <Input id="titulo" name="titulo" required placeholder="Ex: Atraso Reincidente" />
+        </div>
+        <div>
+          <Label htmlFor="descricao">Descrição (Fato Típico)</Label>
+          <Textarea id="descricao" name="descricao" required placeholder="Descreva o enquadramento..." />
+        </div>
+        <div>
+          <Label htmlFor="selectionType">Classificação no QPE</Label>
+          <Select name="selectionType" value={selectionType} onValueChange={(v) => setSelectionType(v as SelectionType)} required>
+            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="FO_POSITIVO">FO+ (Padrão: +0.5)</SelectItem>
-              <SelectItem value="FO_NEGATIVO">FO- (Padrão: -0.3)</SelectItem>
+              <SelectItem value="FO_POSITIVO">Fato Observado Positivo (FO+ 0.5)</SelectItem>
+              <SelectItem value="FO_NEGATIVO">Fato Observado Negativo (FO- -0.3)</SelectItem>
               <SelectItem value="ELOGIO_COORDENACAO">Elogio (Aberto p/ Coordenação)</SelectItem>
               <SelectItem value="PUNICAO_COORDENACAO">Punição (Aberto p/ Coordenação)</SelectItem>
               <SelectItem value="ELOGIO_CUSTOM">Elogio (Pontuação Manual)</SelectItem>
               <SelectItem value="PUNICAO_CUSTOM">Punição (Pontuação Manual)</SelectItem>
+              <SelectItem value="SUSPENSAO">Suspensão</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
-        {}
         {showCustomPontos && (
           <div>
             <Label htmlFor="pontos">Pontos</Label>
@@ -92,7 +77,7 @@ export default function CreateQPEForm() {
       </div>
 
       {state.message && (
-        <div className={`p-3 text-sm rounded-md ${state.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <div className={`p-3 text-sm rounded-md ${state.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {state.message}
         </div>
       )}

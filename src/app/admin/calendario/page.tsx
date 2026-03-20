@@ -38,7 +38,7 @@ export default async function AdminCalendarioPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         <Card className="lg:col-span-1 h-fit shadow-sm">
           <CardHeader>
             <CardTitle>Novo Evento</CardTitle>
@@ -68,10 +68,11 @@ export default async function AdminCalendarioPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="FERIADO">Feriado / Recesso</SelectItem>
-                    <SelectItem value="AULA_EXTRA">Aula Extra / Obrigatória</SelectItem>
+                    <SelectItem value="AULA">Aula</SelectItem>
+                    <SelectItem value="AULA_EXTRA">Aula Extra</SelectItem>
                     <SelectItem value="CANCELADO">Aula Cancelada</SelectItem>
-                    <SelectItem value="EVENTO">Evento / Solenidade</SelectItem>
+                    <SelectItem value="FERIADO">Feriado / Recesso</SelectItem>
+                    <SelectItem value="EVENTO">Evento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -89,7 +90,7 @@ export default async function AdminCalendarioPage() {
         </Card>
 
         <div className="lg:col-span-2 space-y-6">
-          
+
           <Card className="shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle>Visão Geral do Mês</CardTitle>
@@ -135,11 +136,11 @@ export default async function AdminCalendarioPage() {
                     className="flex items-center justify-between p-4 border rounded-lg shadow-sm hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      
+
                       <div className="flex flex-col items-center justify-center min-w-16 px-2 py-1.5 h-14 bg-primary/10 text-primary rounded-md border border-primary/20 text-center">
                         {evt.dataFim ? (
                           <span className="text-[11px] font-bold leading-tight">
-                            {format(evt.data, "dd/MM")} <br/> a <br/> {format(evt.dataFim, "dd/MM")}
+                            {format(evt.data, "dd/MM")} <br /> a <br /> {format(evt.dataFim, "dd/MM")}
                           </span>
                         ) : (
                           <>
@@ -152,7 +153,7 @@ export default async function AdminCalendarioPage() {
                           </>
                         )}
                       </div>
-                      
+
                       <div>
                         <h4 className="font-bold text-foreground">{evt.titulo}</h4>
                         <div className="flex gap-2 text-sm text-muted-foreground mt-0.5">

@@ -28,7 +28,8 @@ const getRankingCacheado = unstable_cache(
             conceitoInicial: true,
             anotacoes: { select: { pontos: true } }
           }
-        }
+        },
+        suspensoes: { select: { pontosRetirados: true } } 
       }
     });
 
@@ -39,48 +40,56 @@ const getRankingCacheado = unstable_cache(
       let foNeg = 0;
       let somaTotalAnotacoes = 0;
 
-      const blocoAtivo = aluno.historicoCargos[0];
-      const anotacoesValidas = blocoAtivo?.anotacoes || [];
-
-      const rawInicial = blocoAtivo?.conceitoInicial ?? aluno.conceitoInicial;
-      const conceitoInicial = rawInicial
-        ? parseFloat(String(rawInicial).replace(',', '.'))
-        : 10.0;
-
-      for (const anotacao of anotacoesValidas) {
-        const pontos = Number(anotacao.pontos);
-        somaTotalAnotacoes += pontos;
-
-        if (pontos > 0.5) elogios += pontos;
-        else if (pontos < -0.3) punicoes += pontos;
-        else if (pontos === 0.5) foPos += pontos;
-        else if (pontos === -0.3) foNeg += pontos;
+      const anotacoes = aluno.historicoCargos[0]?.anotacoes || [];
+      for (const a of anotacoes) {
+        const pts = Number(a.pontos);
+        somaTotalAnotacoes += pts;
+        if (pts > 0.5) elogios++;
+        else if (pts < -0.3) punicoes++;
+        else if (pts === 0.5) foPos++;
+        else if (pts === -0.3) foNeg++;
       }
 
+      let totalSuspensoes = 0;
+      let pontosSuspensao = 0;
+      const suspensoes = aluno.suspensoes || [];
+      for (const s of suspensoes) {
+        totalSuspensoes++;
+        pontosSuspensao += Number(s.pontosRetirados);
+      }
+
+      const conceitoInicial = aluno.historicoCargos[0]?.conceitoInicial || 7;
+      let conceitoAtualCalculado = conceitoInicial + somaTotalAnotacoes + pontosSuspensao;
+      
+      if (conceitoAtualCalculado > 10) conceitoAtualCalculado = 10;
+      if (conceitoAtualCalculado < 0) conceitoAtualCalculado = 0;
+
       return {
-        rawAluno: aluno,
         dadosCalculados: {
           id: aluno.id,
-          posicao: 0,
           numero: aluno.numero,
           nome: aluno.usuario.nome,
-          nomeDeGuerra: aluno.usuario.nomeDeGuerra || "S/N",
-          cargo: aluno.cargo?.nome || "Sem Cargo",
+          nomeDeGuerra: aluno.usuario.nomeDeGuerra || aluno.usuario.nome.split(' ')[0],
+          cargo: aluno.cargo?.abreviacao || '',
           precedencia: aluno.cargo?.precedencia || 999,
           totalElogios: elogios,
           totalPunicoes: punicoes,
           totalFoPos: foPos,
           totalFoNeg: foNeg,
-          conceitoAtual: conceitoInicial + somaTotalAnotacoes
+          totalSuspensoes: totalSuspensoes, 
+          conceitoAtual: conceitoAtualCalculado
         }
       };
     });
 
     processedData.sort((a, b) => {
-      const precA = a.rawAluno.cargo?.precedencia || 999;
-      const precB = b.rawAluno.cargo?.precedencia || 999;
-      if (precA !== precB) return precA - precB;
-      return b.dadosCalculados.conceitoAtual - a.dadosCalculados.conceitoAtual;
+      if (a.dadosCalculados.precedencia !== b.dadosCalculados.precedencia) {
+        return a.dadosCalculados.precedencia - b.dadosCalculados.precedencia;
+      }
+      if (b.dadosCalculados.conceitoAtual !== a.dadosCalculados.conceitoAtual) {
+        return b.dadosCalculados.conceitoAtual - a.dadosCalculados.conceitoAtual;
+      }
+      return a.dadosCalculados.nome.localeCompare(b.dadosCalculados.nome);
     });
 
     const rankingMap: Record<string, number> = {};
@@ -106,7 +115,6 @@ const getRankingCacheado = unstable_cache(
 
 export default async function ClassificacaoGeralPage() {
   const finalData = await getRankingCacheado();
-
   const dataAtualizacao = new Date().toLocaleDateString('pt-BR');
 
   return (
@@ -118,8 +126,8 @@ export default async function ClassificacaoGeralPage() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
-            <CalendarDays className="h-4 w-4" />
-            <span>Atualizado em: {dataAtualizacao}</span>
+            <CalendarDays className="w-4 h-4" />
+            <span>Atualizado: <strong>{dataAtualizacao}</strong></span>
           </div>
           <ExtratoButton dados={finalData} dataAtualizacao={dataAtualizacao} />
         </div>

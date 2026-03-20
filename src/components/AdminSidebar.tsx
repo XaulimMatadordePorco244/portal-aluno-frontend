@@ -100,6 +100,8 @@ export function AdminSidebar() {
     { href: "/admin/dados-escolares", label: "Dados Escolares", icon: GraduationCap },
     { href: "/admin/materiais", label: "Materiais Auxiliares", icon: BookOpen },
     { href: "/admin/atividades", label: "Atividades", icon: ClipboardList },
+        { href: "/admin/vagas", label: "Quadro de Vagas", icon: Settings },
+
   ];
 
   const avaliacoesLinks = [
@@ -108,6 +110,7 @@ export function AdminSidebar() {
     { href: "/admin/qes", label: "QES", icon: ScrollText },
     { href: "/admin/qpe", label: "QPE", icon: FileSpreadsheet },
     { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
+    { href: "/admin/suspensoes", label: "Suspensões", icon: ClipboardList },
   ];
 
   const sistemaLinks = [
@@ -126,7 +129,7 @@ export function AdminSidebar() {
       <Button
         variant="outline"
         size="icon"
-        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full shadow-md bg-background border hover:bg-muted p-0"
+        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full shadow-md bg-background border hover:bg-muted p-0 cursor-pointer"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}

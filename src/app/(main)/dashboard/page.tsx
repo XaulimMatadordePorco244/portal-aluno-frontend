@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import DashboardClient from './DashboardClient';
 import prisma from '@/lib/prisma';
 
+import { AvisoSuspensaoModal } from '@/components/aluno/AvisoSuspensaoModal';
+
 async function getRankingSnippet(user: UserWithRelations) {
   if (!user.perfilAluno?.cargoId) {
     return { rankingData: [], currentUserRank: null };
@@ -83,7 +85,8 @@ export default async function DashboardPage() {
     { rankingData }, 
     latestCIs, 
     latestInformativos,
-    minhasEscalas 
+    minhasEscalas,
+    suspensaoNaoLida 
   ] = await Promise.all([
     
     prisma.qES.findMany({
@@ -127,18 +130,31 @@ export default async function DashboardPage() {
       },
       take: 3,
       orderBy: { dataEscala: 'desc' }
-    }) : []
+    }) : [],
+
+    profileId ? prisma.suspensao.findFirst({
+      where: {
+        alunoId: profileId,
+        visualizadoEm: null
+      },
+      orderBy: { createdAt: 'desc' }
+    }) : null
+
   ]);
 
   return (
-    <DashboardClient
-      user={user}
-      qesItems={qesItems}
-      latestAnnotations={latestAnnotations}
-      rankingData={rankingData}
-      latestCIs={latestCIs}
-      latestInformativos={latestInformativos}
-      minhasEscalas={minhasEscalas} 
-    />
+    <>
+      <AvisoSuspensaoModal suspensao={suspensaoNaoLida} />
+
+      <DashboardClient
+        user={user}
+        qesItems={qesItems}
+        latestAnnotations={latestAnnotations}
+        rankingData={rankingData}
+        latestCIs={latestCIs}
+        latestInformativos={latestInformativos}
+        minhasEscalas={minhasEscalas} 
+      />
+    </>
   );
 }

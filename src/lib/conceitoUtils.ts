@@ -5,6 +5,7 @@ export async function recalcularConceitoAluno(perfilAlunoId: string): Promise<nu
   const perfil = await prisma.perfilAluno.findUnique({
     where: { id: perfilAlunoId },
     include: {
+      suspensoes: true, 
       historicoCargos: {
         where: { status: 'ATIVO' },
         include: {
@@ -28,7 +29,12 @@ export async function recalcularConceitoAluno(perfilAlunoId: string): Promise<nu
     return total + Number(anotacao.pontos || 0);
   }, 0);
 
-  const novoConceitoAtual = pontuacaoInicial + somaAnotacoes;
+  const suspensoes = perfil.suspensoes || [];
+  const pontosPerdidosSuspensao = suspensoes.reduce((total, suspensao) => {
+    return total + Number(suspensao.pontosRetirados || 0);
+  }, 0);
+
+  const novoConceitoAtual = pontuacaoInicial + somaAnotacoes + pontosPerdidosSuspensao;
 
   await prisma.perfilAluno.update({
     where: { id: perfilAlunoId },
