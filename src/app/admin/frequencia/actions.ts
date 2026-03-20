@@ -8,36 +8,38 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
   const startDate = new Date(ano, mes - 1, 1)
   const endDate = new Date(ano, mes, 0) 
 
- const alunos = await prisma.perfilAluno.findMany({
-  where: {
-    usuario: {
-      status: 'ATIVO'
-    }
-  },
-  orderBy: [
-    { cargo: { precedencia: 'asc' } },
-    { dataUltimaPromocao: 'asc' },
-    { numero: 'asc' }
-  ],
-  select: {
-    id: true,
-    usuario: {
-      select: {
-        nomeDeGuerra: true
+  const alunos = await prisma.perfilAluno.findMany({
+    where: {
+      usuario: {
+        status: 'ATIVO'
       }
     },
-    cargo: {
-      select: {
-        abreviacao: true
+    orderBy: [
+      { cargo: { precedencia: 'asc' } },
+      { dataUltimaPromocao: 'asc' },
+      { numero: 'asc' }
+    ],
+    select: {
+      id: true,
+      usuario: {
+        select: {
+          nomeDeGuerra: true
+        }
+      },
+      cargo: {
+        select: {
+          abreviacao: true
+        }
       }
     }
-  }
-})
+  })
+
+  const instrutorId = tipo === 'GERAL' ? null : tipo
 
   const frequencias = await prisma.frequencia.findMany({
     where: {
       data: { gte: startDate, lte: endDate },
-      tipo: tipo
+      instrutorId: instrutorId 
     }
   })
 
@@ -66,13 +68,27 @@ export async function alternarFrequencia(alunoId: string, dataString: string, ti
   else if (statusAtual === StatusFrequencia.FALTA) novoStatus = StatusFrequencia.JUSTIFICADA
   else if (statusAtual === StatusFrequencia.JUSTIFICADA) novoStatus = StatusFrequencia.PRESENTE 
 
-  await prisma.frequencia.upsert({
-    where: {
-      alunoId_data_tipo: { alunoId, data, tipo }
-    },
-    update: { status: novoStatus },
-    create: { alunoId, data, tipo, status: novoStatus }
+  const instrutorId = tipo === 'GERAL' ? null : tipo
+
+  const frequenciaExistente = await prisma.frequencia.findFirst({
+    where: { alunoId, data, instrutorId }
   })
+
+  if (frequenciaExistente) {
+    await prisma.frequencia.update({
+      where: { id: frequenciaExistente.id },
+      data: { status: novoStatus }
+    })
+  } else {
+    await prisma.frequencia.create({
+      data: { 
+        alunoId, 
+        data, 
+        instrutorId, 
+        status: novoStatus 
+      }
+    })
+  }
 
   revalidatePath('/admin/frequencia/')
   return { success: true, novoStatus }

@@ -62,14 +62,15 @@ model Frequencia {
   id         String           @id @default(uuid())
   alunoId    String
   data       DateTime
-  tipo       String           @default("GERAL")
   status     StatusFrequencia
   observacao String?
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   aluno      PerfilAluno      @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  instrutorId String?
+  instrutor   Instrutor? @relation(fields: [instrutorId], references: [id])
 
-  @@unique([alunoId, data, tipo])
+  @@unique([alunoId, data])
   @@map("gm_frequencia")
 }
 
@@ -838,6 +839,16 @@ model AtividadeAluno {
   updatedAt DateTime @updatedAt
 
   @@unique([atividadeId, alunoId])
+}
+
+model Instrutor {
+  id        String   @id @default(uuid())
+  nome      String
+  ativo     Boolean  @default(true) 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  frequencias Frequencia[] 
 }
 
 enum Role {

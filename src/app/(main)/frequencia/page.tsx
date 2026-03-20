@@ -11,7 +11,8 @@ export default async function AlunoFrequenciaPage() {
 
   const frequencias = await prisma.frequencia.findMany({
     where: { alunoId: user.perfilAluno.id },
-    orderBy: { data: 'desc' } 
+    orderBy: { data: 'desc' },
+    include: { instrutor: true } 
   })
 
   const eventos = await prisma.gmEventoCalendario.findMany()
@@ -22,7 +23,7 @@ export default async function AlunoFrequenciaPage() {
       id: f.id,
       data: f.data,
       status: f.status,
-      tipoAula: f.tipo,
+      tipoAula: f.instrutor ? `Inst. ${f.instrutor.nome}` : 'Geral',
       observacao: f.observacao 
     })),
     ...eventos.map(e => ({
