@@ -14,10 +14,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from 'lucide-react';
 import { AvatarUpload } from '@/components/admin/avatar-upload';
 
+export interface AlunoEditado {
+  id: string;
+  nome: string;
+  nomeDeGuerra: string | null;
+  cpf: string;
+  email: string | null;
+  telefone: string | null;
+  rg: string | null;
+  rgEstadoEmissor: string | null;
+  fotoUrl: string | null;
+  dataNascimento: Date | string | null;
+  genero: 'MASCULINO' | 'FEMININO' | null;
+  perfilAluno: {
+    numero: string | null;      
+    cargoId: string | null;    
+    companhiaId: string | null; 
+    foraDeData: boolean;
+    tipagemSanguinea: string | null;
+    aptidaoFisicaStatus: string | null;
+    aptidaoFisicaLaudo: boolean;
+    aptidaoFisicaObs: string | null;
+    endereco: string | null;
+    escolaId: string | null;
+    serieEscolar: string | null;
+    turno: string | null;
+    turmaEscolar: string | null;
+    fazCursoExterno: boolean;
+    cursoExternoDescricao: string | null;
+    termoResponsabilidadeAssinado: boolean;
+    responsavelNome: string | null;
+    responsavelCpf: string | null;
+    responsavelParentesco: string | null;
+    responsavelTelefone: string | null;
+    responsavelEmail: string | null;
+  } | null;
+}
+
 interface AlunoFormProps {
   cargos: { id: string, nome: string }[];
   companhias: { id: string, nome: string }[];
   escolas: { id: string, nome: string }[];
+  aluno: AlunoEditado;
 }
 
 function SubmitButton() {
@@ -25,7 +63,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending} className="w-full">
       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? 'Salvando...' : 'Cadastrar Aluno'}
+      {pending ? 'Salvando...' : 'Salvar Alterações'}
     </Button>
   );
 }
@@ -35,22 +73,33 @@ function ErrorMsg({ error }: { error?: string[] }) {
   return <p className="text-xs text-destructive mt-1 font-medium">{error[0]}</p>;
 }
 
-export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProps) {
+export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: AlunoFormProps) {
   const [state, formAction] = useActionState(createAluno, undefined);
   const [cursoExterno, setCursoExterno] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
 
   useEffect(() => {
-    if (state?.formData?.fazCursoExterno === 'on') {
+    if (state?.formData) {
+      setCursoExterno(state.formData.fazCursoExterno === 'on');
+    } else if (aluno.perfilAluno?.fazCursoExterno) {
       setCursoExterno(true);
     }
-  }, [state]);
+  }, [state, aluno]);
 
   const handleSubmit = (formData: FormData) => {
+    formData.append("id", aluno.id);
     if (profilePic) {
       formData.append("fotoPerfil", profilePic);
     }
     formAction(formData);
+  };
+
+  const getBirthDate = () => {
+    if (state?.formData?.dataNascimento) return state.formData.dataNascimento as string;
+    if (aluno.dataNascimento) {
+      return new Date(aluno.dataNascimento).toISOString().split('T')[0];
+    }
+    return "";
   };
 
   return (
@@ -71,7 +120,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
             <Label htmlFor="nome">Nome Completo <span className="text-red-500">*</span></Label>
             <Input
               id="nome" name="nome" placeholder="Nome completo do aluno" required
-              defaultValue={state?.formData?.nome as string}
+              defaultValue={(state?.formData?.nome as string) ?? aluno.nome}
               className={state?.errors?.nome ? "border-destructive focus-visible:ring-destructive" : ""}
             />
             <ErrorMsg error={state?.errors?.nome} />
@@ -80,7 +129,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
             <Label htmlFor="cpf">CPF <span className="text-red-500">*</span></Label>
             <Input
               id="cpf" name="cpf" placeholder="000.000.000-00" required maxLength={14}
-              defaultValue={state?.formData?.cpf as string}
+              defaultValue={(state?.formData?.cpf as string) ?? aluno.cpf}
               className={state?.errors?.cpf ? "border-destructive focus-visible:ring-destructive" : ""}
             />
             <ErrorMsg error={state?.errors?.cpf} />
@@ -90,22 +139,22 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dataNascimento">Data de Nascimento <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="dataNascimento" name="dataNascimento" type="date" defaultValue={state?.formData?.dataNascimento as string} />
+            <Input id="dataNascimento" name="dataNascimento" type="date" defaultValue={getBirthDate()} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="rg">RG <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="rg" name="rg" placeholder="Registro Geral" defaultValue={state?.formData?.rg as string} />
+            <Input id="rg" name="rg" placeholder="Registro Geral" defaultValue={(state?.formData?.rg as string) ?? (aluno.rg || "")} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="rgEstadoEmissor">Órgão/UF <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="rgEstadoEmissor" name="rgEstadoEmissor" placeholder="Ex: SSP/MS" defaultValue={state?.formData?.rgEstadoEmissor as string} />
+            <Input id="rgEstadoEmissor" name="rgEstadoEmissor" placeholder="Ex: SSP/MS" defaultValue={(state?.formData?.rgEstadoEmissor as string) ?? (aluno.rgEstadoEmissor || "")} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label>Gênero <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="genero" defaultValue={state?.formData?.genero as string}>
+            <Select name="genero" defaultValue={(state?.formData?.genero as string) ?? (aluno.genero || "")}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="MASCULINO">Masculino</SelectItem>
@@ -115,13 +164,13 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           </div>
           <div className="space-y-2">
             <Label htmlFor="telefone">Telefone / Celular <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="telefone" name="telefone" placeholder="(00) 00000-0000" defaultValue={state?.formData?.telefone as string} />
+            <Input id="telefone" name="telefone" placeholder="(00) 00000-0000" defaultValue={(state?.formData?.telefone as string) ?? (aluno.telefone || "")} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Input
               id="email" name="email" type="email" placeholder="aluno@exemplo.com"
-              defaultValue={state?.formData?.email as string}
+              defaultValue={(state?.formData?.email as string) ?? (aluno.email || "")}
               className={state?.errors?.email ? "border-destructive focus-visible:ring-destructive" : ""}
             />
             <ErrorMsg error={state?.errors?.email} />
@@ -130,7 +179,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
 
         <div className="space-y-2">
           <Label htmlFor="endereco">Endereço Completo <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-          <Textarea id="endereco" name="endereco" placeholder="Rua, Número, Bairro, CEP..." className="h-20 resize-none" defaultValue={state?.formData?.endereco as string} />
+          <Textarea id="endereco" name="endereco" placeholder="Rua, Número, Bairro, CEP..." className="h-20 resize-none" defaultValue={(state?.formData?.endereco as string) ?? (aluno.perfilAluno?.endereco || "")} />
         </div>
       </section>
 
@@ -143,24 +192,24 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="numero">Número (Matrícula) <span className="text-red-500">*</span></Label>
-            <Input id="numero" name="numero" placeholder="Ex: 502" required defaultValue={state?.formData?.numero as string} className={state?.errors?.numero ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="numero" name="numero" placeholder="Ex: 502" required defaultValue={(state?.formData?.numero as string) ?? (aluno.perfilAluno?.numero || "")} className={state?.errors?.numero ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.numero} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="nomeDeGuerra">Nome de Guerra <span className="text-red-500">*</span></Label>
-            <Input id="nomeDeGuerra" name="nomeDeGuerra" placeholder="Ex: Sd. Silva" required defaultValue={state?.formData?.nomeDeGuerra as string} className={state?.errors?.nomeDeGuerra ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="nomeDeGuerra" name="nomeDeGuerra" placeholder="Ex: Sd. Silva" required defaultValue={(state?.formData?.nomeDeGuerra as string) ?? (aluno.nomeDeGuerra || "")} className={state?.errors?.nomeDeGuerra ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.nomeDeGuerra} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha Inicial <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="password" name="password" type="password" placeholder="Deixe em branco para senha padrão" defaultValue={state?.formData?.password as string} />
+            <Input id="password" name="password" type="password" placeholder="Deixe em branco para não alterar" defaultValue={state?.formData?.password as string} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Cargo / Graduação <span className="text-red-500">*</span></Label>
-            <Select name="cargoId" defaultValue={state?.formData?.cargoId as string}>
+            <Select name="cargoId" defaultValue={(state?.formData?.cargoId as string) ?? (aluno.perfilAluno?.cargoId || "")}>
               <SelectTrigger className={state?.errors?.cargoId ? "border-destructive focus-visible:ring-destructive" : ""}><SelectValue placeholder="Selecione o Cargo" /></SelectTrigger>
               <SelectContent>
                 {cargos.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
@@ -170,9 +219,10 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           </div>
           <div className="space-y-2">
             <Label>Companhia <span className="text-red-500">*</span></Label>
-            <Select name="companhiaId" defaultValue={state?.formData?.companhiaId as string}>
+            <Select name="companhiaId" defaultValue={(state?.formData?.companhiaId as string) ?? (aluno.perfilAluno?.companhiaId || "")}>
               <SelectTrigger className={state?.errors?.companhiaId ? "border-destructive focus-visible:ring-destructive" : ""}><SelectValue placeholder="Selecione a Companhia" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">Nenhuma</SelectItem>
                 {companhias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -181,8 +231,8 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-          <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" defaultChecked={state?.formData?.ingressoForaDeData === 'on'} />
-          <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Ingresso fora de data (Matrícula tardia)</Label>
+          <Checkbox id="ingressoForaDeData" name="ingressoForaDeData" defaultChecked={state?.formData ? state.formData.ingressoForaDeData === 'on' : (aluno.perfilAluno?.foraDeData || false)} />
+          <Label htmlFor="ingressoForaDeData" className="font-medium cursor-pointer">Aluno Fora de Data?</Label>
         </div>
       </section>
 
@@ -195,7 +245,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Tipagem Sanguínea <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="tipagemSanguinea" defaultValue={state?.formData?.tipagemSanguinea as string}>
+            <Select name="tipagemSanguinea" defaultValue={(state?.formData?.tipagemSanguinea as string) ?? (aluno.perfilAluno?.tipagemSanguinea || "")}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="A_POSITIVO">A+</SelectItem>
@@ -211,7 +261,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           </div>
           <div className="space-y-2">
             <Label>Aptidão Física <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="aptidaoFisicaStatus" defaultValue={(state?.formData?.aptidaoFisicaStatus as string) || "LIBERADO"}>
+            <Select name="aptidaoFisicaStatus" defaultValue={(state?.formData?.aptidaoFisicaStatus as string) ?? (aluno.perfilAluno?.aptidaoFisicaStatus || "LIBERADO")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="LIBERADO">Liberado</SelectItem>
@@ -223,13 +273,13 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-          <Checkbox id="aptidaoFisicaLaudo" name="aptidaoFisicaLaudo" defaultChecked={state?.formData?.aptidaoFisicaLaudo === 'on'} />
+          <Checkbox id="aptidaoFisicaLaudo" name="aptidaoFisicaLaudo" defaultChecked={state?.formData ? state.formData.aptidaoFisicaLaudo === 'on' : (aluno.perfilAluno?.aptidaoFisicaLaudo || false)} />
           <Label htmlFor="aptidaoFisicaLaudo" className="font-medium cursor-pointer">Possui laudo médico entregue?</Label>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="aptidaoFisicaObs">Observações Médicas / Restrições <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-          <Textarea id="aptidaoFisicaObs" name="aptidaoFisicaObs" placeholder="Ex: Alergia a picada de insetos..." className="h-20 resize-none" defaultValue={state?.formData?.aptidaoFisicaObs as string} />
+          <Textarea id="aptidaoFisicaObs" name="aptidaoFisicaObs" placeholder="Ex: Alergia a picada de insetos..." className="h-20 resize-none" defaultValue={(state?.formData?.aptidaoFisicaObs as string) ?? (aluno.perfilAluno?.aptidaoFisicaObs || "")} />
         </div>
       </section>
 
@@ -242,7 +292,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Escola <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="escolaId" defaultValue={state?.formData?.escolaId as string}>
+            <Select name="escolaId" defaultValue={(state?.formData?.escolaId as string) ?? (aluno.perfilAluno?.escolaId || "")}>
               <SelectTrigger className={state?.errors?.escolaId ? "border-destructive focus-visible:ring-destructive" : ""}>
                 <SelectValue placeholder="Selecione a Escola" />
               </SelectTrigger>
@@ -255,7 +305,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
 
           <div className="space-y-2">
             <Label>Série Escolar <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="serieEscolar" defaultValue={state?.formData?.serieEscolar as string}>
+            <Select name="serieEscolar" defaultValue={(state?.formData?.serieEscolar as string) ?? (aluno.perfilAluno?.serieEscolar || "")}>
               <SelectTrigger><SelectValue placeholder="Selecione a Série" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="QUARTO_ANO_FUNDAMENTAL">4º Ano do Ensino Fundamental</SelectItem>
@@ -267,17 +317,20 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
                 <SelectItem value="PRIMEIRO_ANO_MEDIO">1º Ano do Ensino Médio</SelectItem>
                 <SelectItem value="SEGUNDO_ANO_MEDIO">2º Ano do Ensino Médio</SelectItem>
                 <SelectItem value="TERCEIRO_ANO_MEDIO">3º Ano do Ensino Médio</SelectItem>
+                <SelectItem value="CONCLUIDO">Ensino Médio Concluído</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label>Turno <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Select name="turno" defaultValue={state?.formData?.turno as string}>
+            <Select name="turno" defaultValue={(state?.formData?.turno as string) ?? (aluno.perfilAluno?.turno || "")}>
               <SelectTrigger><SelectValue placeholder="Selecione o Turno" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="MATUTINO">Matutino</SelectItem>
                 <SelectItem value="VESPERTINO">Vespertino</SelectItem>
+                <SelectItem value="NOTURNO">Noturno</SelectItem>
+                <SelectItem value="INTEGRAL">Integral</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -286,7 +339,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
             <Label htmlFor="turmaEscolar">Turma (Ex: A, B) <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Input 
               id="turmaEscolar" name="turmaEscolar" placeholder="Ex: A" 
-              defaultValue={state?.formData?.turmaEscolar as string} 
+              defaultValue={(state?.formData?.turmaEscolar as string) ?? (aluno.perfilAluno?.turmaEscolar || "")} 
             />
           </div>
         </div>
@@ -297,12 +350,12 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
             <Label htmlFor="fazCursoExterno" className="font-medium cursor-pointer">Faz algum curso externo?</Label>
           </div>
           {cursoExterno && (
-            <Input name="cursoExternoDescricao" placeholder="Qual curso e onde?" className="mt-2 bg-background" defaultValue={state?.formData?.cursoExternoDescricao as string} />
+            <Input name="cursoExternoDescricao" placeholder="Qual curso e onde?" className="mt-2 bg-background" defaultValue={(state?.formData?.cursoExternoDescricao as string) ?? (aluno.perfilAluno?.cursoExternoDescricao || "")} />
           )}
         </div>
 
         <div className="flex items-center space-x-2 border border-border p-3 rounded-md bg-muted/10">
-          <Checkbox id="termoResponsabilidadeAssinado" name="termoResponsabilidadeAssinado" defaultChecked={state?.formData?.termoResponsabilidadeAssinado === 'on'} />
+          <Checkbox id="termoResponsabilidadeAssinado" name="termoResponsabilidadeAssinado" defaultChecked={state?.formData ? state.formData.termoResponsabilidadeAssinado === 'on' : (aluno.perfilAluno?.termoResponsabilidadeAssinado || false)} />
           <Label htmlFor="termoResponsabilidadeAssinado" className="font-medium cursor-pointer">Termo de Responsabilidade Assinado?</Label>
         </div>
       </section>
@@ -316,12 +369,12 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="responsavelNome">Nome do Responsável <span className="text-red-500">*</span></Label>
-            <Input id="responsavelNome" name="responsavelNome" placeholder="Nome completo do responsável" required defaultValue={state?.formData?.responsavelNome as string} className={state?.errors?.responsavelNome ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="responsavelNome" name="responsavelNome" placeholder="Nome completo do responsável" required defaultValue={(state?.formData?.responsavelNome as string) ?? (aluno.perfilAluno?.responsavelNome || "")} className={state?.errors?.responsavelNome ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.responsavelNome} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="responsavelCpf">CPF do Responsável <span className="text-red-500">*</span></Label>
-            <Input id="responsavelCpf" name="responsavelCpf" placeholder="000.000.000-00" required maxLength={14} defaultValue={state?.formData?.responsavelCpf as string} className={state?.errors?.responsavelCpf ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="responsavelCpf" name="responsavelCpf" placeholder="000.000.000-00" required maxLength={14} defaultValue={(state?.formData?.responsavelCpf as string) ?? (aluno.perfilAluno?.responsavelCpf || "")} className={state?.errors?.responsavelCpf ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.responsavelCpf} />
           </div>
         </div>
@@ -329,7 +382,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="responsavelParentesco">Grau de Parentesco <span className="text-red-500">*</span></Label>
-            <Select name="responsavelParentesco" defaultValue={(state?.formData?.responsavelParentesco as string) || "MAE"}>
+            <Select name="responsavelParentesco" defaultValue={(state?.formData?.responsavelParentesco as string) ?? (aluno.perfilAluno?.responsavelParentesco || "MAE")}>
               <SelectTrigger className={state?.errors?.responsavelParentesco ? "border-destructive focus-visible:ring-destructive" : ""}>
                 <SelectValue />
               </SelectTrigger>
@@ -346,12 +399,12 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           </div>
           <div className="space-y-2">
             <Label htmlFor="responsavelTelefone">Telefone <span className="text-red-500">*</span></Label>
-            <Input id="responsavelTelefone" name="responsavelTelefone" placeholder="(00) 00000-0000" required defaultValue={state?.formData?.responsavelTelefone as string} className={state?.errors?.responsavelTelefone ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="responsavelTelefone" name="responsavelTelefone" placeholder="(00) 00000-0000" required defaultValue={(state?.formData?.responsavelTelefone as string) ?? (aluno.perfilAluno?.responsavelTelefone || "")} className={state?.errors?.responsavelTelefone ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.responsavelTelefone} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="responsavelEmail">Email <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
-            <Input id="responsavelEmail" name="responsavelEmail" type="email" placeholder="email@exemplo.com" defaultValue={state?.formData?.responsavelEmail as string} className={state?.errors?.responsavelEmail ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <Input id="responsavelEmail" name="responsavelEmail" type="email" placeholder="email@exemplo.com" defaultValue={(state?.formData?.responsavelEmail as string) ?? (aluno.perfilAluno?.responsavelEmail || "")} className={state?.errors?.responsavelEmail ? "border-destructive focus-visible:ring-destructive" : ""} />
             <ErrorMsg error={state?.errors?.responsavelEmail} />
           </div>
         </div>
