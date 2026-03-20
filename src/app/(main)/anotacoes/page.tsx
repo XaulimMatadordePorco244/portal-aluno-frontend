@@ -5,6 +5,7 @@ import EvaluationsClient from "./evaluations-client";
 import { recalcularConceitoAluno } from "@/lib/conceitoUtils";
 
 export type AnotacaoComRelacoes = Awaited<ReturnType<typeof getAlunoData>>['anotacoes'][0];
+export type SuspensaoComRelacoes = Awaited<ReturnType<typeof getAlunoData>>['suspensoes'][0];
 
 async function getAlunoData() {
   const user = await getCurrentUserWithRelations();
@@ -18,6 +19,7 @@ async function getAlunoData() {
     return { 
       user, 
       anotacoes: [], 
+      suspensoes: [],
       conceitoAtual: 0 
     };
   }
@@ -41,41 +43,53 @@ async function getAlunoData() {
       tipo: true,
       autor: {
         include: {
-          perfilAluno: {
-            include: {
-              cargo: true
-            }
-          }
+          perfilAluno: { include: { cargo: true } }
         }
       },
       quemAnotou: {
         include: {
-          perfilAluno: {
-            include: {
-              cargo: true
-            }
-          }
+          perfilAluno: { include: { cargo: true } }
         }
       }
     },
-    orderBy: {
-      data: 'desc',
+    orderBy: { data: 'desc' },
+  });
+
+  const suspensoes = await prisma.suspensao.findMany({
+    where: { 
+      alunoId: perfilId 
     },
+    include: {
+      tipo: true, 
+      quemLancou: {
+        include: {
+          perfilAluno: { include: { cargo: true } }
+        }
+      },
+      quemAplicou: {
+        include: {
+          perfilAluno: { include: { cargo: true } }
+        }
+      }
+    },
+    orderBy: { dataOcorrencia: 'desc' },
   });
 
   return { 
     user, 
     anotacoes, 
+    suspensoes,
     conceitoAtual: novoConceito
   };
 }
 
 export default async function EvaluationsPage() {
-  const { user, anotacoes, conceitoAtual} = await getAlunoData();
+  const { user, anotacoes, suspensoes, conceitoAtual} = await getAlunoData();
 
   return <EvaluationsClient 
     user={user} 
     anotacoes={anotacoes} 
+    suspensoes={suspensoes}
     conceitoAtual={conceitoAtual} 
   />;
 }

@@ -110,6 +110,7 @@ export function AdminSidebar() {
     { href: "/admin/qes", label: "QES", icon: ScrollText },
     { href: "/admin/qpe", label: "QPE", icon: FileSpreadsheet },
     { href: "/admin/anotacoes", label: "Anotações", icon: ClipboardList },
+    { href: "/admin/suspensoes", label: "Suspensões", icon: ClipboardList },
   ];
 
   const sistemaLinks = [
