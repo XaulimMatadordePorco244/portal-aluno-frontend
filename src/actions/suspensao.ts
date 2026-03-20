@@ -55,8 +55,7 @@ export async function createSuspensao(prevState: any, formData: FormData) {
     }
 
     const { alunoId, data, dias, pontos, detalhes, quemAplicouId, quemAplicouNome, tipoId } = validatedFields.data;
-
-    await prisma.suspensao.create({
+    const novaSuspensao = await prisma.suspensao.create({
       data: {
         alunoId,
         tipoId,
@@ -73,12 +72,14 @@ export async function createSuspensao(prevState: any, formData: FormData) {
     await recalcularConceitoAluno(alunoId);
 
     const alunoInfo = await prisma.perfilAluno.findUnique({ where: { id: alunoId }, include: { usuario: true }});
-    if (alunoInfo?.usuarioId) {
+  if (alunoInfo?.usuarioId) {
       await criarNotificacao(
         alunoInfo.usuarioId,
         "⚠️ Você foi Suspenso",
         `Foi registrada uma suspensão de ${dias} dia(s) no seu histórico. Verifique os detalhes.`,
-        "/aluno/perfil"
+        "/aluno/perfil",
+        novaSuspensao.id, 
+        "SUSPENSAO"       
       );
     }
 
@@ -119,6 +120,10 @@ export async function deleteSuspensao(id: string) {
     });
 
     if (!suspensao) return { success: false, message: "Suspensão não encontrada." };
+
+    await prisma.notificacao.deleteMany({
+      where: { entidadeOrigemId: id }
+    });
 
     await prisma.suspensao.delete({
       where: { id }

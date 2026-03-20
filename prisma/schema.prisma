@@ -44,6 +44,8 @@ model TipoDeSuspensao {
   suspensoes Suspensao[]
 }
 
+
+
 model GmEventoCalendario {
   id        String     @id @default(uuid())
   titulo    String
@@ -764,6 +766,8 @@ model Notificacao {
   link      String?
   lida      Boolean  @default(false)
   createdAt DateTime @default(now())
+  entidadeOrigemId String?  
+  tipoEntidade     String?  
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
