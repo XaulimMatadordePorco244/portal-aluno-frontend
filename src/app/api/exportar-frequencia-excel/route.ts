@@ -11,14 +11,20 @@ export async function GET(request: Request) {
     workbook.creator = 'Sistema Águia';
 
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const tipos = ['GERAL', 'INST_MENDONCA', 'INST_KAREN', 'INST_JOSIANE', 'INST_CUNHA'];
+    
+    const instrutores = await prisma.instrutor.findMany({
+      where: { ativo: true },
+      orderBy: { nome: 'asc' }
+    });
+
+    const tipos = ['GERAL', ...instrutores.map(i => i.id)];
     const tipoNomes: Record<string, string> = {
-      'GERAL': 'Geral',
-      'INST_MENDONCA': 'Inst. Mendonça',
-      'INST_KAREN': 'Inst. Karen',
-      'INST_JOSIANE': 'Inst. Josiane',
-      'INST_CUNHA': 'Inst. Cunha'
+      'GERAL': 'Geral'
     };
+    
+    instrutores.forEach(inst => {
+      tipoNomes[inst.id] = `Inst. ${inst.nome}`;
+    });
 
     const alunos = await prisma.perfilAluno.findMany({
       where: { usuario: { status: 'ATIVO' } },
@@ -45,7 +51,7 @@ export async function GET(request: Request) {
     const mapaFreq: Record<string, Record<number, Record<number, Record<string, string>>>> = {};
     
     frequenciasAno.forEach(f => {
-      const t = f.tipo;
+      const t = f.instrutorId || 'GERAL';
       const m = f.data.getMonth();
       const d = f.data.getDate();
       const aId = f.alunoId;
@@ -77,6 +83,7 @@ export async function GET(request: Request) {
         const ultimaColunaTabela = 3 + diasOrdenados.length + 4;
         aba.mergeCells(linhaAtual, 1, linhaAtual, ultimaColunaTabela);
         const tituloCell = aba.getCell(linhaAtual, 1);
+        
         tituloCell.value = `Frequência - ${tipoNomes[tipo]} (${meses[m]}/${ano})`;
         tituloCell.font = { size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
         tituloCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
