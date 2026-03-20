@@ -37,6 +37,9 @@ export default async function FrequenciaAlunoPage(props: PageProps) {
     where: { alunoId: aluno.id },
     orderBy: {
       data: 'desc' 
+    },
+    include: {
+      instrutor: true
     }
   })
 
@@ -127,7 +130,7 @@ export default async function FrequenciaAlunoPage(props: PageProps) {
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="w-[140px] pl-6">Data</TableHead>
-                <TableHead>Tipo</TableHead>
+                <TableHead>Atividade/Instrutor</TableHead>
                 <TableHead className="w-[150px] text-center">Status</TableHead>
                 <TableHead className="pr-6">Observações</TableHead>
               </TableRow>
@@ -143,7 +146,7 @@ export default async function FrequenciaAlunoPage(props: PageProps) {
                     
                     <TableCell>
                       <Badge variant="outline" className="text-xs font-semibold bg-background">
-                        {freq.tipo}
+                        {freq.instrutor ? `Inst. ${freq.instrutor.nome}` : 'Geral'}
                       </Badge>
                     </TableCell>
                     
