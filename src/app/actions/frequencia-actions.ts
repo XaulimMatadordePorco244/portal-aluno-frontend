@@ -23,10 +23,12 @@ export async function salvarListaFrequencia(dataStr: Date | string, tipo: string
     const startOfDay = new Date(data.getFullYear(), data.getMonth(), data.getDate(), 0, 0, 0)
     const endOfDay = new Date(data.getFullYear(), data.getMonth(), data.getDate(), 23, 59, 59)
 
+    const instrutorId = tipo === 'GERAL' ? null : tipo
+
     await prisma.$transaction(async (tx) => {
       await tx.frequencia.deleteMany({
         where: {
-          tipo: tipo,
+          instrutorId: instrutorId,
           data: {
             gte: startOfDay,
             lte: endOfDay
@@ -39,7 +41,7 @@ export async function salvarListaFrequencia(dataStr: Date | string, tipo: string
           data: registros.map(r => ({
             alunoId: r.alunoId,
             data: startOfDay, 
-            tipo: tipo,
+            instrutorId: instrutorId, 
             status: r.status,
             observacao: r.observacao || null
           }))
@@ -64,9 +66,11 @@ export async function buscarFrequenciaDoDia(dataOriginal: Date, tipo: string) {
   const fimDia = new Date(dataEvento)
   fimDia.setUTCHours(23, 59, 59, 999)
 
+  const instrutorId = tipo === 'GERAL' ? null : tipo
+
   const registros = await prisma.frequencia.findMany({
     where: {
-      tipo,
+      instrutorId: instrutorId, 
       data: {
         gte: inicioDia,
         lte: fimDia
