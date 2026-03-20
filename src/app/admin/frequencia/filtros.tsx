@@ -3,7 +3,16 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export function FrequenciaFiltros() {
+export interface Instrutor {
+  id: string;
+  nome: string;
+}
+
+interface FrequenciaFiltrosProps {
+  instrutores: Instrutor[];
+}
+
+export function FrequenciaFiltros({ instrutores = [] }: FrequenciaFiltrosProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -16,7 +25,6 @@ export function FrequenciaFiltros() {
   const tipo = searchParams.get('tipo') || 'GERAL'
   const semana = searchParams.get('semana') || 'TODAS'
 
-  // Gera uma lista de anos (de 2024 até o ano atual + 1)
   const anosDisponiveis = Array.from(
     { length: Math.max(2, dataAtual.getFullYear() - 2024 + 2) }, 
     (_, i) => String(2024 + i)
@@ -30,7 +38,6 @@ export function FrequenciaFiltros() {
 
   return (
     <div className="flex gap-2 flex-wrap">
-      {/* NOVO FILTRO DE ANO */}
       <Select value={ano} onValueChange={(val) => handleFilterChange('ano', val)}>
         <SelectTrigger className="w-[100px] bg-background">
            <SelectValue placeholder="Ano" />
@@ -81,11 +88,14 @@ export function FrequenciaFiltros() {
            <SelectValue placeholder="Tipo" />
         </SelectTrigger>
         <SelectContent>
-            <SelectItem value="GERAL">Geral</SelectItem>
-            <SelectItem value="INST_MENDONCA">Inst. Mendonça</SelectItem>
-            <SelectItem value="INST_KAREN">Inst. Karen</SelectItem>
-            <SelectItem value="INST_JOSIANE">Inst. Josiane</SelectItem>
-            <SelectItem value="INST_CUNHA">Inst. Cunha</SelectItem>
+            <SelectItem value="GERAL">GERAL</SelectItem>
+            
+            {instrutores.map(instrutor => (
+               <SelectItem key={instrutor.id} value={instrutor.id}>
+                  INST. {instrutor.nome}
+               </SelectItem>
+            ))}
+            
         </SelectContent>
       </Select>
     </div>

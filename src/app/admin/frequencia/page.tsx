@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { CheckSquare } from 'lucide-react'
 import Link from 'next/link'
 import { Download } from 'lucide-react'
-
+import prisma from '@/lib/prisma' 
 export const metadata: Metadata = { title: 'Controle de Frequência' }
 
 interface PageProps {
@@ -22,6 +22,11 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
   const mesSelecionado = Number(params.mes) || mesAtual
   const tipoSelecionado = (params.tipo as string) || 'GERAL'
   const semanaSelecionada = (params.semana as string) || 'TODAS'
+
+  const instrutores = await prisma.instrutor.findMany({
+    where: { ativo: true },
+    orderBy: { nome: 'asc' }
+  })
 
   const dados = await obterMapaFrequencia(mesSelecionado, anoSelecionado, tipoSelecionado)
 
@@ -41,7 +46,7 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className=" space-y-6 flex flex-col">
+    <div className="space-y-6 flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Mapa de Frequência</h1>
@@ -49,7 +54,8 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
-          <FrequenciaFiltros />
+          
+          <FrequenciaFiltros instrutores={instrutores} />
 
           <Button variant="outline" asChild>
             <a href={`/api/exportar-frequencia-excel?ano=${anoSelecionado}`} download>

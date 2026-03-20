@@ -90,6 +90,7 @@ export function AdminSidebar() {
     { href: "/admin/antiguidade", label: "Antiguidade", icon: Medal },
     { href: "/admin/sessoes-funcoes", label: "Sessões e Funções", icon: Briefcase },
     { href: "/admin/escalas", label: "Escalas", icon: ClipboardList },
+    { href: "/admin/instrutores", label: "Instrutores", icon: Users },
   ];
 
   const academicoLinks = [

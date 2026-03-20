@@ -16,9 +16,10 @@ import { buscarFrequenciaDoDia, salvarListaFrequencia } from '@/app/actions/freq
 
 interface ListaChamadaProps {
   alunos: (PerfilAluno & { usuario: { nome: string, nomeDeGuerra: string | null } })[]
+  instrutores: { id: string, nome: string }[] 
 }
 
-export function ListaChamada({ alunos }: ListaChamadaProps) {
+export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -159,7 +160,7 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
 
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Atividade
+              Atividade / Instrutor
             </span>
             <Select value={tipo} onValueChange={setTipo}>
               <SelectTrigger className="w-full sm:w-[200px] cursor-pointer">
@@ -167,10 +168,13 @@ export function ListaChamada({ alunos }: ListaChamadaProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="GERAL" className='cursor-pointer'>Geral (Dia Comum)</SelectItem>
-                <SelectItem value="INST_CUNHA" className='cursor-pointer'>Inst. Cunha</SelectItem>
-                <SelectItem value="INST_JOSIANE" className='cursor-pointer'>Inst. Josiane</SelectItem>
-                <SelectItem value="INST_KAREN" className='cursor-pointer'>Inst. Karen</SelectItem>
-                <SelectItem value="INST_MENDONCA" className='cursor-pointer'>Inst. Mendonça</SelectItem>
+                
+                {instrutores.map(instrutor => (
+                  <SelectItem key={instrutor.id} value={instrutor.id} className='cursor-pointer'>
+                    Inst. {instrutor.nome}
+                  </SelectItem>
+                ))}
+
               </SelectContent>
             </Select>
           </div>
