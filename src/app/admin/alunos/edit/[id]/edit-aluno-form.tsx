@@ -5,7 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/Button'; 
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
-import { createAluno } from '../../actions'; // Ajuste o import da action se necessário (ex: updateAluno)
+import { updateAluno } from '../../actions'; 
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -74,7 +74,7 @@ function ErrorMsg({ error }: { error?: string[] }) {
 }
 
 export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: AlunoFormProps) {
-  const [state, formAction] = useActionState(createAluno, undefined);
+  const [state, formAction] = useActionState(updateAluno, undefined);
   const [cursoExterno, setCursoExterno] = useState(false);
   const [profilePic, setProfilePic] = useState<File | null>(null);
 
