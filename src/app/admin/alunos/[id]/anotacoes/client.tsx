@@ -12,13 +12,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { 
-  Award, Filter, Pencil, Trash2, ArrowLeft, FileDown, 
+  Award, Filter, Pencil, Trash2, FileDown, 
   UserCheck, Keyboard, Clock, Calendar, Megaphone, ThumbsUp, ThumbsDown, AlertOctagon, Info
 } from 'lucide-react';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { deleteAnotacao } from '@/actions/anotacoes';
-import { deleteSuspensao } from '@/actions/suspensao'; // <--- IMPORT DA AÇÃO DE SUSPENSÃO
+import { deleteSuspensao } from '@/actions/suspensao'; 
 import { toast } from "sonner";
 import { anotacoesPdfService } from '@/services/pdf/anotacoes-pdf.service';
 import { Prisma } from '@prisma/client';
@@ -200,7 +200,7 @@ export default function AdminStudentHistoryClient({
     }
   };
 
-  const generateStatement = async () => {
+const generateStatement = async () => {
     let descricaoFiltro = activeFilter;
     if (startDate || endDate) {
       const i = startDate ? format(parseISO(startDate), 'dd/MM/yy') : '...';
@@ -217,7 +217,7 @@ export default function AdminStudentHistoryClient({
       conceitoAtual: conceitoAtualValor,
       filtroAplicado: descricaoFiltro,
       anotacoes: filteredItems.map(a => ({
-        data: formatDate(a.data) || '',
+        data: typeof a.data === 'string' ? a.data : new Date(a.data).toISOString(), 
         tipo: a.titulo,
         pontos: a.pontos,
         detalhes: a.detalhes,
