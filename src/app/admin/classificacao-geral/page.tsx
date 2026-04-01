@@ -60,9 +60,7 @@ const getRankingCacheado = unstable_cache(
 
       const conceitoInicial = aluno.historicoCargos[0]?.conceitoInicial || 7;
       let conceitoAtualCalculado = conceitoInicial + somaTotalAnotacoes + pontosSuspensao;
-      
-      if (conceitoAtualCalculado > 10) conceitoAtualCalculado = 10;
-      if (conceitoAtualCalculado < 0) conceitoAtualCalculado = 0;
+
 
       return {
         dadosCalculados: {
