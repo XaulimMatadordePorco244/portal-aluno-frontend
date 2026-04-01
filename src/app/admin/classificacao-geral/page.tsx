@@ -38,12 +38,10 @@ const getRankingCacheado = unstable_cache(
       let punicoes = 0;
       let foPos = 0;
       let foNeg = 0;
-      let somaTotalAnotacoes = 0;
 
       const anotacoes = aluno.historicoCargos[0]?.anotacoes || [];
       for (const a of anotacoes) {
         const pts = Number(a.pontos);
-        somaTotalAnotacoes += pts;
         if (pts > 0.5) elogios++;
         else if (pts < -0.3) punicoes++;
         else if (pts === 0.5) foPos++;
@@ -51,16 +49,12 @@ const getRankingCacheado = unstable_cache(
       }
 
       let totalSuspensoes = 0;
-      let pontosSuspensao = 0;
       const suspensoes = aluno.suspensoes || [];
       for (const s of suspensoes) {
         totalSuspensoes++;
-        pontosSuspensao += Number(s.pontosRetirados);
       }
 
-      const conceitoInicial = aluno.historicoCargos[0]?.conceitoInicial || 7;
-      let conceitoAtualCalculado = conceitoInicial + somaTotalAnotacoes + pontosSuspensao;
-
+      const conceitoAtualCalculado = Number(aluno.conceitoAtual) || 0;
 
       return {
         dadosCalculados: {
@@ -75,7 +69,7 @@ const getRankingCacheado = unstable_cache(
           totalFoPos: foPos,
           totalFoNeg: foNeg,
           totalSuspensoes: totalSuspensoes, 
-          conceitoAtual: conceitoAtualCalculado
+          conceitoAtual: conceitoAtualCalculado 
         }
       };
     });
