@@ -11,33 +11,49 @@ import { Textarea } from '@/components/ui/textarea'
 import { Timer, Dumbbell, Activity, Save } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { calcularNotaIndividual } from '@/app/admin/taf/actions/calcular-nota'
-import { salvarTaf } from '@/app/admin/taf/actions/salvar-taf'
+import { calcularNotaIndividual } from '@/app/admin/taf/actions/calcular-nota' 
+import { salvarTaf } from '@/app/admin/taf/actions/taf-actions' 
+
+type ApoioTipo = 'BARRA' | 'FLEXAO'
 
 interface TafFormProps {
   alunoId: string
   genero: 'MASCULINO' | 'FEMININO' 
   nomeAluno: string
+  initialData?: {
+    id: string
+    bimestre: number
+    abdominalQtd: number
+    apoioTipo: ApoioTipo
+    apoioValor: number
+    corridaTempo: number
+    observacoes?: string | null
+  } | null
 }
 
-type ApoioTipo = 'BARRA' | 'FLEXAO'
-
-export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
+export default function TafForm({ alunoId, genero, nomeAluno, initialData }: TafFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<boolean>(false)
   
-  const [bimestre, setBimestre] = useState<string>('1')
-  const [abdominal, setAbdominal] = useState<string>('')
-  const [apoioTipo, setApoioTipo] = useState<ApoioTipo>('BARRA')
-  const [apoioValor, setApoioValor] = useState<string>('')
-  const [corridaMin, setCorridaMin] = useState<string>('')
-  const [corridaSeg, setCorridaSeg] = useState<string>('')
+  const [bimestre, setBimestre] = useState<string>(initialData?.bimestre?.toString() || '1')
+  const [abdominal, setAbdominal] = useState<string>(initialData ? initialData.abdominalQtd.toString() : '')
+  const [apoioTipo, setApoioTipo] = useState<ApoioTipo>(initialData?.apoioTipo || 'BARRA')
+  const [apoioValor, setApoioValor] = useState<string>(initialData ? initialData.apoioValor.toString() : '')
+  
+  const [corridaMin, setCorridaMin] = useState<string>(
+    initialData?.corridaTempo ? Math.floor(initialData.corridaTempo / 60).toString() : ''
+  )
+  const [corridaSeg, setCorridaSeg] = useState<string>(
+    initialData?.corridaTempo ? (initialData.corridaTempo % 60).toString() : ''
+  )
 
   const [notas, setNotas] = useState<{ abdominal: number; apoio: number; corrida: number }>({ 
     abdominal: 0, 
     apoio: 0, 
     corrida: 0 
   })
+
+  const isEditing = !!initialData
 
   useEffect(() => {
     const calcular = async () => {
@@ -81,7 +97,7 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
 
       if (res.success) {
         toast.success(res.message)
-        router.push(`/admin/alunos/${alunoId}`) 
+        router.push(`/admin/taf`) 
       } else {
         toast.error(res.message)
       }
@@ -97,9 +113,11 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+    <form action={handleSubmit} className="space-y-6 ">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Lançamento de TAF - {new Date().getFullYear()}</h2>
+        <h2 className="text-xl font-bold">
+          {isEditing ? 'Editar TAF' : `Lançamento de TAF - ${new Date().getFullYear()}`}
+        </h2>
         <span className="text-sm bg-muted px-3 py-1 rounded-md border font-mono">
             {genero}
         </span>
@@ -112,7 +130,7 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
          </div>
          <div className="space-y-2">
             <Label>Bimestre</Label>
-            <Select value={bimestre} onValueChange={(v: string) => setBimestre(v)}>
+            <Select value={bimestre} onValueChange={(v: string) => setBimestre(v)} disabled={isEditing}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="1">1º Bimestre</SelectItem>
@@ -122,6 +140,7 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
                 </SelectContent>
             </Select>
             <input type="hidden" name="anoLetivo" value={new Date().getFullYear()} />
+            {isEditing && <input type="hidden" name="bimestre" value={bimestre} />}
          </div>
       </div>
 
@@ -228,11 +247,15 @@ export default function TafForm({ alunoId, genero, nomeAluno }: TafFormProps) {
 
       <div className="space-y-2">
         <Label>Observações</Label>
-        <Textarea name="observacoes" placeholder="Ex: Aluno sentiu dores no joelho..." />
+        <Textarea 
+          name="observacoes" 
+          placeholder="Ex: Aluno sentiu dores no joelho..." 
+          defaultValue={initialData?.observacoes || ''} 
+        />
       </div>
 
       <Button type="submit" className="w-full font-bold text-lg" disabled={loading}>
-        {loading ? 'Salvando...' : 'Lançar TAF'} <Save className="ml-2 w-5 h-5" />
+        {loading ? 'Salvando...' : (isEditing ? 'Atualizar TAF' : 'Lançar TAF')} <Save className="ml-2 w-5 h-5" />
       </Button>
     </form>
   )

@@ -37,7 +37,6 @@ export default async function TafHistorico({ alunoId }: { alunoId: string }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-600" />
           Histórico de Aptidão Física (TAF)
         </h2>
         <Button size="sm" asChild>
