@@ -55,8 +55,11 @@ export default function TafForm({ alunoId, genero, nomeAluno, initialData }: Taf
 
   const isEditing = !!initialData
 
+  // 👇 Useeffect Corrigido com Debounce e Limpeza (Cleanup)
   useEffect(() => {
-    const calcular = async () => {
+    let isMounted = true // Evita atualizar o estado com requisições antigas
+
+    const delayDebounceFn = setTimeout(async () => {
       const nAbd = abdominal 
         ? await calcularNotaIndividual(genero, 'ABDOMINAL', parseInt(abdominal)) 
         : 0
@@ -70,13 +73,20 @@ export default function TafForm({ alunoId, genero, nomeAluno, initialData }: Taf
         ? await calcularNotaIndividual(genero, 'CORRIDA', totalSegundos) 
         : 0
 
-      setNotas({ 
-        abdominal: nAbd, 
-        apoio: nApoio, 
-        corrida: nCorrida 
-      })
+      // Só atualiza a tela se esta for a última requisição válida
+      if (isMounted) {
+        setNotas({ 
+          abdominal: nAbd, 
+          apoio: nApoio, 
+          corrida: nCorrida 
+        })
+      }
+    }, 500) // Aguarda 500ms sem digitar para consultar o banco
+
+    return () => {
+      isMounted = false // Cancela a requisição antiga se o usuário digitar de novo
+      clearTimeout(delayDebounceFn) // Reseta o cronômetro
     }
-    calcular()
   }, [abdominal, apoioTipo, apoioValor, corridaMin, corridaSeg, genero])
 
   const mediaPrevista = ((notas.abdominal + notas.apoio + notas.corrida) / 3).toFixed(2)
