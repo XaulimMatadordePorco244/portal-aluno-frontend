@@ -15,7 +15,6 @@ import { StatusEscala } from "@prisma/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-
 async function getEscalas() {
   const escalas = await prisma.escala.findMany({
     orderBy: {
@@ -30,7 +29,6 @@ async function getEscalas() {
   });
   return escalas;
 }
-
 
 const getStatusVariant = (status: StatusEscala) => {
   switch (status) {
@@ -78,7 +76,16 @@ export default async function EscalasPage() {
           <TableBody>
             {escalas.map((escala) => {
               const statusInfo = getStatusVariant(escala.status);
-              const dataFormatada = format(new Date(escala.dataEscala), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+              
+              const dataUtc = new Date(escala.dataEscala);
+              const safeDate = new Date(
+                dataUtc.getUTCFullYear(), 
+                dataUtc.getUTCMonth(), 
+                dataUtc.getUTCDate(), 
+                12
+              );
+              
+              const dataFormatada = format(safeDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
               
               return (
                 <TableRow key={escala.id}>
