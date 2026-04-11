@@ -4,15 +4,28 @@ import prisma from '@/lib/prisma'
 import { StatusFrequencia } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
-export async function obterMapaFrequencia(mes: number, ano: number, tipo: string = 'GERAL') {
+export async function obterMapaFrequencia(mes: number, ano: number, tipo: string = 'GERAL', statusFiltro: string = 'ATIVOS') {
   const startDate = new Date(ano, mes - 1, 1)
   const endDate = new Date(ano, mes, 0) 
 
-  const alunos = await prisma.perfilAluno.findMany({
+  const instrutorId = tipo === 'GERAL' ? null : tipo
+
+  const frequencias = await prisma.frequencia.findMany({
     where: {
-      usuario: {
-        status: 'ATIVO'
-      }
+      data: { gte: startDate, lte: endDate },
+      instrutorId: instrutorId 
+    }
+  })
+
+  const alunosComFrequenciaIds = new Set(frequencias.map(f => f.alunoId))
+
+  let whereStatus: any = { status: 'ATIVO' }
+  if (statusFiltro === 'INATIVOS') whereStatus = { status: 'INATIVO' }
+  if (statusFiltro === 'TODOS') whereStatus = undefined 
+
+  let alunos = await prisma.perfilAluno.findMany({
+    where: {
+      usuario: whereStatus
     },
     orderBy: [
       { cargo: { precedencia: 'asc' } },
@@ -23,7 +36,8 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
       id: true,
       usuario: {
         select: {
-          nomeDeGuerra: true
+          nomeDeGuerra: true,
+          status: true 
         }
       },
       cargo: {
@@ -34,14 +48,12 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
     }
   })
 
-  const instrutorId = tipo === 'GERAL' ? null : tipo
-
-  const frequencias = await prisma.frequencia.findMany({
-    where: {
-      data: { gte: startDate, lte: endDate },
-      instrutorId: instrutorId 
-    }
-  })
+  if (statusFiltro === 'TODOS' || statusFiltro === 'INATIVOS') {
+    alunos = alunos.filter(aluno => {
+      if (aluno.usuario.status === 'ATIVO') return true;
+      return alunosComFrequenciaIds.has(aluno.id);
+    })
+  }
 
   const datasSet = new Set(frequencias.map(f => f.data.toISOString().split('T')[0]))
   const datasOrdenadas = Array.from(datasSet).sort()

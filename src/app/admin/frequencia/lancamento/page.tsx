@@ -5,6 +5,10 @@ const prisma = new PrismaClient()
 
 export default async function LancamentoFrequenciaPage() {
   const alunos = await prisma.perfilAluno.findMany({
+    where: {
+      usuario: { status: 'ATIVO' },
+      status: 'ATIVO' 
+    },
     include: {
       usuario: {
         select: { nome: true, nomeDeGuerra: true }

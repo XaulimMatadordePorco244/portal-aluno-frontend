@@ -22,13 +22,14 @@ export default async function FrequenciaPage({ searchParams }: PageProps) {
   const mesSelecionado = Number(params.mes) || mesAtual
   const tipoSelecionado = (params.tipo as string) || 'GERAL'
   const semanaSelecionada = (params.semana as string) || 'TODAS'
+  const statusAlunoSelecionado = (params.statusAluno as string) || 'ATIVOS'
 
   const instrutores = await prisma.instrutor.findMany({
     where: { ativo: true },
     orderBy: { nome: 'asc' }
   })
 
-  const dados = await obterMapaFrequencia(mesSelecionado, anoSelecionado, tipoSelecionado)
+  const dados = await obterMapaFrequencia(mesSelecionado, anoSelecionado, tipoSelecionado, statusAlunoSelecionado)
 
   let datasFiltradas = dados.datas
   if (semanaSelecionada !== 'TODAS') {
