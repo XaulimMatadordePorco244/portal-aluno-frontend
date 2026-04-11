@@ -19,9 +19,10 @@ export async function obterMapaFrequencia(mes: number, ano: number, tipo: string
 
   const alunosComFrequenciaIds = new Set(frequencias.map(f => f.alunoId))
 
-  let whereStatus: any = { status: 'ATIVO' }
+  let whereStatus: { status: 'ATIVO' | 'INATIVO' } | undefined = { status: 'ATIVO' }
+  
   if (statusFiltro === 'INATIVOS') whereStatus = { status: 'INATIVO' }
-  if (statusFiltro === 'TODOS') whereStatus = undefined 
+  if (statusFiltro === 'TODOS') whereStatus = undefined
 
   let alunos = await prisma.perfilAluno.findMany({
     where: {

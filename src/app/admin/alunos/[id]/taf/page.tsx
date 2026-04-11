@@ -1,8 +1,5 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, User } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import prisma from '@/lib/prisma'
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth'
 
@@ -34,7 +31,6 @@ export default async function AlunoTafPage({ params }: PageProps) {
 
   if (!aluno) return notFound()
 
-  const nomeExibicao = aluno.usuario.nomeDeGuerra || aluno.usuario.nome
 
   return (
     <div className="space-y-6">
