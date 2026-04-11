@@ -58,9 +58,7 @@ export async function buildClassificacaoTemplate(
     const startX = currentCol === 1 ? marginX : marginX + colWidth + gap;
 
     const tableBody = alunos.map((aluno) => {
-      const conceitoApresentacao = aluno.conceitoAtual <= 4.9 
-        ? '-' 
-        : aluno.conceitoAtual.toFixed(2).replace('.', ',');
+      const conceitoApresentacao = aluno.conceitoAtual.toFixed(2).replace('.', ',');
 
       return [
         aluno.posicao.toString(),

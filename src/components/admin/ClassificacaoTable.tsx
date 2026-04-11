@@ -154,17 +154,22 @@ export function ClassificacaoTable({ data }: ClassificacaoTableProps) {
                         <NumberCell value={aluno.totalFoNeg} type="negative" />
                       </TableCell>
 
-                      {/* 👇 NOVA CÉLULA ADICIONADA AQUI */}
                       <TableCell className="text-center border-r py-3 align-middle">
                         <NumberCell value={aluno.totalSuspensoes} type="negative" />
                       </TableCell>
 
                       <TableCell className="text-center bg-muted/5 py-3 align-middle">
-                        <span className={`font-mono font-bold ${
-                            aluno.conceitoAtual < 7 ? "text-destructive" : "text-foreground"
-                        }`}>
-                           {aluno.conceitoAtual.toFixed(2)}
-                        </span>
+                       <span
+  className={`font-mono font-bold ${
+    aluno.conceitoAtual <= 4.9
+      ? "text-destructive"
+      : aluno.conceitoAtual >= 5 && aluno.conceitoAtual <= 6.9
+      ? "text-yellow-500"
+      : "text-foreground"
+  }`}
+>
+  {aluno.conceitoAtual.toFixed(2)}
+</span>
                       </TableCell>
 
                     </TableRow>

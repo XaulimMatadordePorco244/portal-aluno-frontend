@@ -32,8 +32,7 @@ const getRankingCacheado = unstable_cache(
         suspensoes: { select: { pontosRetirados: true } } 
       }
     });
-
-    const processedData = alunos.map((aluno) => {
+const processedData = alunos.map((aluno) => {
       let elogios = 0;
       let punicoes = 0;
       let foPos = 0;
@@ -42,16 +41,17 @@ const getRankingCacheado = unstable_cache(
       const anotacoes = aluno.historicoCargos[0]?.anotacoes || [];
       for (const a of anotacoes) {
         const pts = Number(a.pontos);
-        if (pts > 0.5) elogios++;
-        else if (pts < -0.3) punicoes++;
-        else if (pts === 0.5) foPos++;
-        else if (pts === -0.3) foNeg++;
+        
+        if (pts > 0.5) elogios += pts;
+        else if (pts < -0.3) punicoes += pts;
+        else if (pts === 0.5) foPos += pts;
+        else if (pts === -0.3) foNeg += pts;
       }
 
       let totalSuspensoes = 0;
       const suspensoes = aluno.suspensoes || [];
       for (const s of suspensoes) {
-        totalSuspensoes++;
+        totalSuspensoes += Number(s.pontosRetirados); 
       }
 
       const conceitoAtualCalculado = Number(aluno.conceitoAtual) || 0;
