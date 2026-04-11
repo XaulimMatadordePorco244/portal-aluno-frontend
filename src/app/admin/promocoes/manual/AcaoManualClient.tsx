@@ -15,7 +15,8 @@ export interface AlunoSimples {
 type MotivoTransicaoEnum = 
   | 'ANTIGUIDADE' 
   | 'BRAVURA' 
-  | 'TERMINO_CURSO' 
+  | 'TERMINO_CURSO'
+  | 'MERECIMENTO'
   | 'MERITO_ESCOLAR' 
   | 'MERITO_INTELECTUAL'
   | 'INDISCIPLINA' 
@@ -27,6 +28,7 @@ const motivosPromocao = [
     { value: 'ANTIGUIDADE', label: 'Antiguidade' },
     { value: 'BRAVURA', label: 'Ato de Bravura' },
     { value: 'TERMINO_CURSO', label: 'Término de Curso' },
+    { value: 'MERECIMENTO', label: 'Merecimento' },
     { value: 'MERITO_ESCOLAR', label: 'Mérito Escolar' },
     { value: 'MERITO_INTELECTUAL', label: 'Mérito Intelectual' },
 ];
