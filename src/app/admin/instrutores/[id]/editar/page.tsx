@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { InstrutorForm } from '../instrutor-form'
+import { InstrutorForm } from '../../instrutor-form'
 
 export const metadata = { title: 'Editar Instrutor' }
 
