@@ -65,7 +65,7 @@ const SERIES_MAP: Record<string, string> = {
 
 const SERIES_ENTRIES = Object.entries(SERIES_MAP)
 
-const TURNOS = ["Matutino", "Vespertino"]
+const TURNOS = ["Matutino", "Vespertino", "Noturno"]
 
 export function StudentRow({
     aluno, escolas, isDesatualizado, currentValues,
@@ -83,7 +83,9 @@ export function StudentRow({
         setNovaEscolaNome("")
     }
 
-    const baseStyle = "grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_1fr_0.5fr_1fr_auto] gap-4 items-center p-4 border-b transition-colors"
+    // 👇 MUDANÇA 1: Colunas com larguras FIXAS no Desktop para limitar o tamanho
+    const baseStyle = "grid grid-cols-1 lg:grid-cols-[1fr_180px_140px_80px_120px_auto] gap-x-4 gap-y-6 lg:gap-y-0 items-center p-4 border-b transition-colors"
+    
     const highlightStyle = isDesatualizado
         ? "bg-red-50/50 dark:bg-red-900/10 border-l-4 border-l-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
         : "border-l-4 border-l-transparent hover:bg-accent/50"
@@ -95,8 +97,8 @@ export function StudentRow({
         <div className={`${baseStyle} ${highlightStyle}`}>
 
             <div className="flex items-center overflow-hidden mr-2">
-                <FotoHover src={aluno.fotoUrl} alt={aluno.nome} className="mr-3" />
-                <div className="truncate">
+                <FotoHover src={aluno.fotoUrl} alt={aluno.nome} className="mr-3 shrink-0" />
+                <div className="truncate w-full">
                     <p className="font-bold text-foreground truncate">
                         {perfil?.cargo?.abreviacao} <span className="text-primary">{aluno.nomeDeGuerra || "Sem Nome"}</span>
                     </p>
@@ -109,9 +111,10 @@ export function StudentRow({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-1">
+            {/* 👇 MUDANÇA 2: 'relative' e o texto no 'absolute' não desalinha as caixas */}
+            <div className="relative w-full">
                 <Select value={currentValues.escolaId} onValueChange={(v: string) => onChange("escolaId", v)}>
-                    <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Escola" /></SelectTrigger>
+                    <SelectTrigger className={`w-full ${isDesatualizado ? "border-red-300" : ""}`}><SelectValue placeholder="Escola" /></SelectTrigger>
                     <SelectContent>
                         {escolas.map((esc: EscolaType) => (
                             <SelectItem key={esc.id} value={esc.id}>{esc.nome}</SelectItem>
@@ -129,13 +132,13 @@ export function StudentRow({
                     </SelectContent>
                 </Select>
                 {isDesatualizado && perfil?.escola?.nome && (
-                    <p className="text-[10px] text-muted-foreground">Antes: {perfil.escola.nome}</p>
+                    <p className="absolute top-full left-0 mt-0.5 text-[10px] text-muted-foreground truncate w-full">Antes: {perfil.escola.nome}</p>
                 )}
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="relative w-full">
                 <Select value={currentValues.serieEscolar} onValueChange={(v: string) => onChange("serieEscolar", v)}>
-                    <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Série" /></SelectTrigger>
+                    <SelectTrigger className={`w-full ${isDesatualizado ? "border-red-300" : ""}`}><SelectValue placeholder="Série" /></SelectTrigger>
                     <SelectContent>
                         {SERIES_ENTRIES.map(([key, label]) => (
                             <SelectItem key={key} value={key}>{label}</SelectItem>
@@ -143,40 +146,42 @@ export function StudentRow({
                     </SelectContent>
                 </Select>
                 {isDesatualizado && perfil?.serieEscolar && (
-                    <p className="text-[10px] text-muted-foreground">Antes: {SERIES_MAP[perfil.serieEscolar] || perfil.serieEscolar}</p>
+                    <p className="absolute top-full left-0 mt-0.5 text-[10px] text-muted-foreground truncate w-full">Antes: {SERIES_MAP[perfil.serieEscolar] || perfil.serieEscolar}</p>
                 )}
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="relative w-full">
                 <Input
-                    placeholder="Turma (Ex: A)"
+                    placeholder="Turma"
                     value={currentValues.turmaEscolar}
                     onChange={(e) => onChange("turmaEscolar", e.target.value)}
-                    className={isDesatualizado ? "border-red-300 uppercase" : "uppercase"}
+                    className={`w-full text-center uppercase ${isDesatualizado ? "border-red-300" : ""}`}
                     maxLength={10}
                 />
                 {isDesatualizado && perfil?.turmaEscolar && (
-                    <p className="text-[10px] text-muted-foreground">Antes: {perfil.turmaEscolar}</p>
+                    <p className="absolute top-full left-0 mt-0.5 text-[10px] text-muted-foreground truncate w-full">Antes: {perfil.turmaEscolar}</p>
                 )}
             </div>
-            <div className="flex flex-col gap-1">
+
+            <div className="relative w-full">
                 <Select value={currentValues.turno} onValueChange={(v: string) => onChange("turno", v)}>
-                    <SelectTrigger className={isDesatualizado ? "border-red-300" : ""}><SelectValue placeholder="Turno" /></SelectTrigger>
+                    <SelectTrigger className={`w-full ${isDesatualizado ? "border-red-300" : ""}`}><SelectValue placeholder="Turno" /></SelectTrigger>
                     <SelectContent>
                         {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 {isDesatualizado && perfil?.turno && (
-                    <p className="text-[10px] text-muted-foreground">Antes: {perfil.turno}</p>
+                    <p className="absolute top-full left-0 mt-0.5 text-[10px] text-muted-foreground truncate w-full">Antes: {perfil.turno}</p>
                 )}
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end w-full lg:w-auto">
                 <Button
                     variant={hasModifications ? "default" : "outline"}
                     onClick={onSaveOne}
                     disabled={!hasModifications}
                     size="sm"
+                    className="w-full lg:w-auto"
                 >
                     <Check className="h-4 w-4 lg:mr-1" /> <span className="hidden lg:inline">Salvar</span>
                 </Button>
