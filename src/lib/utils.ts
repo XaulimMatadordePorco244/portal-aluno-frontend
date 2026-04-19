@@ -11,15 +11,37 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDate = (date: Date | string | null | undefined) => {
   if (!date) return null;
 
-  return new Date(date).toLocaleDateString('pt-BR', {
-    timeZone: 'UTC'
-  });
+  const d = new Date(date);
+
+  const normalized = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate()
+  );
+
+  return format(normalized, 'dd/MM/yyyy', { locale: ptBR });
 };
 
 export const formatCivilDate = (date: Date | string) => {
-  return format(
-    startOfDay(parseISO(date.toString())),
-    'dd/MM/yyyy',
-    { locale: ptBR }
+  const d = new Date(date);
+
+  const normalized = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate()
   );
+
+  return format(normalized, 'dd/MM/yyyy', { locale: ptBR });
+};
+
+export const normalizeDate = (date: Date | string | null | undefined) => {
+  if (!date) return null;
+
+  const d = new Date(date);
+
+  return new Date(Date.UTC(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate()
+  ));
 };
