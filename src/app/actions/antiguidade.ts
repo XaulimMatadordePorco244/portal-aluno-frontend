@@ -59,26 +59,40 @@ export async function updateAntiguidadeMassa(
     id: string; 
     dataUltimaPromocao: Date | string | null; 
     modalidadeUltimaPromocao: string | null;
-    notaDesempatePromocao?: number;
+    notaDesempatePromocao?: number | string; 
   }[]
 ) {
   try {
     await prisma.$transaction(
-      updates.map((item) =>
-        prisma.perfilAluno.update({
+      updates.map((item) => {
+        
+        let notaFormatada = undefined;
+        if (item.notaDesempatePromocao !== undefined && item.notaDesempatePromocao !== null && item.notaDesempatePromocao !== '') {
+          notaFormatada = Number(item.notaDesempatePromocao);
+        }
+
+        let dataFormatada = null;
+        if (item.dataUltimaPromocao) {
+            const d = new Date(item.dataUltimaPromocao);
+            d.setUTCHours(12, 0, 0, 0); 
+            dataFormatada = d;
+        }
+
+        return prisma.perfilAluno.update({
           where: { id: item.id },
           data: {
-            dataUltimaPromocao: item.dataUltimaPromocao ? new Date(item.dataUltimaPromocao) : null,
+            dataUltimaPromocao: dataFormatada,
             modalidadeUltimaPromocao: item.modalidadeUltimaPromocao,
-            notaDesempatePromocao: item.notaDesempatePromocao
+            notaDesempatePromocao: notaFormatada 
           },
-        })
-      )
+        });
+      })
     );
 
     revalidatePath("/admin/antiguidade");
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("ERRO NO UPDATE EM MASSA:", error); 
     return { success: false, error: "Falha ao atualizar antiguidade" };
   }
 }
