@@ -76,11 +76,25 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
       const cargoNovoObj = todosCargos.find((c) => c.id === novoCargoId);
 
       operations.push(
+        prisma.cargoHistory.updateMany({
+          where: { 
+            alunoId: aluno.id,
+            status: "ATIVO" 
+          },
+          data: {
+            status: "FECHADO",
+            dataFim: dataReferencia
+          }
+        })
+      );
+
+      operations.push(
         prisma.cargoHistory.create({
           data: {
             alunoId: aluno.id,
             cargoId: novoCargoId,
             cargoNomeSnapshot: cargoNovoObj?.nome || "Cargo Desconhecido",
+            status: "ATIVO",
             tipoPromocao:
               data.tipo === "PROMOCAO" ? "MANUAL_OVERRIDE" : "RECLASSIFICACAO",
             dataInicio: dataReferencia,
