@@ -4,6 +4,7 @@ import { ClassificacaoTable, ClassificacaoItem } from "@/components/admin/Classi
 import { Metadata } from "next";
 import { ExtratoButton } from "./extrato-button";
 import { unstable_cache } from "next/cache";
+import { RefreshButton } from "./RefreshButton";
 
 export const metadata: Metadata = {
   title: "Classificação Geral | Admin",
@@ -121,6 +122,7 @@ export default async function ClassificacaoGeralPage() {
             <CalendarDays className="w-4 h-4" />
             <span>Atualizado: <strong>{dataAtualizacao}</strong></span>
           </div>
+          <RefreshButton />
           <ExtratoButton dados={finalData} dataAtualizacao={dataAtualizacao} />
         </div>
       </div>

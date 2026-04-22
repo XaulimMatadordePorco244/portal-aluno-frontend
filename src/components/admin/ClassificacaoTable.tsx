@@ -25,7 +25,7 @@ export interface ClassificacaoItem {
   totalPunicoes: number;
   totalFoPos: number;
   totalFoNeg: number;
-  totalSuspensoes: number; // 👇 Propriedade adicionada
+  totalSuspensoes: number; 
   conceitoAtual: number;
 }
 
@@ -116,7 +116,6 @@ export function ClassificacaoTable({ data }: ClassificacaoTableProps) {
                     <TableHead className="w-[100px] text-center border-r font-semibold text-muted-foreground h-12">Punições</TableHead>
                     <TableHead className="w-[90px] text-center border-r font-semibold text-muted-foreground h-12">FO (+)</TableHead>
                     <TableHead className="w-[90px] text-center border-r font-semibold text-muted-foreground h-12">FO (-)</TableHead>
-                    {/* 👇 NOVA COLUNA ADICIONADA AQUI */}
                     <TableHead className="w-[90px] text-center border-r font-semibold text-muted-foreground h-12">Susp.</TableHead>
                     
                     <TableHead className="w-[140px] text-center font-bold text-foreground h-12 bg-muted/5">Conceito Atual</TableHead>
