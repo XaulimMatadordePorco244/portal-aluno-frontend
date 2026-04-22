@@ -18,6 +18,8 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AdminNotificacoesDropdown } from "@/components/AdminNotificacoesDropdown"; 
 
+import { logout } from "@/app/actions"; 
+
 export function AdminHeader({
     userName,
     userImage,
@@ -89,7 +91,10 @@ export function AdminHeader({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                        <DropdownMenuItem 
+                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                            onClick={() => logout()}
+                        >
                             Sair do Sistema
                         </DropdownMenuItem>
                     </DropdownMenuContent>
