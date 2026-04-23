@@ -224,3 +224,214 @@ export async function calcularVagasDisponiveis() {
     soldados: Math.max(0, limites.soldados - ocupadas.soldados),
   };
 }
+
+export async function efetivarPromocoesDoCiclo(
+  cicloId: string, 
+  promocoes: { alunoId: string; novoCargoId: string }[]
+) {
+  const admin = await getCurrentUserWithRelations();
+
+  if (!admin) {
+    return { success: false, message: "Não autorizado" };
+  }
+
+  try {
+    const todosCargos = await prisma.cargo.findMany({
+      where: { tipo: { not: "CURSO" } },
+    });
+
+    const dataReferencia = new Date();
+    const operations = [];
+    const notificacoesPendentes = [];
+
+    for (let i = 0; i < promocoes.length; i++) {
+      const p = promocoes[i];
+      const cargoNovoObj = todosCargos.find((c) => c.id === p.novoCargoId);
+      
+      if (!cargoNovoObj) continue;
+
+      const notaDesempate = 10 - i * 0.01;
+
+      operations.push(
+        prisma.cargoHistory.updateMany({
+          where: { 
+            alunoId: p.alunoId,
+            status: "ATIVO" 
+          },
+          data: {
+            status: "FECHADO",
+            dataFim: dataReferencia
+          }
+        })
+      );
+
+      operations.push(
+        prisma.cargoHistory.create({
+          data: {
+            alunoId: p.alunoId,
+            cargoId: p.novoCargoId,
+            cargoNomeSnapshot: cargoNovoObj.nome,
+            status: "ATIVO",
+            tipoPromocao: "AUTOMATICA", 
+            dataInicio: dataReferencia,
+            cicloId: cicloId, 
+            motivo: "Promoção por Ciclo de Avaliação",
+          },
+        })
+      );
+
+      operations.push(
+        prisma.perfilAluno.update({
+          where: { id: p.alunoId },
+          data: {
+            cargoId: p.novoCargoId,
+            conceitoAtual: "7.0",
+            foraDeData: false,
+            dataUltimaPromocao: dataReferencia,
+            modalidadeUltimaPromocao: "CICLO_PROMOCAO", 
+            notaDesempatePromocao: notaDesempate,
+          },
+        })
+      );
+
+      notificacoesPendentes.push({
+        usuarioId: p.alunoId, 
+        titulo: "Promoção Realizada",
+        mensagem: `Parabéns! Você foi promovido para o cargo de ${cargoNovoObj.nome} no ciclo de avaliação atual.`,
+        tipo: "SISTEMA" as const,
+      });
+    }
+
+    operations.push(
+      prisma.cicloPromocao.update({
+        where: { id: cicloId },
+        data: {
+          status: "FECHADO",
+          dataReferencia: dataReferencia, 
+        }
+      })
+    );
+
+    await prisma.$transaction(operations);
+
+
+    revalidatePath("/admin/promocoes/ciclos");
+    revalidatePath(`/admin/promocoes/ciclos/${cicloId}`);
+    revalidatePath("/admin/antiguidade");
+
+    return { success: true, message: "Ciclo finalizado e promoções efetivadas com sucesso!" };
+  } catch (error) {
+    console.error("Erro ao efetivar ciclo:", error);
+    return { success: false, message: "Erro ao efetivar as promoções do ciclo." };
+  }
+}
+
+export async function criarCicloPromocao(nome: string) {
+    try {
+        const novoCiclo = await prisma.cicloPromocao.create({
+            data: {
+                nome,
+                status: "ABERTO",
+                dataReferencia: new Date(), 
+            },
+        });
+
+        revalidatePath("/admin/promocoes/ciclos");
+        return { success: true, cicloId: novoCiclo.id, message: "Ciclo criado com sucesso!" };
+    } catch (error) {
+        console.error("Erro ao criar ciclo:", error);
+        return { success: false, message: "Erro ao criar o ciclo de promoção." };
+    }
+}
+
+export async function gerarQuadroDeAcesso(cicloId: string) {
+    try {
+        const alunosAtivos = await prisma.perfilAluno.findMany({
+            where: {
+                status: "ATIVO" 
+            },
+            include: {
+                desempenhosEscolares: {
+                    orderBy: { anoLetivo: 'desc' },
+                    take: 1
+                },
+                tafs: {
+                    orderBy: { dataRealizacao: 'desc' },
+                    take: 1
+                }
+            }
+        });
+
+        if (alunosAtivos.length === 0) {
+            return { success: false, message: "Nenhum aluno ativo encontrado para gerar o quadro." };
+        }
+
+        const candidatosData = alunosAtivos.map((aluno) => {
+            const mediaEscolar = aluno.desempenhosEscolares[0]?.mediaFinal || 0;
+            
+            const mediaTaf = aluno.tafs[0]?.mediaFinal || 0;
+
+            let conceitoNum = 8.0; 
+            if (aluno.conceitoAtual) {
+                const parsed = parseFloat(aluno.conceitoAtual);
+                if (!isNaN(parsed)) conceitoNum = parsed;
+            }
+
+            return {
+                cicloId: cicloId,
+                alunoId: aluno.id,
+                conceitoSnapshot: conceitoNum,
+                mediaEscolarSnapshot: mediaEscolar,
+                tafSnapshot: mediaTaf,
+            };
+        });
+
+        await prisma.candidatoCiclo.createMany({
+            data: candidatosData,
+            skipDuplicates: true, 
+        });
+
+        revalidatePath("/admin/promocoes/ciclos");
+        revalidatePath(`/admin/promocoes/${cicloId}`);
+        return { success: true, message: "Quadro de acesso gerado com sucesso!" };
+    } catch (error) {
+        console.error("Erro ao gerar quadro:", error);
+        return { success: false, message: "Erro ao gerar o quadro de acesso." };
+    }
+}
+
+export async function encerrarCicloPromocao(cicloId: string) {
+    try {
+        await prisma.cicloPromocao.update({
+            where: { id: cicloId },
+            data: {
+                status: "FECHADO", 
+            },
+        });
+
+        revalidatePath("/admin/promocoes/ciclos");
+        revalidatePath(`/admin/promocoes/${cicloId}`);
+        return { success: true, message: "Ciclo encerrado com sucesso!" };
+    } catch (error) {
+        console.error("Erro ao encerrar ciclo:", error);
+        return { success: false, message: "Erro ao encerrar o ciclo." };
+    }
+}
+
+export async function apagarCicloPromocao(cicloId: string) {
+    try {
+        await prisma.candidatoCiclo.deleteMany({
+            where: { cicloId: cicloId },
+        });
+
+        await prisma.cicloPromocao.delete({
+            where: { id: cicloId },
+        });
+
+        revalidatePath("/admin/promocoes/ciclos");
+        return { success: true, message: "Ciclo apagado com sucesso!" };
+    } catch (error) {
+        console.error("Erro ao apagar ciclo:", error);
+        return { success: false, message: "Erro ao apagar o ciclo de promoção." };
+    }
+}
