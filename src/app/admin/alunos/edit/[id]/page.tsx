@@ -65,6 +65,8 @@ export default async function EditAlunoPage({ params }: PageProps) {
       cargoId: alunoRaw.perfilAluno.cargoId,
       companhiaId: alunoRaw.perfilAluno.companhiaId,
       foraDeData: alunoRaw.perfilAluno.foraDeData,
+      dataIngresso: alunoRaw.perfilAluno.dataIngresso,
+      anoIngresso: alunoRaw.perfilAluno.anoIngresso,
       tipagemSanguinea: alunoRaw.perfilAluno.tipagemSanguinea,
       aptidaoFisicaStatus: alunoRaw.perfilAluno.aptidaoFisicaStatus,
       aptidaoFisicaLaudo: alunoRaw.perfilAluno.aptidaoFisicaLaudo,

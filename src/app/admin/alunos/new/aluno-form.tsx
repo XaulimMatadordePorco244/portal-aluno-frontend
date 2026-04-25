@@ -14,8 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from 'lucide-react';
 import { AvatarUpload } from '@/components/admin/avatar-upload';
 
-
-
 interface AlunoFormProps {
   cargos: { id: string, nome: string }[];
   companhias: { id: string, nome: string }[];
@@ -57,6 +55,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
       cargoId?: string;
       companhiaId?: string;
       foraDeData?: boolean;
+      dataIngresso?: string | Date;
       tipagemSanguinea?: string;
       aptidaoFisicaStatus?: string;
       aptidaoFisicaLaudo?: boolean;
@@ -204,7 +203,7 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label>Cargo / Graduação <span className="text-red-500">*</span></Label>
             <Select name="cargoId" defaultValue={(state?.formData?.cargoId as string) ?? (aluno.perfilAluno?.cargoId || "")}>
@@ -225,6 +224,17 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
               </SelectContent>
             </Select>
             <ErrorMsg error={state?.errors?.companhiaId} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dataIngresso">Data de Ingresso <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
+            <Input 
+              id="dataIngresso" 
+              name="dataIngresso" 
+              type="date" 
+              defaultValue={(state?.formData?.dataIngresso as string) ?? (aluno.perfilAluno?.dataIngresso ? new Date(aluno.perfilAluno.dataIngresso).toISOString().split('T')[0] : "")} 
+              className={state?.errors?.dataIngresso ? "border-destructive focus-visible:ring-destructive" : ""} 
+            />
+            <ErrorMsg error={state?.errors?.dataIngresso} />
           </div>
         </div>
 
@@ -291,7 +301,6 @@ export default function AlunoForm({ cargos, companhias, escolas }: AlunoFormProp
           <div className="space-y-2 min-w-0">
             <Label>Escola <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
             <Select name="escolaId" defaultValue={(state?.formData?.escolaId as string) ?? (aluno.perfilAluno?.escolaId || "")}>
-              {/* 👇 Aqui adicionamos [&>span]:truncate */}
               <SelectTrigger className={`[&>span]:truncate ${state?.errors?.escolaId ? "border-destructive focus-visible:ring-destructive" : ""}`}>
                 <SelectValue placeholder="Selecione a Escola" />
               </SelectTrigger>

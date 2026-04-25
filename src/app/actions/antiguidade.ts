@@ -2,6 +2,7 @@
 
 import  prisma  from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ORDEM_ANTIGUIDADE } from "@/lib/regras";
 
 export async function getAlmanaque() {
   try {
@@ -40,12 +41,7 @@ export async function getAlmanaque() {
         anoIngresso: true,
         numero: true
       },
-      orderBy: [
-        { cargo: { precedencia: 'asc' } },
-        { dataUltimaPromocao: 'asc' },
-        { notaDesempatePromocao: 'desc' },
-        { usuario: { dataNascimento: 'asc' } }
-      ]
+      orderBy: ORDEM_ANTIGUIDADE
     });
 
     return { success: true, data: dados };

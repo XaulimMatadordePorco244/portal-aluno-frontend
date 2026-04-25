@@ -1,28 +1,63 @@
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect, useMemo, useTransition } from "react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createAnotacao, updateAnotacao } from '@/actions/anotacoes';
-import { Usuario, TipoDeAnotacao, Companhia, PerfilAluno, Cargo } from '@prisma/client';
-import { Check, ChevronsUpDown, X, Loader2, UserCheck, Globe, User, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createAnotacao, updateAnotacao } from "@/actions/anotacoes";
+import {
+  Usuario,
+  TipoDeAnotacao,
+  Companhia,
+  PerfilAluno,
+  Cargo,
+} from "@prisma/client";
+import {
+  Check,
+  ChevronsUpDown,
+  X,
+  Loader2,
+  UserCheck,
+  Globe,
+  User,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type AlunoComCompanhia = Usuario & {
-  perfilAluno: (PerfilAluno & {
-    companhia: Companhia | null;
-    cargo: Cargo | null;
-  }) | null;
-}
+  perfilAluno:
+    | (PerfilAluno & {
+        companhia: Companhia | null;
+        cargo: Cargo | null;
+      })
+    | null;
+};
 
 export interface FormState {
   errors?: {
@@ -61,26 +96,28 @@ export default function AnotacaoForm({
   usuarios,
   tiposDeAnotacao,
   preSelectedAlunoId,
-  initialData
+  initialData,
 }: AnotacaoFormProps) {
-
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<FormState>({});
 
   const isEditing = !!initialData;
 
-  const [selectionMode, setSelectionMode] = useState<'companhia' | 'individual'>('individual');
+  const [selectionMode, setSelectionMode] = useState<
+    "companhia" | "individual"
+  >("individual");
   const [selectedAlunos, setSelectedAlunos] = useState<AlunoComCompanhia[]>([]);
   const [selectedTipo, setSelectedTipo] = useState<TipoDeAnotacao | null>(null);
-  const [pontos, setPontos] = useState<number | string>('');
-  const [dataOcorrencia, setDataOcorrencia] = useState<string>('');
-  const [detalhes, setDetalhes] = useState<string>('');
+  const [pontos, setPontos] = useState<number | string>("");
+  const [dataOcorrencia, setDataOcorrencia] = useState<string>("");
+  const [detalhes, setDetalhes] = useState<string>("");
 
   const [isExterno, setIsExterno] = useState(false);
-  const [quemAnotouId, setQuemAnotouId] = useState<string>('AUTOR_LOGADO');
-  const [quemAnotouNome, setQuemAnotouNome] = useState<string>('');
-  const [selectedObserver, setSelectedObserver] = useState<AlunoComCompanhia | null>(null);
+  const [quemAnotouId, setQuemAnotouId] = useState<string>("AUTOR_LOGADO");
+  const [quemAnotouNome, setQuemAnotouNome] = useState<string>("");
+  const [selectedObserver, setSelectedObserver] =
+    useState<AlunoComCompanhia | null>(null);
 
   const [isTipoComboboxOpen, setIsTipoComboboxOpen] = useState(false);
   const [isAlunoComboboxOpen, setIsAlunoComboboxOpen] = useState(false);
@@ -88,84 +125,96 @@ export default function AnotacaoForm({
 
   useEffect(() => {
     if (initialData) {
-      const aluno = alunos.find(a => a.perfilAluno?.id === initialData.alunoId);
+      const aluno = alunos.find(
+        (a) => a.perfilAluno?.id === initialData.alunoId,
+      );
       if (aluno) setSelectedAlunos([aluno]);
 
-      const tipo = tiposDeAnotacao.find(t => t.id === initialData.tipoId);
+      const tipo = tiposDeAnotacao.find((t) => t.id === initialData.tipoId);
       if (tipo) setSelectedTipo(tipo);
 
-      setDataOcorrencia(new Date(initialData.data).toISOString().split('T')[0]);
+      setDataOcorrencia(new Date(initialData.data).toISOString().split("T")[0]);
       setPontos(Number(initialData.pontos));
-      setDetalhes(initialData.detalhes || '');
+      setDetalhes(initialData.detalhes || "");
 
       if (initialData.quemAnotouNome) {
         setIsExterno(true);
         setQuemAnotouNome(initialData.quemAnotouNome);
-        setQuemAnotouId('AUTOR_LOGADO');
+        setQuemAnotouId("AUTOR_LOGADO");
       } else {
         setIsExterno(false);
-        setQuemAnotouId(initialData.quemAnotouId || 'AUTOR_LOGADO');
-        if (initialData.quemAnotouId && initialData.quemAnotouId !== 'AUTOR_LOGADO') {
-          const u = usuarios.find(user => user.id === initialData.quemAnotouId);
+        setQuemAnotouId(initialData.quemAnotouId || "AUTOR_LOGADO");
+        if (
+          initialData.quemAnotouId &&
+          initialData.quemAnotouId !== "AUTOR_LOGADO"
+        ) {
+          const u = usuarios.find(
+            (user) => user.id === initialData.quemAnotouId,
+          );
           if (u) setSelectedObserver(u);
         }
       }
-
     } else if (preSelectedAlunoId) {
-      const aluno = alunos.find(a => a.perfilAluno?.id === preSelectedAlunoId);
+      const aluno = alunos.find(
+        (a) => a.perfilAluno?.id === preSelectedAlunoId,
+      );
       if (aluno) setSelectedAlunos([aluno]);
     }
   }, [initialData, preSelectedAlunoId, alunos, tiposDeAnotacao, usuarios]);
 
   useEffect(() => {
     if (!initialData && !dataOcorrencia) {
-      setDataOcorrencia(new Date().toISOString().split('T')[0]);
+      setDataOcorrencia(new Date().toISOString().split("T")[0]);
     }
   }, [initialData, dataOcorrencia]);
 
   useEffect(() => {
     if (selectedTipo && !isEditing) {
       if (selectedTipo.abertoCoordenacao) {
-        if (pontos === '' || pontos === selectedTipo.pontos) {
-          setPontos('');
+        if (pontos === "" || pontos === selectedTipo.pontos) {
+          setPontos("");
         }
       } else {
         setPontos(selectedTipo.pontos ?? 0);
       }
     } else if (!selectedTipo && !isEditing) {
-      setPontos('');
+      setPontos("");
     }
   }, [selectedTipo, isEditing, pontos]);
 
   const getDisplayText = (u: AlunoComCompanhia) => {
-    if (u.role === 'ALUNO') {
-      const cargo = u.perfilAluno?.cargo?.abreviacao || 'AL';
-      const nomeGuerra = u.nomeDeGuerra || u.nome.split(' ')[0];
+    if (u.role === "ALUNO") {
+      const cargo = u.perfilAluno?.cargo?.abreviacao || "AL";
+      const nomeGuerra = u.nomeDeGuerra || u.nome.split(" ")[0];
       return `${cargo} GM ${nomeGuerra}`;
     }
     return u.nome.toUpperCase();
   };
 
   const getSearchValue = (u: AlunoComCompanhia) => {
-    if (u.role === 'ALUNO') {
-      return u.nomeDeGuerra || u.nome.split(' ')[0];
+    if (u.role === "ALUNO") {
+      return u.nomeDeGuerra || u.nome.split(" ")[0];
     }
     return u.nome;
   };
 
   const { staffMembers, studentMembers } = useMemo(() => {
-    const staff = usuarios.filter(u => u.role !== 'ALUNO');
-    const students = usuarios.filter(u => u.role === 'ALUNO');
+    const staff = usuarios.filter((u) => u.role !== "ALUNO");
+    const students = usuarios.filter((u) => u.role === "ALUNO");
     return { staffMembers: staff, studentMembers: students };
   }, [usuarios]);
 
   const handleCompanhiaChange = (companhia: string) => {
-    const alunosDaCompanhia = alunos.filter(a => a.perfilAluno?.companhia?.nome === companhia);
+    const alunosDaCompanhia = alunos.filter(
+      (a) => a.perfilAluno?.companhia?.nome === companhia,
+    );
     setSelectedAlunos(alunosDaCompanhia);
   };
 
   const handleAlunoSelect = (aluno: AlunoComCompanhia) => {
-    setSelectedAlunos(prev => prev.find(a => a.id === aluno.id) ? prev : [...prev, aluno]);
+    setSelectedAlunos((prev) =>
+      prev.find((a) => a.id === aluno.id) ? prev : [...prev, aluno],
+    );
     setIsAlunoComboboxOpen(false);
   };
 
@@ -174,7 +223,7 @@ export default function AnotacaoForm({
       setQuemAnotouId(user.id);
       setSelectedObserver(user);
     } else {
-      setQuemAnotouId('AUTOR_LOGADO');
+      setQuemAnotouId("AUTOR_LOGADO");
       setSelectedObserver(null);
     }
     setIsObserverComboboxOpen(false);
@@ -182,13 +231,20 @@ export default function AnotacaoForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedAlunos.length === 0) { toast.error("Selecione pelo menos um aluno"); return; }
-    if (!selectedTipo) { toast.error("Selecione um tipo"); return; }
+    if (selectedAlunos.length === 0) {
+      toast.error("Selecione pelo menos um aluno");
+      return;
+    }
+    if (!selectedTipo) {
+      toast.error("Selecione um tipo");
+      return;
+    }
 
     startTransition(async () => {
       const formData = new FormData();
-      selectedAlunos.forEach(aluno => {
-        if (aluno.perfilAluno?.id) formData.append("alunoIds", aluno.perfilAluno.id);
+      selectedAlunos.forEach((aluno) => {
+        if (aluno.perfilAluno?.id)
+          formData.append("alunoIds", aluno.perfilAluno.id);
       });
       formData.append("tipoId", selectedTipo.id);
       formData.append("data", `${dataOcorrencia}T12:00:00.000Z`);
@@ -214,30 +270,39 @@ export default function AnotacaoForm({
       if (result?.success) {
         toast.success(isEditing ? "Anotação atualizada!" : "Anotação lançada!");
 
-        setTimeout(() => {
-          if (preSelectedAlunoId || initialData?.alunoId) {
-            router.push(`/admin/anotacoes`);
-          } else {
-            router.push("/admin");
-          }
-        }, 1500);
-
+        router.push(`/admin/anotacoes/new`);
       } else if (result?.message) {
         toast.error(result.message);
       }
     });
   };
 
-  const companhias = useMemo(() => [...new Set(alunos.map(a => a.perfilAluno?.companhia?.nome).filter(Boolean))], [alunos]);
+  const companhias = useMemo(
+    () => [
+      ...new Set(
+        alunos.map((a) => a.perfilAluno?.companhia?.nome).filter(Boolean),
+      ),
+    ],
+    [alunos],
+  );
 
-  const { positivas, negativas, abertasElogio, abertasPunicao } = useMemo(() => {
-    return {
-      positivas: tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos > 0 && !t.abertoCoordenacao),
-      negativas: tiposDeAnotacao.filter(t => t.pontos !== null && t.pontos < 0 && !t.abertoCoordenacao),
-      abertasElogio: tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'ELOGIO'),
-      abertasPunicao: tiposDeAnotacao.filter(t => t.abertoCoordenacao && t.categoriaAberto === 'PUNICAO'),
-    };
-  }, [tiposDeAnotacao]);
+  const { positivas, negativas, abertasElogio, abertasPunicao } =
+    useMemo(() => {
+      return {
+        positivas: tiposDeAnotacao.filter(
+          (t) => t.pontos !== null && t.pontos > 0 && !t.abertoCoordenacao,
+        ),
+        negativas: tiposDeAnotacao.filter(
+          (t) => t.pontos !== null && t.pontos < 0 && !t.abertoCoordenacao,
+        ),
+        abertasElogio: tiposDeAnotacao.filter(
+          (t) => t.abertoCoordenacao && t.categoriaAberto === "ELOGIO",
+        ),
+        abertasPunicao: tiposDeAnotacao.filter(
+          (t) => t.abertoCoordenacao && t.categoriaAberto === "PUNICAO",
+        ),
+      };
+    }, [tiposDeAnotacao]);
 
   const strictStartFilter = (value: string, search: string) => {
     if (value.toLowerCase().startsWith(search.toLowerCase())) return 1;
@@ -246,16 +311,16 @@ export default function AnotacaoForm({
 
   const anotacaoTypeFilter = (value: string, search: string) => {
     if (!search) return 1;
-    const [title, description] = value.split('|||');
+    const [title, description] = value.split("|||");
     const searchLower = search.toLowerCase();
 
-    const titleWords = title.toLowerCase().split(' ');
-    const titleMatch = titleWords.some(word => word.startsWith(searchLower));
+    const titleWords = title.toLowerCase().split(" ");
+    const titleMatch = titleWords.some((word) => word.startsWith(searchLower));
 
     if (titleMatch) return 2;
 
-    const descWords = description.toLowerCase().split(' ');
-    const descMatch = descWords.some(word => word.startsWith(searchLower));
+    const descWords = description.toLowerCase().split(" ");
+    const descMatch = descWords.some((word) => word.startsWith(searchLower));
 
     if (descMatch) return 1;
 
@@ -263,7 +328,10 @@ export default function AnotacaoForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in duration-500">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 animate-in fade-in duration-500"
+    >
       <div className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
         <Label className="text-base font-semibold text-foreground flex items-center gap-2">
           <User className="w-4 h-4 text-primary" />
@@ -272,7 +340,7 @@ export default function AnotacaoForm({
 
         <RadioGroup
           value={selectionMode}
-          onValueChange={(value: 'companhia' | 'individual') => {
+          onValueChange={(value: "companhia" | "individual") => {
             setSelectionMode(value);
             if (!isEditing && !preSelectedAlunoId) setSelectedAlunos([]);
           }}
@@ -281,37 +349,59 @@ export default function AnotacaoForm({
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="individual" id="individual" />
-            <Label htmlFor="individual" className="cursor-pointer">Alunos Específicos</Label>
+            <Label htmlFor="individual" className="cursor-pointer">
+              Alunos Específicos
+            </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="companhia" id="companhia" />
-            <Label htmlFor="companhia" className="cursor-pointer">Companhia Inteira</Label>
+            <Label htmlFor="companhia" className="cursor-pointer">
+              Companhia Inteira
+            </Label>
           </div>
         </RadioGroup>
 
         <div className="pt-2">
-          {selectionMode === 'companhia' ? (
+          {selectionMode === "companhia" ? (
             <Select onValueChange={handleCompanhiaChange}>
-              <SelectTrigger className="bg-background"><SelectValue placeholder="Selecione uma companhia" /></SelectTrigger>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Selecione uma companhia" />
+              </SelectTrigger>
               <SelectContent>
-                {companhias.map(comp => <SelectItem key={comp as string} value={comp as string}>{comp as string}</SelectItem>)}
+                {companhias.map((comp) => (
+                  <SelectItem key={comp as string} value={comp as string}>
+                    {comp as string}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           ) : (
-            <Popover open={isAlunoComboboxOpen} onOpenChange={setIsAlunoComboboxOpen}>
+            <Popover
+              open={isAlunoComboboxOpen}
+              onOpenChange={setIsAlunoComboboxOpen}
+            >
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between bg-background text-muted-foreground font-normal" disabled={isEditing || !!preSelectedAlunoId}>
-                  {isEditing || preSelectedAlunoId ? "Aluno selecionado (fixo)" : "Pesquisar aluno (Nome de Guerra)..."}
+                <Button
+                  variant="outline"
+                  className="w-full justify-between bg-background text-muted-foreground font-normal"
+                  disabled={isEditing || !!preSelectedAlunoId}
+                >
+                  {isEditing || preSelectedAlunoId
+                    ? "Aluno selecionado (fixo)"
+                    : "Pesquisar aluno (Nome de Guerra)..."}
                   <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                align="start"
+              >
                 <Command filter={strictStartFilter}>
                   <CommandInput placeholder="Digite o início do nome de guerra..." />
                   <CommandList>
                     <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {alunos.map(aluno => (
+                      {alunos.map((aluno) => (
                         <CommandItem
                           key={aluno.id}
                           value={getSearchValue(aluno)}
@@ -331,11 +421,23 @@ export default function AnotacaoForm({
 
         {selectedAlunos.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
-            {selectedAlunos.map(aluno => (
-              <Badge key={aluno.id} variant="secondary" className="pl-2 pr-1 py-1 h-7 text-sm font-medium border-primary/20 bg-primary/5 text-primary">
+            {selectedAlunos.map((aluno) => (
+              <Badge
+                key={aluno.id}
+                variant="secondary"
+                className="pl-2 pr-1 py-1 h-7 text-sm font-medium border-primary/20 bg-primary/5 text-primary"
+              >
                 {getDisplayText(aluno)}
                 {!isEditing && !preSelectedAlunoId && (
-                  <button type="button" onClick={() => setSelectedAlunos(prev => prev.filter(a => a.id !== aluno.id))} className="ml-2 hover:bg-destructive/10 rounded-full p-0.5 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedAlunos((prev) =>
+                        prev.filter((a) => a.id !== aluno.id),
+                      )
+                    }
+                    className="ml-2 hover:bg-destructive/10 rounded-full p-0.5 transition-colors"
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 )}
@@ -345,23 +447,39 @@ export default function AnotacaoForm({
         )}
       </div>
 
-      <div className={cn(
-        "space-y-4 rounded-xl border p-5 shadow-sm transition-all duration-300",
-        isExterno
-          ? "border-amber-200 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/10"
-          : "border-border bg-card"
-      )}>
+      <div
+        className={cn(
+          "space-y-4 rounded-xl border p-5 shadow-sm transition-all duration-300",
+          isExterno
+            ? "border-amber-200 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/10"
+            : "border-border bg-card",
+        )}
+      >
         <div className="flex justify-between items-center">
           <Label className="flex items-center gap-2 text-base font-semibold">
-            <UserCheck className={cn("w-4 h-4", isExterno ? "text-amber-600" : "text-primary")} />
+            <UserCheck
+              className={cn(
+                "w-4 h-4",
+                isExterno ? "text-amber-600" : "text-primary",
+              )}
+            />
             Quem observou o fato?
           </Label>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className={cn("text-xs font-bold uppercase tracking-wide", isExterno ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-muted-foreground")}
-            onClick={() => { setIsExterno(!isExterno); setQuemAnotouId('AUTOR_LOGADO'); setSelectedObserver(null); }}
+            className={cn(
+              "text-xs font-bold uppercase tracking-wide",
+              isExterno
+                ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100"
+                : "text-muted-foreground",
+            )}
+            onClick={() => {
+              setIsExterno(!isExterno);
+              setQuemAnotouId("AUTOR_LOGADO");
+              setSelectedObserver(null);
+            }}
           >
             {isExterno ? "Voltar para Lista Interna" : "Visitante / Externo"}
           </Button>
@@ -378,45 +496,68 @@ export default function AnotacaoForm({
               value={quemAnotouNome}
               onChange={(e) => setQuemAnotouNome(e.target.value)}
             />
-            <p className="text-[10px] text-amber-600/80 mt-1.5 ml-1 font-medium">* Este nome será salvo como texto e não terá vínculo com perfil de usuário.</p>
+            <p className="text-[10px] text-amber-600/80 mt-1.5 ml-1 font-medium">
+              * Este nome será salvo como texto e não terá vínculo com perfil de
+              usuário.
+            </p>
           </div>
         ) : (
           <div className="relative animate-in slide-in-from-top-2 fade-in">
-            <Popover open={isObserverComboboxOpen} onOpenChange={setIsObserverComboboxOpen}>
+            <Popover
+              open={isObserverComboboxOpen}
+              onOpenChange={setIsObserverComboboxOpen}
+            >
               <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full justify-between h-11 bg-background px-3 font-normal text-foreground">
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between h-11 bg-background px-3 font-normal text-foreground"
+                >
                   <span className="flex items-center gap-2 truncate">
-                    {quemAnotouId === 'AUTOR_LOGADO' ? (
+                    {quemAnotouId === "AUTOR_LOGADO" ? (
                       <>
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
                           <User className="h-3 w-3 text-primary" />
                         </span>
-                        <span className="font-semibold text-primary">Eu mesmo (Lançador)</span>
+                        <span className="font-semibold text-primary">
+                          Eu mesmo (Lançador)
+                        </span>
                       </>
                     ) : selectedObserver ? (
                       <>
-                        <span className="font-medium text-foreground">{getDisplayText(selectedObserver)}</span>
+                        <span className="font-medium text-foreground">
+                          {getDisplayText(selectedObserver)}
+                        </span>
                       </>
-                    ) : "Selecione o responsável..."}
+                    ) : (
+                      "Selecione o responsável..."
+                    )}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                align="start"
+              >
                 <Command filter={strictStartFilter}>
                   <CommandInput placeholder="Digite o início do nome..." />
                   <CommandList className="max-h-[300px]">
                     <CommandEmpty>Ninguém encontrado.</CommandEmpty>
 
                     <CommandGroup>
-                      <CommandItem value="AUTOR_LOGADO eu mesmo" onSelect={() => handleObserverSelect(null)} className="cursor-pointer font-medium text-primary bg-primary/5">
+                      <CommandItem
+                        value="AUTOR_LOGADO eu mesmo"
+                        onSelect={() => handleObserverSelect(null)}
+                        className="cursor-pointer font-medium text-primary bg-primary/5"
+                      >
                         Eu mesmo (Lançador)
                       </CommandItem>
                     </CommandGroup>
 
                     {staffMembers.length > 0 && (
                       <CommandGroup heading="Corpo de Comando & Staff">
-                        {staffMembers.map(u => (
+                        {staffMembers.map((u) => (
                           <CommandItem
                             key={u.id}
                             value={getSearchValue(u)}
@@ -431,7 +572,7 @@ export default function AnotacaoForm({
 
                     {studentMembers.length > 0 && (
                       <CommandGroup heading="Corpo de Alunos">
-                        {studentMembers.map(u => (
+                        {studentMembers.map((u) => (
                           <CommandItem
                             key={u.id}
                             value={getSearchValue(u)}
@@ -453,14 +594,26 @@ export default function AnotacaoForm({
 
       <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="space-y-2">
-          <Label className="text-base font-semibold">Classificação do Fato</Label>
-          <Popover open={isTipoComboboxOpen} onOpenChange={setIsTipoComboboxOpen}>
+          <Label className="text-base font-semibold">
+            Classificação do Fato
+          </Label>
+          <Popover
+            open={isTipoComboboxOpen}
+            onOpenChange={setIsTipoComboboxOpen}
+          >
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={isTipoComboboxOpen} className="w-full justify-between h-11 font-normal bg-background">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={isTipoComboboxOpen}
+                className="w-full justify-between h-11 font-normal bg-background"
+              >
                 {selectedTipo ? (
                   <span className="font-medium">{selectedTipo.titulo}</span>
                 ) : (
-                  <span className="text-muted-foreground">Selecione o tipo...</span>
+                  <span className="text-muted-foreground">
+                    Selecione o tipo...
+                  </span>
                 )}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
@@ -474,29 +627,50 @@ export default function AnotacaoForm({
                     { label: "Elogios (Aberto)", data: abertasElogio },
                     { label: "Positivas", data: positivas },
                     { label: "Punições (Aberto)", data: abertasPunicao },
-                    { label: "Negativas", data: negativas }
-                  ].map(group => group.data.length > 0 && (
-                    <CommandGroup key={group.label} heading={group.label}>
-                      {group.data.map(tipo => (
-                        <CommandItem
-                          key={tipo.id}
-                          value={`${tipo.titulo}|||${tipo.descricao}`}
-                          onSelect={() => { setSelectedTipo(tipo); setIsTipoComboboxOpen(false); }}
-                        >
-                          <Check className={cn("mr-2 h-4 w-4", selectedTipo?.id === tipo.id ? "opacity-100" : "opacity-0")} />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{tipo.titulo}</span>
-                            <span className="text-[10px] text-muted-foreground line-clamp-1">{tipo.descricao}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ))}
+                    { label: "Negativas", data: negativas },
+                  ].map(
+                    (group) =>
+                      group.data.length > 0 && (
+                        <CommandGroup key={group.label} heading={group.label}>
+                          {group.data.map((tipo) => (
+                            <CommandItem
+                              key={tipo.id}
+                              value={`${tipo.titulo}|||${tipo.descricao}`}
+                              onSelect={() => {
+                                setSelectedTipo(tipo);
+                                setIsTipoComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedTipo?.id === tipo.id
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {tipo.titulo}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground line-clamp-1">
+                                  {tipo.descricao}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ),
+                  )}
                 </CommandList>
               </Command>
             </PopoverContent>
           </Popover>
-          {formState?.errors?.tipoId && <p className="text-sm text-destructive mt-1 font-medium">{formState.errors.tipoId[0]}</p>}
+          {formState?.errors?.tipoId && (
+            <p className="text-sm text-destructive mt-1 font-medium">
+              {formState.errors.tipoId[0]}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -526,11 +700,21 @@ export default function AnotacaoForm({
                 readOnly={!selectedTipo?.abertoCoordenacao}
                 className={cn(
                   "h-11 bg-background font-medium text-lg pl-4",
-                  selectedTipo?.abertoCoordenacao ? "border-primary" : "opacity-80",
-                  Number(pontos) > 0 ? "text-green-600" : Number(pontos) < 0 ? "text-red-600" : ""
+                  selectedTipo?.abertoCoordenacao
+                    ? "border-primary"
+                    : "opacity-80",
+                  Number(pontos) > 0
+                    ? "text-green-600"
+                    : Number(pontos) < 0
+                      ? "text-red-600"
+                      : "",
                 )}
               />
-              {!selectedTipo?.abertoCoordenacao && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium uppercase tracking-wider">Automático</div>}
+              {!selectedTipo?.abertoCoordenacao && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Automático
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -555,19 +739,38 @@ export default function AnotacaoForm({
             "p-3 rounded-md border text-sm font-medium flex items-center gap-2",
             formState.success
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-              : "bg-destructive/10 border-destructive/20 text-destructive"
+              : "bg-destructive/10 border-destructive/20 text-destructive",
           )}
         >
-          {formState.success ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          {formState.success ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
           {formState.message}
         </div>
       )}
 
       <div className="flex gap-3 pt-4 border-t border-border">
-        <Button type="submit" disabled={isPending} className="flex-1 h-12 text-base font-bold shadow-md">
-          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditing ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="flex-1 h-12 text-base font-bold shadow-md"
+        >
+          {isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : isEditing ? (
+            "Salvar Alterações"
+          ) : (
+            "Confirmar Lançamento"
+          )}
         </Button>
-        <Button variant="secondary" type="button" onClick={() => router.back()} className="h-12 px-6">
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => router.back()}
+          className="h-12 px-6"
+        >
           Cancelar
         </Button>
       </div>
