@@ -20,8 +20,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteComunicacao } from "./actions"
+import { deleteComunicacao, deleteManyComunicacoes } from "./actions"
 import { CIEditSheet } from "./ci-edit-sheet"
 
 interface Autor {
@@ -57,6 +58,9 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedCI, setSelectedCI] = useState<ComunicacaoInterna | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -76,6 +80,54 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const endIndex = startIndex + data.length
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === data.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(data.map(ci => ci.id))
+    }
+  }
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Deseja excluir ${selectedIds.length} itens selecionados?`)) return
+
+    setIsBulkDeleting(true)
+    const itemsToDelete = data
+      .filter(ci => selectedIds.includes(ci.id))
+      .map(ci => ({ id: ci.id, fileUrl: ci.arquivoUrl }))
+
+    try {
+      const result = await deleteManyComunicacoes(itemsToDelete)
+
+      if (result && typeof result === 'object' && 'success' in result && result.success) {
+        toast.success("Itens excluídos com sucesso!")
+        setSelectedIds([])
+        
+        if (data.length === itemsToDelete.length && currentPage > 1) {
+          const params = new URLSearchParams(searchParams)
+          params.set('page', (currentPage - 1).toString())
+          router.push(`${pathname}?${params.toString()}`)
+        } else {
+          router.refresh()
+        }
+      } else if (result && typeof result === 'object' && 'error' in result && typeof result.error === 'string') {
+        toast.error(result.error)
+      } else {
+        toast.error("Erro ao excluir itens.")
+      }
+    } catch {
+      toast.error("Erro ao conectar com o servidor")
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
 
   const handleDelete = async () => {
     if (!selectedCI) return
@@ -134,12 +186,35 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      {selectedIds.length > 0 && (
+        <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between animate-in fade-in slide-in-from-top-1">
+          <span className="text-sm font-medium ml-2 text-foreground">
+            {selectedIds.length} selecionado(s)
+          </span>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleBulkDelete}
+            disabled={isBulkDeleting}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir Selecionados
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
+                <TableHead className="w-[40px]">
+                  <Checkbox 
+                    checked={selectedIds.length === data.length && data.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead className="w-[100px]">CI Nº</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Assunto</TableHead>
@@ -151,7 +226,7 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
             <TableBody>
               {data.length === 0 ? (
                  <TableRow>
-                   <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                      <div className="flex flex-col items-center justify-center gap-2">
                        <FileText className="h-8 w-8 opacity-20" />
                        <p>Nenhuma comunicação encontrada.</p>
@@ -160,7 +235,16 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
                  </TableRow>
               ) : (
                 data.map((ci) => (
-                  <TableRow key={ci.id} className="hover:bg-muted/30">
+                  <TableRow 
+                    key={ci.id} 
+                    className={selectedIds.includes(ci.id) ? "bg-muted/30" : "hover:bg-muted/30"}
+                  >
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(ci.id)}
+                        onCheckedChange={() => toggleSelectOne(ci.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono font-medium text-primary">
                       {formatCINumber(ci.numeroSequencial, ci.anoReferencia)}
                     </TableCell>
@@ -281,6 +365,6 @@ export function CIListTable({ data, currentPage, totalPages, totalItems }: CILis
           data={selectedCI} 
         />
       )}
-    </>
+    </div>
   )
 }

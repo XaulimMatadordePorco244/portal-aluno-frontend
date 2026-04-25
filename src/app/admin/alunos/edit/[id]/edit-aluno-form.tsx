@@ -31,6 +31,8 @@ export interface AlunoEditado {
     cargoId: string | null;    
     companhiaId: string | null; 
     foraDeData: boolean;
+    dataIngresso: Date | string | null;
+    anoIngresso: number | null;
     tipagemSanguinea: string | null;
     aptidaoFisicaStatus: string | null;
     aptidaoFisicaLaudo: boolean;
@@ -101,6 +103,16 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
     }
     return "";
   };
+
+  let dataIngressoPadrao = (state?.formData?.dataIngresso as string) || "";
+  
+  if (!dataIngressoPadrao && aluno.perfilAluno) {
+    if (aluno.perfilAluno.dataIngresso) {
+      dataIngressoPadrao = new Date(aluno.perfilAluno.dataIngresso).toISOString().split('T')[0];
+    } else if (aluno.perfilAluno.anoIngresso) {
+      dataIngressoPadrao = `${aluno.perfilAluno.anoIngresso}-01-01`; 
+    }
+  }
 
   return (
     <form action={handleSubmit} className="space-y-8 bg-card text-card-foreground">
@@ -203,7 +215,7 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label>Cargo / Posto <span className="text-red-500">*</span></Label>
             <Select name="cargoId" defaultValue={(state?.formData?.cargoId as string) ?? (aluno.perfilAluno?.cargoId || "")}>
@@ -228,6 +240,18 @@ export default function EditAlunoForm({ cargos, companhias, escolas, aluno }: Al
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dataIngresso">Data de Ingresso <span className="text-muted-foreground text-xs font-normal ml-1">(Opcional)</span></Label>
+            <Input 
+              id="dataIngresso" 
+              name="dataIngresso" 
+              type="date" 
+              defaultValue={dataIngressoPadrao} 
+              className={state?.errors?.dataIngresso ? "border-destructive focus-visible:ring-destructive" : ""} 
+            />
+            <ErrorMsg error={state?.errors?.dataIngresso} />
           </div>
         </div>
       </section>

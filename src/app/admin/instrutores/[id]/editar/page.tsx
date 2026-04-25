@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { InstrutorForm } from '../../instrutor-form'
+import { ORDEM_ANTIGUIDADE } from '@/lib/regras' 
 
 export const metadata = { title: 'Editar Instrutor' }
 
@@ -8,10 +9,40 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
   const { id } = await params
   
   const instrutor = await prisma.instrutor.findUnique({
-    where: { id }
+    where: { id },
+    include: {
+      alunos: { select: { id: true } }
+    }
   })
 
   if (!instrutor) notFound()
+
+  const alunos = await prisma.perfilAluno.findMany({
+    where: { 
+      status: 'ATIVO',
+      usuario: { status: 'ATIVO' }
+    },
+    select: {
+      id: true,
+      numero: true,
+      usuario: { select: { nome: true, nomeDeGuerra: true } },
+      cargo: { select: { abreviacao: true } }
+    },
+    orderBy: ORDEM_ANTIGUIDADE
+  });
+
+  const alunosMapeados = alunos.map(a => ({
+    id: a.id,
+    nome: a.usuario.nomeDeGuerra || a.usuario.nome,
+    numero: a.numero,
+    cargoAbreviacao: a.cargo?.abreviacao || null
+  }));
+
+  const initialData = {
+    id: instrutor.id,
+    nome: instrutor.nome,
+    alunosIds: instrutor.alunos.map(a => a.id)
+  }
 
   return (
     <div className="space-y-6">
@@ -20,7 +51,7 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
         <p className="text-muted-foreground">Altere os dados do instrutor.</p>
       </div>
       <div className="border rounded-lg bg-card p-6 shadow-sm">
-        <InstrutorForm initialData={instrutor} />
+        <InstrutorForm initialData={initialData} alunosDisponiveis={alunosMapeados} />
       </div>
     </div>
   )

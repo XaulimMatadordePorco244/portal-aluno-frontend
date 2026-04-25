@@ -8,43 +8,41 @@ datasource db {
 }
 
 model Suspensao {
-  id              String      @id @default(cuid())
+  id              String   @id @default(cuid())
   alunoId         String
   dataOcorrencia  DateTime
-  dias            Int         
-  pontosRetirados Float       
-  detalhes        String      @db.Text
-  
-  quemAplicouId   String?     
-  quemAplicouNome String?     
+  dias            Int
+  pontosRetirados Float
+  detalhes        String   @db.Text
+
+  quemAplicouId   String?
+  quemAplicouNome String?
   quemLancouId    String
-  
-  visualizadoEm   DateTime?   
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
 
-  aluno           PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
-  quemLancou      Usuario     @relation("SuspensaoLancada", fields: [quemLancouId], references: [id])
-  quemAplicou     Usuario?    @relation("SuspensaoAplicada", fields: [quemAplicouId], references: [id])
+  visualizadoEm DateTime?
 
-  tipoId    String
-  tipo      TipoDeSuspensao @relation(fields: [tipoId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  aluno       PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  quemLancou  Usuario     @relation("SuspensaoLancada", fields: [quemLancouId], references: [id])
+  quemAplicou Usuario?    @relation("SuspensaoAplicada", fields: [quemAplicouId], references: [id])
+
+  tipoId String
+  tipo   TipoDeSuspensao @relation(fields: [tipoId], references: [id])
 
   @@map("gm_suspensoes")
 }
 
 model TipoDeSuspensao {
-  id        String      @id @default(cuid())
-  titulo    String      @unique
-  descricao String      @db.Text
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
+  id        String   @id @default(cuid())
+  titulo    String   @unique
+  descricao String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   suspensoes Suspensao[]
 }
-
-
 
 model GmEventoCalendario {
   id        String     @id @default(uuid())
@@ -59,16 +57,16 @@ model GmEventoCalendario {
 }
 
 model Frequencia {
-  id         String           @id @default(uuid())
-  alunoId    String
-  data       DateTime
-  status     StatusFrequencia
-  observacao String?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  aluno      PerfilAluno      @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  id          String           @id @default(uuid())
+  alunoId     String
+  data        DateTime
+  status      StatusFrequencia
+  observacao  String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  aluno       PerfilAluno      @relation(fields: [alunoId], references: [id], onDelete: Cascade)
   instrutorId String?
-  instrutor   Instrutor? @relation(fields: [instrutorId], references: [id])
+  instrutor   Instrutor?       @relation(fields: [instrutorId], references: [id])
 
   @@unique([alunoId, data])
   @@map("gm_frequencia")
@@ -141,7 +139,7 @@ model Usuario {
   passwordResetToken        String?              @unique
   passwordResetExpires      DateTime?
   funcaoAdminId             String?
-  nomeDeGuerra          String?
+  nomeDeGuerra              String?
   status                    StatusUsuario        @default(ATIVO)
   role                      Role
   genero                    GeneroUsuario?
@@ -174,9 +172,8 @@ model Usuario {
   atividadesCriadas         Atividade[]          @relation("AtividadesCriadas")
   atividadesRecebidas       AtividadeAluno[]     @relation("AtividadesRecebidas")
   interacoesMaterial        InteracaoMaterial[]
-  suspensoesLancadas  Suspensao[] @relation("SuspensaoLancada")
-  suspensoesAplicadas Suspensao[] @relation("SuspensaoAplicada")
-
+  suspensoesLancadas        Suspensao[]          @relation("SuspensaoLancada")
+  suspensoesAplicadas       Suspensao[]          @relation("SuspensaoAplicada")
 
   @@map("usuarios")
 }
@@ -211,6 +208,9 @@ model PerfilAluno {
   modalidadeUltimaPromocao      String?
   turmaEscolar                  String?
   turmaId                       String?
+  instrutorId                   String?
+  dataIngresso                  DateTime?            @db.Date
+  instrutor                     Instrutor?           @relation(fields: [instrutorId], references: [id])
   escola                        Escola?              @relation(fields: [escolaId], references: [id])
   turma                         Turma?               @relation("AlunosDaTurma", fields: [turmaId], references: [id], map: "fk_perfil_aluno_turma")
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
@@ -224,8 +224,8 @@ model PerfilAluno {
   usuario                       Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tafs                          TafDesempenho[]
   candidatoCiclos               CandidatoCiclo[]
-  suspensoes  Suspensao[]
-  status   StatusPerfilAluno @default(ATIVO)
+  suspensoes                    Suspensao[]
+  status                        StatusPerfilAluno    @default(ATIVO)
 
   @@index([cargoId, dataUltimaPromocao, notaDesempatePromocao])
   @@index([cargoId])
@@ -626,9 +626,9 @@ model EscalaItem {
   escalaId      String
   alunoId       String
   bandeira      BandeiraTipo?
-  
-  aluno         Usuario       @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
-  escala        Escala        @relation(fields: [escalaId], references: [id], onDelete: Cascade)
+
+  aluno  Usuario @relation("EscalasAtribuidas", fields: [alunoId], references: [id])
+  escala Escala  @relation(fields: [escalaId], references: [id], onDelete: Cascade)
 
   @@index([escalaId])
   @@index([alunoId])
@@ -760,15 +760,15 @@ model FuncaoAdmin {
 }
 
 model Notificacao {
-  id        String   @id @default(cuid())
-  usuarioId String
-  titulo    String
-  mensagem  String
-  link      String?
-  lida      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  entidadeOrigemId String?  
-  tipoEntidade     String?  
+  id               String   @id @default(cuid())
+  usuarioId        String
+  titulo           String
+  mensagem         String
+  link             String?
+  lida             Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  entidadeOrigemId String?
+  tipoEntidade     String?
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -844,11 +844,12 @@ model AtividadeAluno {
 model Instrutor {
   id        String   @id @default(uuid())
   nome      String
-  ativo     Boolean  @default(true) 
+  ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  frequencias Frequencia[] 
+  frequencias Frequencia[]
+  alunos      PerfilAluno[]
 }
 
 enum Role {
@@ -1061,8 +1062,8 @@ enum TipoInteracaoMaterial {
 }
 
 enum StatusPerfilAluno {
-  ATIVO        
-  INATIVO       
+  ATIVO
+  INATIVO
 }
 
 enum MotivoPromocao {

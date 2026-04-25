@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { PerfilAluno, StatusFrequencia } from '@prisma/client'
+import { StatusFrequencia } from '@prisma/client'
 import { toast } from 'sonner'
 import { CalendarIcon, CheckCheck, Save, Search, MessageSquare, Eraser } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -14,10 +14,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { buscarFrequenciaDoDia, salvarListaFrequencia } from '@/app/actions/frequencia-actions'
 
+
 interface ListaChamadaProps {
-  alunos: (PerfilAluno & { usuario: { nome: string, nomeDeGuerra: string | null } })[]
+  alunos: AlunoChamada[]
   instrutores: { id: string, nome: string }[] 
 }
+
+export type AlunoChamada = {
+  id: string;
+  instrutorId: string | null;
+  numero: string | null;
+  usuario: { nome: string; nomeDeGuerra: string | null };
+  cargo: { abreviacao: string } | null;
+}
+
 
 export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
   const searchParams = useSearchParams()
@@ -78,10 +88,10 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
   }
 
   const marcarTodosPresentes = () => {
-    const novoMapa: Record<string, StatusFrequencia> = {}
-    alunos.forEach(a => (novoMapa[a.id] = StatusFrequencia.PRESENTE))
+    const novoMapa: Record<string, StatusFrequencia> = { ...chamada }
+    alunosFiltrados.forEach(a => (novoMapa[a.id] = StatusFrequencia.PRESENTE))
     setChamada(novoMapa)
-    toast.success('Todos marcados como presente!')
+    toast.success('Alunos visíveis marcados como presente!')
   }
 
   const limparTudo = () => {
@@ -111,13 +121,24 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
     setLoading(false)
   }
 
-  const alunosFiltrados = alunos
-    .filter(
-      a =>
-        a.usuario.nomeDeGuerra?.toLowerCase().includes(busca.toLowerCase()) ||
-        a.usuario.nome.toLowerCase().includes(busca.toLowerCase())
-    )
-    .sort((a, b) => (a.usuario.nomeDeGuerra || '').localeCompare(b.usuario.nomeDeGuerra || ''))
+  const alunosFiltrados = alunos.filter(aluno => {
+    if (tipo !== 'GERAL' && aluno.instrutorId !== tipo) {
+      return false;
+    }
+
+    if (busca.trim()) {
+      const termo = busca.toLowerCase();
+      const nomeGuerra = aluno.usuario.nomeDeGuerra?.toLowerCase() || '';
+      const nomeCompleto = aluno.usuario.nome.toLowerCase();
+      const numero = aluno.numero?.toLowerCase() || '';
+      
+      if (!nomeGuerra.includes(termo) && !nomeCompleto.includes(termo) && !numero.includes(termo)) {
+        return false;
+      }
+    }
+
+    return true;
+  }) 
 
   const presentes = Object.values(chamada).filter(s => s === 'PRESENTE').length
   const faltas = Object.values(chamada).filter(s => s === 'FALTA').length
@@ -125,7 +146,7 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
   return (
     <div className="space-y-6">
       <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row gap-6 justify-between md:items-center">
-        <div className="flex flex-col sm:flex-row gap-4  w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Data
@@ -141,19 +162,12 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {data.toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
+                    day: "2-digit", month: "2-digit", year: "numeric",
                   })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={data}
-                  onSelect={d => d && setData(d)}
-                  initialFocus
-                />
+                <Calendar mode="single" selected={data} onSelect={d => d && setData(d)} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
@@ -167,14 +181,12 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="GERAL" className='cursor-pointer'>Geral (Dia Comum)</SelectItem>
-                
+                <SelectItem value="GERAL" className='cursor-pointer'>Geral (Todos os Alunos)</SelectItem>
                 {instrutores.map(instrutor => (
                   <SelectItem key={instrutor.id} value={instrutor.id} className='cursor-pointer'>
                     Inst. {instrutor.nome}
                   </SelectItem>
                 ))}
-
               </SelectContent>
             </Select>
           </div>
@@ -182,20 +194,12 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
 
         <div className="flex gap-3">
           <div className="flex flex-col items-center px-4 py-2 rounded bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-              PRESENTES
-            </span>
-            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
-              {presentes}
-            </span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">PRESENTES</span>
+            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{presentes}</span>
           </div>
           <div className="flex flex-col items-center px-4 py-2 rounded bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800/50">
-            <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
-              FALTAS
-            </span>
-            <span className="text-xl font-bold text-red-700 dark:text-red-300">
-              {faltas}
-            </span>
+            <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FALTAS</span>
+            <span className="text-xl font-bold text-red-700 dark:text-red-300">{faltas}</span>
           </div>
         </div>
       </div>
@@ -212,29 +216,14 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
         </div>
 
         <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
-          <Button
-            variant="outline"
-            onClick={limparTudo}
-            className="flex-1 md:flex-none cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 border-red-300 dark:border-red-800/50"
-          >
-            <Eraser className="mr-2 h-4 w-4 text-red-500" />
-            Limpar Tudo
+          <Button variant="outline" onClick={limparTudo} className="flex-1 md:flex-none cursor-pointer text-red-500 border-red-300">
+            <Eraser className="mr-2 h-4 w-4" /> Limpar Tudo
           </Button>
-          <Button
-            variant="outline"
-            onClick={marcarTodosPresentes}
-            className="flex-1 md:flex-none hover:bg-emerald-50 cursor-pointer dark:hover:bg-emerald-950/30 text-emerald-600 border-emerald-200 dark:border-emerald-800/50"
-          >
-            <CheckCheck className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            Todos Presentes
+          <Button variant="outline" onClick={marcarTodosPresentes} className="flex-1 md:flex-none cursor-pointer text-emerald-600 border-emerald-200">
+            <CheckCheck className="mr-2 h-4 w-4" /> Todos Presentes
           </Button>
-          <Button
-            onClick={salvar}
-            disabled={loading}
-            className="flex-1 md:flex-none min-w-[140px] cursor-pointer hover:bg-emerald-600"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? 'Salvando...' : 'Salvar Chamada'}
+          <Button onClick={salvar} disabled={loading} className="flex-1 md:flex-none min-w-[140px] cursor-pointer hover:bg-emerald-600">
+            <Save className="mr-2 h-4 w-4" /> {loading ? 'Salvando...' : 'Salvar Chamada'}
           </Button>
         </div>
       </div>
@@ -242,42 +231,34 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {alunosFiltrados.map(aluno => {
           const status = chamada[aluno.id]
+          const cargoFormatado = aluno.cargo?.abreviacao || 'S/C'
+          const numeroFormatado = aluno.numero ? `${aluno.numero} - ` : ''
+
           return (
             <div
               key={aluno.id}
               className={cn(
-                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm transition-colors ',
-                !status
-                  ? 'bg-muted/30 border-border '
-                  : status === 'FALTA'
-                    ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
-                    : status === 'JUSTIFICADA'
-                      ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
-                      : status === 'PRESENTE'
-                        ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50 '
-                        : 'bg-card '
+                'p-3 rounded-lg border flex items-center justify-between gap-3 shadow-sm transition-colors',
+                !status ? 'bg-muted/30 border-border'
+                  : status === 'FALTA' ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50'
+                  : status === 'JUSTIFICADA' ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
+                  : 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/50'
               )}
             >
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">
+                  <span className="text-primary mr-1">{numeroFormatado}{cargoFormatado} GM</span> 
                   {aluno.usuario.nomeDeGuerra || aluno.usuario.nome.split(' ')[0]}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {aluno.usuario.nome}
-                </p>
+                <p className="text-xs text-muted-foreground truncate">{aluno.usuario.nome}</p>
               </div>
 
               <div className="flex shrink-0 gap-1 bg-background p-1 rounded-md border shadow-sm">
-
                 <button
                   onClick={() => toggleStatus(aluno.id, null)}
-                  title="Limpar registro de chamada"
                   disabled={!status}
-                  className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center transition-colors',
-                    status
-                      ? 'text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
-                      : 'text-gray-300 dark:text-gray-700 cursor-not-allowed'
+                  className={cn('h-8 w-8 rounded flex items-center justify-center transition-colors',
+                    status ? 'text-red-400 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'
                   )}
                 >
                   <Eraser className="w-4 h-4" />
@@ -287,46 +268,28 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
 
                 <button
                   onClick={() => toggleStatus(aluno.id, 'PRESENTE')}
-                  className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
-                    status === 'PRESENTE'
-                      ? 'bg-emerald-600 text-white dark:bg-emerald-500'
-                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
+                  className={cn('h-8 w-8 rounded font-bold text-xs transition-colors',
+                    status === 'PRESENTE' ? 'bg-emerald-600 text-white' : 'text-muted-foreground hover:bg-muted'
                   )}
-                >
-                  P
-                </button>
+                >P</button>
                 <button
                   onClick={() => toggleStatus(aluno.id, 'FALTA')}
-                  className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
-                    status === 'FALTA'
-                      ? 'bg-red-600 text-white dark:bg-red-500'
-                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
+                  className={cn('h-8 w-8 rounded font-bold text-xs transition-colors',
+                    status === 'FALTA' ? 'bg-red-600 text-white' : 'text-muted-foreground hover:bg-muted'
                   )}
-                >
-                  F
-                </button>
+                >F</button>
                 <button
                   onClick={() => toggleStatus(aluno.id, 'JUSTIFICADA')}
-                  className={cn(
-                    'h-8 w-8 rounded flex items-center justify-center font-bold text-xs transition-colors',
-                    status === 'JUSTIFICADA'
-                      ? 'bg-amber-500 text-white dark:bg-amber-400'
-                      : 'text-muted-foreground hover:bg-muted cursor-pointer'
+                  className={cn('h-8 w-8 rounded font-bold text-xs transition-colors',
+                    status === 'JUSTIFICADA' ? 'bg-amber-500 text-white' : 'text-muted-foreground hover:bg-muted'
                   )}
-                >
-                  J
-                </button>
+                >J</button>
 
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className={cn(
-                        'h-8 w-8 rounded flex items-center justify-center transition-colors',
-                        observacoes[aluno.id]
-                          ? 'bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/50'
-                          : 'text-gray-400 hover:bg-muted dark:text-gray-500 cursor-pointer'
+                      className={cn('h-8 w-8 rounded flex items-center justify-center transition-colors',
+                        observacoes[aluno.id] ? 'bg-blue-100 text-blue-600 border border-blue-200' : 'text-gray-400 hover:bg-muted'
                       )}
                     >
                       <MessageSquare className="w-4 h-4" />
@@ -334,11 +297,9 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-3">
                     <Textarea
-                      placeholder="Ex: Saiu mais cedo, atestado..."
+                      placeholder="Ex: Atestado médico..."
                       value={observacoes[aluno.id] || ''}
-                      onChange={e =>
-                        handleObservacao(aluno.id, e.target.value)
-                      }
+                      onChange={e => handleObservacao(aluno.id, e.target.value)}
                       className="h-20 text-sm"
                     />
                   </PopoverContent>
@@ -347,6 +308,12 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
             </div>
           )
         })}
+
+        {alunosFiltrados.length === 0 && (
+          <div className="col-span-full py-12 flex flex-col items-center justify-center text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed">
+            <span className="font-medium">Nenhum aluno para exibir.</span>
+          </div>
+        )}
       </div>
     </div>
   )

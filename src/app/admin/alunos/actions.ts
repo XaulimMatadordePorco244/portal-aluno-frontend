@@ -25,6 +25,7 @@ const alunoSchema = z.object({
   rg: z.string().optional(),
   rgEstadoEmissor: z.string().optional(),
   dataNascimento: z.string().optional(),
+  dataIngresso: z.string().optional(),
 
   genero: z.nativeEnum(GeneroUsuario).optional().or(z.literal("")),
   telefone: z.string().optional(),
@@ -42,8 +43,9 @@ const alunoSchema = z.object({
   aptidaoFisicaLaudo: z.string().optional(),
 
   escolaId: z.string().optional().or(z.literal("")),
-  serieEscolar: z.nativeEnum(SerieEscolar).optional().or(z.literal("")), endereco: z.string().optional(),
-    termoResponsabilidadeAssinado: z.string().optional(),
+  serieEscolar: z.nativeEnum(SerieEscolar).optional().or(z.literal("")), 
+  endereco: z.string().optional(),
+  termoResponsabilidadeAssinado: z.string().optional(),
   fazCursoExterno: z.string().optional(),
   cursoExternoDescricao: z.string().optional(),
 
@@ -60,7 +62,6 @@ export type AlunoState = {
   formData?: Record<string, unknown> | null;
 } | undefined;
 
-
 export async function createAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const user = await getCurrentUserWithRelations();
   if (!user || user.role !== 'ADMIN') return { message: "Acesso negado." };
@@ -75,8 +76,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   const validated = alunoSchema.safeParse(rawData);
 
   if (!validated.success) {
-    console.log("ERROS DO ZOD (CREATE):", validated.error.flatten().fieldErrors);
-
     return {
       errors: validated.error.flatten().fieldErrors,
       message: "Erro de validação nos campos. Verifique os dados digitados.",
@@ -87,6 +86,14 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   const data = validated.data;
   const hashedPassword = await bcrypt.hash(data.password || "mudar123", 10);
   const conceitoInicial = data.ingressoForaDeData ? "6.0" : "7.0";
+
+  let dataIngressoDate: Date | null = null;
+  let anoIngressoInt: number = new Date().getFullYear();
+
+  if (data.dataIngresso) {
+    dataIngressoDate = new Date(`${data.dataIngresso}T12:00:00`);
+    anoIngressoInt = dataIngressoDate.getFullYear();
+  }
 
   try {
     let fotoUrl: string | null = null;
@@ -127,7 +134,8 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           cargoId: data.cargoId,
           conceitoInicial: conceitoInicial,
           conceitoAtual: conceitoInicial,
-          anoIngresso: new Date().getFullYear(),
+          dataIngresso: dataIngressoDate,
+          anoIngresso: anoIngressoInt,
           foraDeData: !!data.ingressoForaDeData,
 
           tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
@@ -192,8 +200,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
     });
 
   } catch (error: unknown) {
-    console.error("Erro ao criar aluno:", error);
-
     if (typeof error === 'object' && error !== null && 'code' in error) {
       const prismaError = error as { code: string; meta?: { target?: string[] } };
       if (prismaError.code === 'P2002') {
@@ -213,7 +219,6 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   redirect("/admin/alunos");
 }
 
-
 export async function updateAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
   const id = formData.get("id") as string;
   if (!id) return { message: "ID não fornecido" };
@@ -226,8 +231,6 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
   const validated = updateSchema.safeParse({ ...rawData, id });
 
   if (!validated.success) {
-    console.log("ERROS DO ZOD (UPDATE):", validated.error.flatten().fieldErrors);
-
     return {
       errors: validated.error.flatten().fieldErrors,
       message: "Erro de validação",
@@ -237,6 +240,14 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
 
   const data = validated.data;
 
+  let dataIngressoDate: Date | null | undefined = undefined;
+  let anoIngressoInt: number | null | undefined = undefined;
+
+  if (data.dataIngresso) {
+    dataIngressoDate = new Date(`${data.dataIngresso}T12:00:00`);
+    anoIngressoInt = dataIngressoDate.getFullYear();
+  }
+
   try {
     const alunoAtual = await prisma.usuario.findUnique({ where: { id } });
 
@@ -244,7 +255,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
 
     if (fotoPerfil && fotoPerfil.size > 0) {
       if (alunoAtual?.fotoUrl) {
-        await del(alunoAtual.fotoUrl).catch(err => console.error("Erro ao deletar foto antiga:", err));
+        await del(alunoAtual.fotoUrl).catch(() => {});
       }
 
       const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
@@ -278,6 +289,8 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
           numero: data.numero,
           companhiaId: data.companhiaId,
           cargoId: data.cargoId,
+          dataIngresso: dataIngressoDate,
+          ...(anoIngressoInt !== undefined ? { anoIngresso: anoIngressoInt } : {}),
 
           tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
           aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : null,
@@ -295,8 +308,7 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
         }
       });
     });
-  } catch (error: unknown) {
-    console.error("Erro ao atualizar aluno:", error);
+  } catch {
     return { message: "Erro ao atualizar dados." };
   }
 
@@ -344,8 +356,7 @@ export async function inativarAluno(id: string) {
     revalidatePath("/admin/alunos");
     return { success: true, message: "Aluno desligado e histórico preservado com sucesso." };
 
-  } catch (error: unknown) {
-    console.error("Erro ao inativar aluno:", error);
+  } catch {
     return { success: false, message: "Erro interno ao tentar inativar o aluno." };
   }
 }
@@ -432,8 +443,7 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
       message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).`
     };
 
-  } catch (error: unknown) {
-    console.error("Erro ao reativar aluno:", error);
+  } catch {
     return { success: false, message: "Erro interno ao tentar reativar o aluno." };
   }
 }
@@ -492,8 +502,7 @@ export async function gerirPrivilegiosAluno(usuarioId: string, acao: TipoPromoca
     revalidatePath("/admin/alunos");
     return { success: true, message: "Privilégios atualizados com sucesso." };
 
-  } catch (error) {
-    console.error("Erro ao gerir privilégios:", error);
+  } catch {
     return { success: false, message: "Ocorreu um erro ao alterar os privilégios." };
   }
 }
