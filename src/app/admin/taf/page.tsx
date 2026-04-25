@@ -6,8 +6,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
-import { Settings, Eye, PlusCircle } from 'lucide-react'
+import { Settings, Eye, PlusCircle, Pencil, Trash2 } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { excluirTaf } from './actions/taf-actions' 
 
 export const metadata: Metadata = {
   title: 'Gestão de TAF',
@@ -25,24 +26,24 @@ export default async function TafDashboardPage({ searchParams }: PageProps) {
   const bimestreSelecionado = Number(params.bimestre) || 1
 
   const alunos = await prisma.perfilAluno.findMany({
-  where: { 
-    usuario: { status: 'ATIVO' }
-  }, 
-  orderBy: {
-    usuario: {
-      nomeDeGuerra: 'asc'
-    }
-  },
-  include: {
-    usuario: true,
-    tafs: {
-      where: {
-        anoLetivo: anoSelecionado,
-        bimestre: bimestreSelecionado
+    where: { 
+      usuario: { status: 'ATIVO' }
+    }, 
+    orderBy: {
+      usuario: {
+        nomeDeGuerra: 'asc'
+      }
+    },
+    include: {
+      usuario: true,
+      tafs: {
+        where: {
+          anoLetivo: anoSelecionado,
+          bimestre: bimestreSelecionado
+        }
       }
     }
-  }
-})
+  })
 
   const totalAlunos = alunos.length
   const realizados = alunos.filter(a => a.tafs.length > 0).length
@@ -188,19 +189,43 @@ export default async function TafDashboardPage({ searchParams }: PageProps) {
 
                             <TableCell className="text-right">
                                 {taf ? (
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`/admin/alunos/${aluno.id}`}>
-                                            <Eye className="w-4 h-4 mr-1" /> Ver
-                                        </Link>
-                                    </Button>
+                                    <div className="flex items-center justify-end gap-1">
+                                        <Button variant="ghost" size="icon" asChild title="Ver Aluno">
+                                            <Link href={`/admin/alunos/${aluno.id}/taf`}>
+                                                <Eye className="w-4 h-4 text-muted-foreground" />
+                                            </Link>
+                                        </Button>
+
+                                        <Button variant="ghost" size="icon" asChild title="Editar Nota">
+                                            <Link href={`/admin/alunos/${aluno.id}/taf/editar?id=${taf.id}`}>
+                                                <Pencil className="w-4 h-4 text-blue-500" />
+                                            </Link>
+                                        </Button>
+
+                                        <form action={async () => {
+                                            'use server'
+                                            await excluirTaf(taf.id)
+                                        }}>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" 
+                                                type="submit" 
+                                                title="Excluir TAF"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </form>
+                                    </div>
                                 ) : (
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/admin/alunos/${aluno.id}/taf/novo`}>
+                                        <Link href={`/admin/alunos/${aluno.id}/taf/novo?bimestre=${bimestreSelecionado}&ano=${anoSelecionado}`}>
                                             <PlusCircle className="w-4 h-4 mr-1" /> Lançar
                                         </Link>
                                     </Button>
                                 )}
                             </TableCell>
+
                         </TableRow>
                     )
                 })}

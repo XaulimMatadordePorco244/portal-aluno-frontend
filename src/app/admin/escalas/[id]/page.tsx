@@ -29,7 +29,6 @@ export type UserComCargoEFuncao = Usuario & {
 };
 
 
-
 async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null> {
  const escala = await prisma.escala.findUnique({
     where: { id },
@@ -58,8 +57,17 @@ async function getEscalaDetailsSimple(id: string): Promise<EscalaCompleta | null
 
   if (!escala) return null;
 
-return {
+  const dataUtc = new Date(escala.dataEscala);
+  const safeDate = new Date(
+    dataUtc.getUTCFullYear(), 
+    dataUtc.getUTCMonth(), 
+    dataUtc.getUTCDate(), 
+    12
+  );
+
+  return {
     ...escala,
+    dataEscala: safeDate, 
     itens: escala.itens.map(item => ({
       ...item,
       alunoId: item.aluno.id, 
@@ -138,19 +146,15 @@ export default async function DetalheEscalaPage({ params }: PageProps) {
           <Scale className="w-8 h-8 text-foreground" />
           <h1 className="text-3xl font-bold text-foreground">Detalhes da Escala</h1>
         </div>
-                <DeleteEscalaButton escalaId={escala.id} />
-
+        <DeleteEscalaButton escalaId={escala.id} />
       </div>
       
-
       <EditEscalaForm
         escalaInicial={escala}
         alunos={formData.alunos}
         admins={formData.admins}
         funcoes={formData.funcoes}
       />
-      
     </>
-    
   );
 }

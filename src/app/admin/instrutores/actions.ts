@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 export async function salvarInstrutor(formData: FormData) {
   const id = formData.get('id') as string | null
   const nome = formData.get('nome') as string
+  
+  const alunosIds = formData.getAll('alunos') as string[]
 
   if (!nome || nome.trim() === '') {
     return { error: 'O nome é obrigatório' }
@@ -15,11 +17,22 @@ export async function salvarInstrutor(formData: FormData) {
   if (id) {
     await prisma.instrutor.update({
       where: { id },
-      data: { nome }
+      data: { 
+        nome,
+        alunos: {
+          set: alunosIds.map(alunoId => ({ id: alunoId }))
+        }
+      }
     })
   } else {
     await prisma.instrutor.create({
-      data: { nome, ativo: true }
+      data: { 
+        nome, 
+        ativo: true,
+        alunos: {
+          connect: alunosIds.map(alunoId => ({ id: alunoId }))
+        }
+      }
     })
   }
 

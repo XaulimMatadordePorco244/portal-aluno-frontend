@@ -30,7 +30,15 @@ import { toast } from "sonner";
 
 import { inativarAluno, reativarAluno, gerirPrivilegiosAluno, TipoPromocao } from "./actions";
 
-export function AlunoActions({ aluno }: { aluno: Usuario }) {
+
+
+type AlunoComPerfil = Usuario & {
+  perfilAluno: {
+    id: string
+  } | null
+}
+
+export function AlunoActions({ aluno }: { aluno: AlunoComPerfil }) {
   const [isPromoteOpen, setIsPromoteOpen] = useState(false);
   const [promoteType, setPromoteType] = useState<TipoPromocao>('PROMOVER_MANTER');
   const [confirmText, setConfirmText] = useState("");
@@ -95,7 +103,7 @@ export function AlunoActions({ aluno }: { aluno: Usuario }) {
         <DropdownMenuContent align="end" className="w-56">
           
           <DropdownMenuItem asChild>
-            <Link href={`/admin/alunos/${aluno.id}`}>
+            <Link href={`/admin/alunos/${aluno.perfilAluno?.id}`}>
               <UserCircle className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>Ver Perfil Completo</span>
             </Link>

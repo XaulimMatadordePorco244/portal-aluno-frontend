@@ -209,7 +209,7 @@ export default function AdminStudentHistoryClient({
 
   const handleEdit = (id: string, type: 'anotacao' | 'suspensao') => {
     if (type === 'anotacao') {
-        router.push(`/admin/anotacoes/lancamento?id=${id}`);
+        router.push(`/admin/anotacoes/${id}/edit`);
     } else {
         router.push(`/admin/suspensao/${id}/edit`);
     }

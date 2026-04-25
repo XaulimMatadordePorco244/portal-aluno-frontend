@@ -1,31 +1,26 @@
 import prisma from "@/lib/prisma";
 import { getAlmanaque } from "@/app/actions/antiguidade";
+import { getCurrentUser } from "@/lib/auth"; 
 import TabelaAntiguidade from "@/components/admin/antiguidade/TabelaAntiguidade";
 import BotaoExtratoAntiguidade from "./BotaoExtratoAntiguidade"; 
+import ModalDefinirComando from "@/components/admin/antiguidade/ModalDefinirComando"; 
 
 export default async function Page() {
+  const currentUser = await getCurrentUser();
+  const isAdmin = currentUser?.role === 'ADMIN';
+
   const [comandante, subComandante, efetivoResponse] = await Promise.all([
     prisma.perfilAluno.findFirst({
       where: {
-        funcao: {
-          nome: "COMANDANTE GERAL"
-        }
+        funcao: { nome: "COMANDANTE GERAL" }
       },
-      include: {
-        usuario: true,
-        cargo: true
-      }
+      include: { usuario: true, cargo: true }
     }),
     prisma.perfilAluno.findFirst({
       where: {
-        funcao: {
-          nome: "SUB COMANDANTE GERAL"
-        }
+        funcao: { nome: "SUB COMANDANTE GERAL" }
       },
-      include: {
-        usuario: true,
-        cargo: true
-      }
+      include: { usuario: true, cargo: true }
     }),
     getAlmanaque()
   ]);
@@ -34,12 +29,27 @@ export default async function Page() {
     ? efetivoResponse.data.filter((aluno): aluno is typeof aluno & { cargo: NonNullable<typeof aluno.cargo> } => aluno.cargo !== null)
     : [];
 
+  const efetivoSimplificado = efetivo.map(aluno => ({
+    id: aluno.id,
+    numero: aluno.numero?.toString() || null,
+    nome: aluno.usuario?.nomeDeGuerra || aluno.usuario?.nome || 'Sem Nome',
+    cargo: aluno.cargo.abreviacao || aluno.cargo.nome
+  }));
+
   return (
     <div className="space-y-6">
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
+        <div className="flex items-center gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Antiguidade</h1>
+          
+          {isAdmin && (
+            <ModalDefinirComando 
+              efetivo={efetivoSimplificado}
+              comandanteAtualId={comandante?.id}
+              subComandanteAtualId={subComandante?.id}
+            />
+          )}
         </div>
         <BotaoExtratoAntiguidade efetivo={efetivo} />
       </div>

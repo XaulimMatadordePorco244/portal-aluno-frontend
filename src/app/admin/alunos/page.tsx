@@ -17,7 +17,6 @@ import { AlunoFiltros } from "./aluno-filtros";
 import { FotoHover } from "@/components/ui/foto-hover";
 import { NomeFormatado } from '@/components/ui/nome-formatado'
 
-// Importe o novo componente criado
 import { FiltroCargo } from "./filtro-cargo"; 
 
 type PageProps = {

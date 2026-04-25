@@ -13,12 +13,12 @@ interface CarteirinhaProps {
         nomeDeGuerra: string;
         fotoUrl?: string | null;
         cpf: string;
-        dataNascimento: Date;
+        dataNascimento: string;
         numero: string | null;
         codigoValidacao: string;
         cargo: string;
         cargoTipo: string;
-        validade: Date;
+        validade: string;
     };
 }
 
@@ -102,8 +102,8 @@ export default function Carteirinha({ aluno }: CarteirinhaProps) {
                                         <LinhaDado label="CARGO" valor={aluno.cargo} />
                                         <LinhaDado label="NÚMERO" valor={aluno.numero} />
                                         <LinhaDado label="CPF" valor={aluno.cpf} />
-                                        <LinhaDado label="NASC." valor={aluno.dataNascimento.toLocaleDateString('pt-BR')} />
-                                        <LinhaDado label="VALIDADE" valor={aluno.validade.toLocaleDateString('pt-BR')} destaque />
+                                        <LinhaDado label="NASC."valor={aluno.dataNascimento} />
+                                        <LinhaDado label="VALIDADE" valor={aluno.validade} destaque />
                                     </div>
 
 

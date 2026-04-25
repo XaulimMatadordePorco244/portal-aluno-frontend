@@ -4,6 +4,7 @@ import { ClassificacaoTable, ClassificacaoItem } from "@/components/admin/Classi
 import { Metadata } from "next";
 import { ExtratoButton } from "./extrato-button";
 import { unstable_cache } from "next/cache";
+import { RefreshButton } from "./RefreshButton";
 
 export const metadata: Metadata = {
   title: "Classificação Geral | Admin",
@@ -32,37 +33,29 @@ const getRankingCacheado = unstable_cache(
         suspensoes: { select: { pontosRetirados: true } } 
       }
     });
-
-    const processedData = alunos.map((aluno) => {
+const processedData = alunos.map((aluno) => {
       let elogios = 0;
       let punicoes = 0;
       let foPos = 0;
       let foNeg = 0;
-      let somaTotalAnotacoes = 0;
 
       const anotacoes = aluno.historicoCargos[0]?.anotacoes || [];
       for (const a of anotacoes) {
         const pts = Number(a.pontos);
-        somaTotalAnotacoes += pts;
-        if (pts > 0.5) elogios++;
-        else if (pts < -0.3) punicoes++;
-        else if (pts === 0.5) foPos++;
-        else if (pts === -0.3) foNeg++;
+        
+        if (pts > 0.5) elogios += pts;
+        else if (pts < -0.3) punicoes += pts;
+        else if (pts === 0.5) foPos += pts;
+        else if (pts === -0.3) foNeg += pts;
       }
 
       let totalSuspensoes = 0;
-      let pontosSuspensao = 0;
       const suspensoes = aluno.suspensoes || [];
       for (const s of suspensoes) {
-        totalSuspensoes++;
-        pontosSuspensao += Number(s.pontosRetirados);
+        totalSuspensoes += Number(s.pontosRetirados); 
       }
 
-      const conceitoInicial = aluno.historicoCargos[0]?.conceitoInicial || 7;
-      let conceitoAtualCalculado = conceitoInicial + somaTotalAnotacoes + pontosSuspensao;
-      
-      if (conceitoAtualCalculado > 10) conceitoAtualCalculado = 10;
-      if (conceitoAtualCalculado < 0) conceitoAtualCalculado = 0;
+      const conceitoAtualCalculado = Number(aluno.conceitoAtual) || 0;
 
       return {
         dadosCalculados: {
@@ -77,7 +70,7 @@ const getRankingCacheado = unstable_cache(
           totalFoPos: foPos,
           totalFoNeg: foNeg,
           totalSuspensoes: totalSuspensoes, 
-          conceitoAtual: conceitoAtualCalculado
+          conceitoAtual: conceitoAtualCalculado 
         }
       };
     });
@@ -129,6 +122,7 @@ export default async function ClassificacaoGeralPage() {
             <CalendarDays className="w-4 h-4" />
             <span>Atualizado: <strong>{dataAtualizacao}</strong></span>
           </div>
+          <RefreshButton />
           <ExtratoButton dados={finalData} dataAtualizacao={dataAtualizacao} />
         </div>
       </div>

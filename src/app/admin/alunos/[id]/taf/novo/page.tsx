@@ -1,8 +1,6 @@
 import { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+
 import prisma from '@/lib/prisma'
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth'
 import TafForm from './taf-form' 
@@ -45,13 +43,9 @@ export default async function NovoTafPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
+    <div >
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" asChild>
-            <Link href={`/admin/alunos/${id}`}>
-                <ArrowLeft className="h-5 w-5" />
-            </Link>
-        </Button>
+
         <div>
             <h1 className="text-2xl font-bold tracking-tight">Avaliação Física (TAF)</h1>
             <p className="text-muted-foreground">

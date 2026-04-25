@@ -1,4 +1,4 @@
-import { PDFBuilder } from '@/lib/pdf/pdfUtils'; // Ajuste o caminho
+import { PDFBuilder } from '@/lib/pdf/pdfUtils'; 
 import { buildClassificacaoTemplate, ClassificacaoPdfItem } from '@/lib/pdf/classificacao.template';
 
 export class ClassificacaoPdfService {

@@ -11,7 +11,6 @@ const TafSchema = z.object({
   bimestre: z.coerce.number().min(1).max(4),
   genero: z.enum(['MASCULINO', 'FEMININO']),
   
-
   abdominalQtd: z.coerce.number().min(0),
 
   apoioTipo: z.enum(['BARRA', 'FLEXAO']),
@@ -76,10 +75,27 @@ export async function salvarTaf(formData: FormData) {
     })
 
     revalidatePath(`/admin/alunos/${data.alunoId}`)
+    revalidatePath('/admin/taf')
     return { success: true, message: 'TAF lançado com sucesso!' }
 
   } catch (error) {
     console.error(error)
     return { success: false, message: 'Erro ao salvar TAF. Verifique se já existe lançamento.' }
+  }
+}
+
+export async function excluirTaf(id: string) {
+  try {
+    const tafExcluido = await prisma.tafDesempenho.delete({
+      where: { id }
+    })
+
+    revalidatePath(`/admin/alunos/${tafExcluido.alunoId}`)
+    revalidatePath('/admin/taf')
+    
+    return { success: true, message: 'Nota excluída com sucesso!' }
+  } catch (error) {
+    console.error(error)
+    return { success: false, message: 'Erro ao excluir o TAF.' }
   }
 }

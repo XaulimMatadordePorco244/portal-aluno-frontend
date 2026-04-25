@@ -148,7 +148,7 @@ export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: Ciclo, ca
             return;
         }
 
-        const result = await efetivarPromocoesDoCiclo(payload, ciclo.id);
+        const result = await efetivarPromocoesDoCiclo(ciclo.id, payload);
 
         if (result.success) {
             alert(result.message);

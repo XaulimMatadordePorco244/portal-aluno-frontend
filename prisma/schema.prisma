@@ -211,6 +211,8 @@ model PerfilAluno {
   modalidadeUltimaPromocao      String?
   turmaEscolar                  String?
   turmaId                       String?
+  instrutorId                   String?
+  instrutor                     Instrutor?           @relation(fields: [instrutorId], references: [id])
   escola                        Escola?              @relation(fields: [escolaId], references: [id])
   turma                         Turma?               @relation("AlunosDaTurma", fields: [turmaId], references: [id], map: "fk_perfil_aluno_turma")
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
@@ -849,6 +851,7 @@ model Instrutor {
   updatedAt DateTime @updatedAt
 
   frequencias Frequencia[] 
+  alunos      PerfilAluno[]
 }
 
 enum Role {
