@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { InstrutorForm } from '../../instrutor-form'
+import { getAlmanaque } from '@/app/actions/antiguidade'
 
 export const metadata = { title: 'Editar Instrutor' }
 
@@ -16,16 +17,14 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
 
   if (!instrutor) notFound()
 
-  const alunos = await prisma.perfilAluno.findMany({
-    where: { status: 'ATIVO' },
-    include: { usuario: { select: { nome: true, nomeDeGuerra: true } } },
-    orderBy: { usuario: { nome: 'asc' } }
-  });
+  const resultadoAlmanaque = await getAlmanaque();
+  const alunosBase = resultadoAlmanaque.success ? (resultadoAlmanaque.data || []) : [];
 
-  const alunosMapeados = alunos.map(a => ({
+  const alunosMapeados = alunosBase.map(a => ({
     id: a.id,
     nome: a.usuario.nomeDeGuerra || a.usuario.nome,
-    numero: a.numero
+    numero: a.numero,
+    cargoAbreviacao: a.cargo?.abreviacao || null
   }));
 
   const initialData = {
@@ -38,9 +37,9 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Editar Instrutor</h1>
-        <p className="text-muted-foreground">Altere os dados do instrutor e os seus alunos vinculados.</p>
+        <p className="text-muted-foreground">Altere os dados do instrutor.</p>
       </div>
-      <div className="border rounded-lg bg-card p-6 shadow-sm">
+      <div>
         <InstrutorForm initialData={initialData} alunosDisponiveis={alunosMapeados} />
       </div>
     </div>
