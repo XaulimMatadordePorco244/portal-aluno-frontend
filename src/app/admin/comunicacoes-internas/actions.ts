@@ -195,7 +195,10 @@ export async function getComunicacoes(
     const [data, total] = await Promise.all([
       prisma.comunicacaoInterna.findMany({
         where,
-        orderBy: { numeroSequencial: 'desc' },
+        orderBy: [
+          { anoReferencia: 'desc' },
+          { numeroSequencial: 'desc' }
+        ],
         take: ITEMS_PER_PAGE,
         skip,
         include: { autor: { select: {id: true, nome: true } } }
@@ -236,5 +239,27 @@ export async function deleteComunicacao(
     }
     
     return { error: errorMessage }
+  }
+}
+
+export async function deleteManyComunicacoes(
+  items: { id: string; fileUrl: string }[]
+): Promise<DeleteResponse> {
+  try {
+    await Promise.all(
+      items.map(item => item.fileUrl ? del(item.fileUrl) : Promise.resolve())
+    );
+
+    await prisma.comunicacaoInterna.deleteMany({
+      where: {
+        id: { in: items.map(i => i.id) }
+      }
+    });
+
+    revalidatePath("/admin/comunicacoes-internas");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro na exclusão múltipla:", error);
+    return { error: "Falha ao excluir as comunicações selecionadas." };
   }
 }

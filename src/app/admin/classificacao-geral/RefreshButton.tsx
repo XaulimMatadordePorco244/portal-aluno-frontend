@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/Button'; // Ajuste o caminho se necessário
-import { toast } from 'sonner'; // Ou a biblioteca de toast que você usa
+import { Button } from '@/components/ui/Button'; 
+import { toast } from 'sonner';
 import { recarregarCacheClassificacao } from './actions';
 
 export function RefreshButton() {

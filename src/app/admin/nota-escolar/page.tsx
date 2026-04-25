@@ -13,6 +13,7 @@ import prisma from '@/lib/prisma';
 import { getCurrentUserWithRelations, canAccessAdminArea } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import BoletimFiltros from './boletim-filtros';
+import { ORDEM_ANTIGUIDADE } from '@/lib/regras';
 
 export const metadata: Metadata = {
   title: 'Admin - Monitoramento Escolar',
@@ -63,11 +64,7 @@ export default async function NotasEscolaresPage({
         where: { anoLetivo: anoAtual }
       }
     },
-    orderBy: [
-      { cargo: { precedencia: 'asc' } },
-      { dataUltimaPromocao: 'asc' },
-      { numero: 'asc' }
-    ]
+    orderBy: ORDEM_ANTIGUIDADE
   });
 
 
