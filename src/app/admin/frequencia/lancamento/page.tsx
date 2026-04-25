@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { ListaChamada } from './lista-chamada'
+import { ORDEM_ANTIGUIDADE } from '@/lib/regras'
 
 const prisma = new PrismaClient()
 
@@ -9,16 +10,18 @@ export default async function LancamentoFrequenciaPage() {
       usuario: { status: 'ATIVO' },
       status: 'ATIVO' 
     },
-    include: {
+    select: {
+      id: true,
+      instrutorId: true, 
+      numero: true,
       usuario: {
         select: { nome: true, nomeDeGuerra: true }
+      },
+      cargo: {
+        select: { abreviacao: true }
       }
     },
-    orderBy: {
-      usuario: {
-        nomeDeGuerra: 'asc'
-      }
-    }
+    orderBy: ORDEM_ANTIGUIDADE
   })
 
   const instrutores = await prisma.instrutor.findMany({
