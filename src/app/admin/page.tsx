@@ -211,7 +211,7 @@ export default async function AdminDashboardPage() {
                                     </p>
                                 </div>
                                 <Button variant="ghost" size="sm" asChild className="mt-2 sm:mt-0 text-primary shrink-0">
-                                    <Link href="/admin/desempenho">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                                    <Link href="/admin/nota-escolar">Ver todos <ArrowRight className="w-4 h-4 ml-2" /></Link>
                                 </Button>
                             </div>
 
