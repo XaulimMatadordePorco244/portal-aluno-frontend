@@ -16,7 +16,7 @@ export function RefreshButton() {
       if (res.success) {
         toast.success(res.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao atualizar a classificação.');
     } finally {
       setLoading(false);
