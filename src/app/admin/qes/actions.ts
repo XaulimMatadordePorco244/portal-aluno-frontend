@@ -73,27 +73,6 @@ export async function createQES(prevState: QESState, formData: FormData): Promis
   }
 }
 
-export async function deleteQES(formData: FormData) {
-  const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
-    throw new Error("Acesso negado.");
-  }
-
-  const id = formData.get('id') as string;
-  const arquivoUrl = formData.get('arquivoUrl') as string;
-
-  if (!id || !arquivoUrl) {
-    throw new Error("ID ou URL do arquivo não fornecidos.");
-  }
-
-  try {
-    await del(arquivoUrl);
-    await prisma.qES.delete({ where: { id } });
-    revalidatePath("/admin/qes");
-  } catch (error) {
-    console.error(error);
-  }
-}
 
 const UpdateFormSchema = z.object({
   id: z.string(),
@@ -149,4 +128,45 @@ export async function updateQES(prevState: QESState, formData: FormData): Promis
 
   revalidatePath("/admin/qes");
   redirect("/admin/qes");
+}
+
+
+export async function deleteQES(id: string, fileUrl: string) {
+  const user = await getCurrentUserWithRelations();
+  if (!user || user.role !== 'ADMIN') return { error: "Acesso negado." };
+
+  try {
+    if (fileUrl) {
+      await del(fileUrl).catch(() => {});
+    }
+    await prisma.qES.delete({ where: { id } });
+    revalidatePath("/admin/qes");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir QES:", error);
+    return { error: "Erro ao excluir QES." };
+  }
+}
+
+export async function deleteManyQES(items: { id: string; fileUrl: string }[]) {
+  const user = await getCurrentUserWithRelations();
+  if (!user || user.role !== 'ADMIN') return { error: "Acesso negado." };
+
+  try {
+    await Promise.all(
+      items.map(item => item.fileUrl ? del(item.fileUrl).catch(() => {}) : Promise.resolve())
+    );
+
+    await prisma.qES.deleteMany({
+      where: {
+        id: { in: items.map(i => i.id) }
+      }
+    });
+
+    revalidatePath("/admin/qes");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro na exclusão múltipla de QES:", error);
+    return { error: "Falha ao excluir os QES selecionados." };
+  }
 }
