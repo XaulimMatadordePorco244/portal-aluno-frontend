@@ -7,6 +7,7 @@
     "build": "next build ",
     "start": "next start",
     "lint": "eslint",
+    "hash-pass": "tsx --env-file=.env scripts/hash-passwords.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

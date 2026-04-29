@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/Button";
 import { AlertOctagon, CheckCircle, Calendar, ShieldAlert } from "lucide-react";
 import { marcarSuspensaoComoVisualizada } from "@/actions/suspensao";
@@ -16,10 +23,14 @@ type SuspensaoPendente = {
   detalhes: string;
 };
 
-export function AvisoSuspensaoModal({ suspensao }: { suspensao: SuspensaoPendente | null }) {
+export function AvisoSuspensaoModal({
+  suspensao,
+}: {
+  suspensao: SuspensaoPendente | null;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isOpen, setIsOpen] = useState(!!suspensao); 
+  const [isOpen, setIsOpen] = useState(!!suspensao);
 
   if (!suspensao) return null;
 
@@ -29,7 +40,7 @@ export function AvisoSuspensaoModal({ suspensao }: { suspensao: SuspensaoPendent
       if (result.success) {
         toast.success("Ciente registado com sucesso.");
         setIsOpen(false);
-        router.refresh(); 
+        router.refresh();
       } else {
         toast.error("Erro ao comunicar com o servidor. Tente novamente.");
       }
@@ -37,10 +48,10 @@ export function AvisoSuspensaoModal({ suspensao }: { suspensao: SuspensaoPendent
   };
 
   return (
-    <Dialog 
-      open={isOpen} 
+    <Dialog
+      open={isOpen}
       onOpenChange={(open) => {
-        if (!open) return; 
+        if (!open) return;
         setIsOpen(open);
       }}
     >
@@ -59,36 +70,55 @@ export function AvisoSuspensaoModal({ suspensao }: { suspensao: SuspensaoPendent
 
         <div className="bg-muted/50 p-4 rounded-md space-y-3 text-sm">
           <div className="flex justify-between items-center border-b pb-2">
-            <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Data do Fato:</span>
-            <span className="font-semibold">{new Date(suspensao.dataOcorrencia).toLocaleDateString('pt-BR')}</span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-4 w-4" /> Data do Fato:
+            </span>
+            <span className="font-semibold">
+              {new Date(suspensao.dataOcorrencia).toLocaleDateString("pt-BR")}
+            </span>
           </div>
           <div className="flex justify-between items-center border-b pb-2">
-            <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Dias de Suspensão:</span>
-            <span className="font-semibold text-red-600">{suspensao.dias} dias</span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-4 w-4" /> Dias de Suspensão:
+            </span>
+            <span className="font-semibold text-red-600">
+              {suspensao.dias} dias
+            </span>
           </div>
           <div className="flex justify-between items-center border-b pb-2">
-            <span className="text-muted-foreground flex items-center gap-1"><ShieldAlert className="h-4 w-4"/> Impacto no Conceito:</span>
-            <span className="font-semibold text-red-600">{suspensao.pontosRetirados} pontos</span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <ShieldAlert className="h-4 w-4" /> Impacto no Conceito:
+            </span>
+            <span className="font-semibold text-red-600">
+              {suspensao.pontosRetirados} pontos
+            </span>
           </div>
           <div className="space-y-1 pt-1">
-            <span className="text-muted-foreground font-semibold">Motivo / Detalhes:</span>
+            <span className="text-muted-foreground font-semibold">
+              Motivo / Detalhes:
+            </span>
             <p className="bg-background border p-2 rounded text-foreground text-xs leading-relaxed max-h-32 overflow-y-auto">
               {suspensao.detalhes}
             </p>
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-center flex-col gap-2 pt-2">
-          <p className="text-xs text-muted-foreground text-center mb-2">
-            Ao clicar abaixo, você confirma que leu e está ciente desta penalidade. A data e hora desta leitura ficarão registadas no sistema.
+        <DialogFooter className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-col sm:justify-center sm:space-x-0">
+          <p className="text-xs text-muted-foreground text-center max-w-[300px]">
+            Ao clicar abaixo, você confirma que leu e está ciente desta
+            penalidade. A data e hora desta leitura ficarão registadas no
+            sistema.
           </p>
-          <Button 
-            variant="destructive" 
-            className="w-full font-bold" 
+
+          <Button
+            variant="destructive"
+            className="w-full sm:w-full font-bold"
             onClick={handleCiente}
             disabled={isPending}
           >
-            {isPending ? "A Registar..." : (
+            {isPending ? (
+              "A Registar..."
+            ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 ESTOU CIENTE DESTA SUSPENSÃO
