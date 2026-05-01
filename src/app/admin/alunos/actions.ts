@@ -4,8 +4,8 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRelations } from "@/lib/auth";
-import bcrypt from 'bcryptjs';
-import { redirect } from 'next/navigation';
+import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { put, del } from "@vercel/blob";
 import {
   AptidaoFisicaStatus,
@@ -19,7 +19,10 @@ import {
 
 const alunoSchema = z.object({
   nome: z.string().min(3, "Nome obrigatório"),
-  cpf: z.string().transform(val => val.replace(/\D/g, '')).pipe(z.string().length(11, "CPF deve ter 11 dígitos")),
+  cpf: z
+    .string()
+    .transform((val) => val.replace(/\D/g, ""))
+    .pipe(z.string().length(11, "CPF deve ter 11 dígitos")),
   email: z.string().email().optional().or(z.literal("")),
   password: z.string().optional().or(z.literal("")),
   rg: z.string().optional(),
@@ -37,34 +40,51 @@ const alunoSchema = z.object({
   ingressoForaDeData: z.string().optional(),
 
   tipagemSanguinea: z.nativeEnum(tipagemSanguinea).optional().or(z.literal("")),
-  aptidaoFisicaStatus: z.nativeEnum(AptidaoFisicaStatus).optional().or(z.literal("")),
+  aptidaoFisicaStatus: z
+    .nativeEnum(AptidaoFisicaStatus)
+    .optional()
+    .or(z.literal("")),
 
   aptidaoFisicaObs: z.string().optional(),
   aptidaoFisicaLaudo: z.string().optional(),
 
   escolaId: z.string().optional().or(z.literal("")),
-  serieEscolar: z.nativeEnum(SerieEscolar).optional().or(z.literal("")), 
+  serieEscolar: z.nativeEnum(SerieEscolar).optional().or(z.literal("")),
   endereco: z.string().optional(),
   termoResponsabilidadeAssinado: z.string().optional(),
   fazCursoExterno: z.string().optional(),
   cursoExternoDescricao: z.string().optional(),
 
   responsavelNome: z.string().min(3, "Nome do responsável é obrigatório"),
-  responsavelCpf: z.string().transform(val => val.replace(/\D/g, '')).pipe(z.string().length(11, "CPF do responsável inválido")),
+  responsavelCpf: z
+    .string()
+    .transform((val) => val.replace(/\D/g, ""))
+    .pipe(z.string().length(11, "CPF do responsável inválido")),
   responsavelParentesco: z.string().min(1, "Grau de parentesco é obrigatório"),
-  responsavelTelefone: z.string().min(1, "Telefone do responsável é obrigatório"),
-  responsavelEmail: z.string().email("Email do responsável inválido").optional().or(z.literal("")),
+  responsavelTelefone: z
+    .string()
+    .min(1, "Telefone do responsável é obrigatório"),
+  responsavelEmail: z
+    .string()
+    .email("Email do responsável inválido")
+    .optional()
+    .or(z.literal("")),
 });
 
-export type AlunoState = {
-  errors?: Record<string, string[]>;
-  message?: string;
-  formData?: Record<string, unknown> | null;
-} | undefined;
+export type AlunoState =
+  | {
+      errors?: Record<string, string[]>;
+      message?: string;
+      formData?: Record<string, unknown> | null;
+    }
+  | undefined;
 
-export async function createAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
+export async function createAluno(
+  prevState: AlunoState,
+  formData: FormData,
+): Promise<AlunoState> {
   const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') return { message: "Acesso negado." };
+  if (!user || user.role !== "ADMIN") return { message: "Acesso negado." };
 
   const rawData = Object.fromEntries(formData.entries());
   const fotoPerfil = formData.get("fotoPerfil") as File | null;
@@ -84,7 +104,10 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   }
 
   const data = validated.data;
-  const hashedPassword = await bcrypt.hash(data.password || "mudar123", 10);
+  const senhaPadrao =
+    data.password && data.password.trim() !== "" ? data.password : data.cpf;
+
+  const hashedPassword = await bcrypt.hash(senhaPadrao, 10);
   const conceitoInicial = data.ingressoForaDeData ? "6.0" : "7.0";
 
   let dataIngressoDate: Date | null = null;
@@ -101,8 +124,8 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
     if (fotoPerfil && fotoPerfil.size > 0) {
       const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
       const blob = await put(filename, fotoPerfil, {
-        access: 'public',
-        addRandomSuffix: true
+        access: "public",
+        addRandomSuffix: true,
       });
       fotoUrl = blob.url;
     }
@@ -119,11 +142,13 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           status: StatusUsuario.ATIVO,
           rg: data.rg,
           rgEstadoEmissor: data.rgEstadoEmissor,
-          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+          dataNascimento: data.dataNascimento
+            ? new Date(data.dataNascimento)
+            : null,
           telefone: data.telefone,
           genero: data.genero ? (data.genero as GeneroUsuario) : null,
           fotoUrl: fotoUrl,
-        }
+        },
       });
 
       const novoPerfil = await tx.perfilAluno.create({
@@ -138,23 +163,31 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
           anoIngresso: anoIngressoInt,
           foraDeData: !!data.ingressoForaDeData,
 
-          tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
-          aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : AptidaoFisicaStatus.LIBERADO,
+          tipagemSanguinea: data.tipagemSanguinea
+            ? (data.tipagemSanguinea as tipagemSanguinea)
+            : null,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus
+            ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus)
+            : AptidaoFisicaStatus.LIBERADO,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
           escolaId: data.escolaId || null,
-          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null,
+          serieEscolar: data.serieEscolar
+            ? (data.serieEscolar as SerieEscolar)
+            : null,
 
           endereco: data.endereco || null,
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
           cursoExternoDescricao: data.cursoExternoDescricao || null,
-        }
+        },
       });
 
       if (data.cargoId) {
-        const cargo = await tx.cargo.findUnique({ where: { id: data.cargoId } });
+        const cargo = await tx.cargo.findUnique({
+          where: { id: data.cargoId },
+        });
         if (cargo) {
           await tx.cargoHistory.create({
             data: {
@@ -164,14 +197,14 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
               conceitoInicial: parseFloat(conceitoInicial),
               conceitoAtual: parseFloat(conceitoInicial),
               status: CargoHistoryStatus.ATIVO,
-              motivo: "Ingresso na instituição"
-            }
+              motivo: "Ingresso na instituição",
+            },
           });
         }
       }
 
       let responsavelUser = await tx.usuario.findUnique({
-        where: { cpf: data.responsavelCpf }
+        where: { cpf: data.responsavelCpf },
       });
 
       if (!responsavelUser) {
@@ -184,8 +217,8 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
             email: data.responsavelEmail || null,
             password: passwordPadraoResp,
             role: Role.RESPONSAVEL,
-            status: StatusUsuario.ATIVO
-          }
+            status: StatusUsuario.ATIVO,
+          },
         });
       }
 
@@ -193,21 +226,22 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
         data: {
           alunoId: novoUsuario.id,
           responsavelId: responsavelUser.id,
-          tipoParentesco: data.responsavelParentesco
-        }
+          tipoParentesco: data.responsavelParentesco,
+        },
       });
-
     });
-
   } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error) {
-      const prismaError = error as { code: string; meta?: { target?: string[] } };
-      if (prismaError.code === 'P2002') {
-        if (prismaError.meta?.target?.includes('cpf')) {
-          return { message: 'Já existe um usuário com este CPF no sistema.' };
+    if (typeof error === "object" && error !== null && "code" in error) {
+      const prismaError = error as {
+        code: string;
+        meta?: { target?: string[] };
+      };
+      if (prismaError.code === "P2002") {
+        if (prismaError.meta?.target?.includes("cpf")) {
+          return { message: "Já existe um usuário com este CPF no sistema." };
         }
-        if (prismaError.meta?.target?.includes('numero')) {
-          return { message: 'Este número de matrícula já está em uso.' };
+        if (prismaError.meta?.target?.includes("numero")) {
+          return { message: "Este número de matrícula já está em uso." };
         }
       }
     }
@@ -219,7 +253,10 @@ export async function createAluno(prevState: AlunoState, formData: FormData): Pr
   redirect("/admin/alunos");
 }
 
-export async function updateAluno(prevState: AlunoState, formData: FormData): Promise<AlunoState> {
+export async function updateAluno(
+  prevState: AlunoState,
+  formData: FormData,
+): Promise<AlunoState> {
   const id = formData.get("id") as string;
   if (!id) return { message: "ID não fornecido" };
 
@@ -260,8 +297,8 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
 
       const filename = `alunos/${Date.now()}-${fotoPerfil.name}`;
       const blob = await put(filename, fotoPerfil, {
-        access: 'public',
-        addRandomSuffix: true
+        access: "public",
+        addRandomSuffix: true,
       });
       novaFotoUrl = blob.url;
     }
@@ -275,12 +312,16 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
           nomeDeGuerra: data.nomeDeGuerra,
           rg: data.rg,
           rgEstadoEmissor: data.rgEstadoEmissor,
-          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : undefined,
+          dataNascimento: data.dataNascimento
+            ? new Date(data.dataNascimento)
+            : undefined,
           telefone: data.telefone,
           genero: data.genero ? (data.genero as GeneroUsuario) : null,
           fotoUrl: novaFotoUrl,
-          ...(data.password ? { password: await bcrypt.hash(data.password, 10) } : {})
-        }
+          ...(data.password
+            ? { password: await bcrypt.hash(data.password, 10) }
+            : {}),
+        },
       });
 
       await tx.perfilAluno.update({
@@ -290,22 +331,30 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
           companhiaId: data.companhiaId,
           cargoId: data.cargoId,
           dataIngresso: dataIngressoDate,
-          ...(anoIngressoInt !== undefined ? { anoIngresso: anoIngressoInt } : {}),
+          ...(anoIngressoInt !== undefined
+            ? { anoIngresso: anoIngressoInt }
+            : {}),
 
-          tipagemSanguinea: data.tipagemSanguinea ? (data.tipagemSanguinea as tipagemSanguinea) : null,
-          aptidaoFisicaStatus: data.aptidaoFisicaStatus ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus) : null,
+          tipagemSanguinea: data.tipagemSanguinea
+            ? (data.tipagemSanguinea as tipagemSanguinea)
+            : null,
+          aptidaoFisicaStatus: data.aptidaoFisicaStatus
+            ? (data.aptidaoFisicaStatus as AptidaoFisicaStatus)
+            : null,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
 
           escolaId: data.escolaId || null,
-          serieEscolar: data.serieEscolar ? (data.serieEscolar as SerieEscolar) : null,
+          serieEscolar: data.serieEscolar
+            ? (data.serieEscolar as SerieEscolar)
+            : null,
 
           endereco: data.endereco || null,
 
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
           cursoExternoDescricao: data.cursoExternoDescricao || null,
-        }
+        },
       });
     });
   } catch {
@@ -318,14 +367,14 @@ export async function updateAluno(prevState: AlunoState, formData: FormData): Pr
 
 export async function inativarAluno(id: string) {
   const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || user.role !== "ADMIN") {
     return { success: false, message: "Acesso negado." };
   }
 
   try {
     const usuarioAlvo = await prisma.usuario.findUnique({
       where: { id },
-      include: { perfilAluno: true }
+      include: { perfilAluno: true },
     });
 
     if (!usuarioAlvo) {
@@ -335,42 +384,47 @@ export async function inativarAluno(id: string) {
     await prisma.$transaction(async (tx) => {
       await tx.usuario.update({
         where: { id },
-        data: { status: StatusUsuario.INATIVO }
+        data: { status: StatusUsuario.INATIVO },
       });
 
       if (usuarioAlvo.perfilAluno) {
         await tx.cargoHistory.updateMany({
           where: {
             alunoId: usuarioAlvo.perfilAluno.id,
-            status: CargoHistoryStatus.ATIVO
+            status: CargoHistoryStatus.ATIVO,
           },
           data: {
             status: CargoHistoryStatus.FECHADO,
             dataFim: new Date(),
-            motivo: "Desligamento / Inativação da Instituição"
-          }
+            motivo: "Desligamento / Inativação da Instituição",
+          },
         });
       }
     });
 
     revalidatePath("/admin/alunos");
-    return { success: true, message: "Aluno desligado e histórico preservado com sucesso." };
-
+    return {
+      success: true,
+      message: "Aluno desligado e histórico preservado com sucesso.",
+    };
   } catch {
-    return { success: false, message: "Erro interno ao tentar inativar o aluno." };
+    return {
+      success: false,
+      message: "Erro interno ao tentar inativar o aluno.",
+    };
   }
 }
 
-export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
+export async function reativarAluno(id: string, modo: "ZERAR" | "RESTAURAR") {
   const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || user.role !== "ADMIN") {
     return { success: false, message: "Acesso negado." };
   }
 
   try {
     const usuarioAlvo = await prisma.usuario.findUnique({
       where: { id },
-      include: { perfilAluno: true }
+      include: { perfilAluno: true },
     });
 
     if (!usuarioAlvo || !usuarioAlvo.perfilAluno) {
@@ -382,13 +436,13 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
     await prisma.$transaction(async (tx) => {
       await tx.usuario.update({
         where: { id },
-        data: { status: StatusUsuario.ATIVO }
+        data: { status: StatusUsuario.ATIVO },
       });
 
-      if (modo === 'RESTAURAR') {
+      if (modo === "RESTAURAR") {
         const ultimoBloco = await tx.cargoHistory.findFirst({
           where: { alunoId: perfilId, status: CargoHistoryStatus.FECHADO },
-          orderBy: { dataInicio: 'desc' }
+          orderBy: { dataInicio: "desc" },
         });
 
         if (ultimoBloco) {
@@ -397,19 +451,20 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
             data: {
               status: CargoHistoryStatus.ATIVO,
               dataFim: null,
-              motivo: ultimoBloco.motivo ? ultimoBloco.motivo + " | Reativado" : "Reativado"
-            }
+              motivo: ultimoBloco.motivo
+                ? ultimoBloco.motivo + " | Reativado"
+                : "Reativado",
+            },
           });
 
           await tx.perfilAluno.update({
             where: { id: perfilId },
-            data: { cargoId: ultimoBloco.cargoId }
+            data: { cargoId: ultimoBloco.cargoId },
           });
         }
-      }
-      else if (modo === 'ZERAR') {
+      } else if (modo === "ZERAR") {
         const cargoBase = await tx.cargo.findFirst({
-          orderBy: { precedencia: 'asc' }
+          orderBy: { precedencia: "asc" },
         });
 
         if (cargoBase) {
@@ -421,8 +476,8 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
               conceitoInicial: 7.0,
               conceitoAtual: 7.0,
               status: CargoHistoryStatus.ATIVO,
-              motivo: "Reativado (Reinício de Carreira)"
-            }
+              motivo: "Reativado (Reinício de Carreira)",
+            },
           });
 
           await tx.perfilAluno.update({
@@ -430,8 +485,8 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
             data: {
               cargoId: cargoBase.id,
               conceitoInicial: "7.0",
-              conceitoAtual: "7.0"
-            }
+              conceitoAtual: "7.0",
+            },
           });
         }
       }
@@ -440,69 +495,71 @@ export async function reativarAluno(id: string, modo: 'ZERAR' | 'RESTAURAR') {
     revalidatePath("/admin/alunos");
     return {
       success: true,
-      message: `Aluno reativado com sucesso (${modo === 'ZERAR' ? 'Carreira Reiniciada' : 'Histórico Restaurado'}).`
+      message: `Aluno reativado com sucesso (${modo === "ZERAR" ? "Carreira Reiniciada" : "Histórico Restaurado"}).`,
     };
-
   } catch {
-    return { success: false, message: "Erro interno ao tentar reativar o aluno." };
+    return {
+      success: false,
+      message: "Erro interno ao tentar reativar o aluno.",
+    };
   }
 }
 
-export type TipoPromocao = 'PROMOVER_MANTER' | 'PROMOVER_ENCERRAR' | 'REVERTER';
+export type TipoPromocao = "PROMOVER_MANTER" | "PROMOVER_ENCERRAR" | "REVERTER";
 
-export async function gerirPrivilegiosAluno(usuarioId: string, acao: TipoPromocao) {
+export async function gerirPrivilegiosAluno(
+  usuarioId: string,
+  acao: TipoPromocao,
+) {
   const user = await getCurrentUserWithRelations();
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || user.role !== "ADMIN") {
     return { success: false, message: "Acesso negado." };
   }
 
   try {
     await prisma.$transaction(async (tx) => {
-      
-      if (acao === 'PROMOVER_MANTER') {
+      if (acao === "PROMOVER_MANTER") {
         await tx.usuario.update({
           where: { id: usuarioId },
-          data: { role: Role.ADMIN }
+          data: { role: Role.ADMIN },
         });
-      } 
-      
-      else if (acao === 'PROMOVER_ENCERRAR') {
+      } else if (acao === "PROMOVER_ENCERRAR") {
         await tx.usuario.update({
           where: { id: usuarioId },
-          data: { role: Role.ADMIN }
+          data: { role: Role.ADMIN },
         });
 
         const perfil = await tx.perfilAluno.findUnique({
-          where: { usuarioId: usuarioId }
+          where: { usuarioId: usuarioId },
         });
 
         if (perfil) {
           await tx.cargoHistory.updateMany({
-            where: { 
+            where: {
               alunoId: perfil.id,
-              status: CargoHistoryStatus.ATIVO
+              status: CargoHistoryStatus.ATIVO,
             },
             data: {
               dataFim: new Date(),
               motivo: "Promovido a Admin / Jornada Encerrada",
-              status: CargoHistoryStatus.FECHADO 
-            }
+              status: CargoHistoryStatus.FECHADO,
+            },
           });
         }
-      } 
-      
-      else if (acao === 'REVERTER') {
+      } else if (acao === "REVERTER") {
         await tx.usuario.update({
           where: { id: usuarioId },
-          data: { role: Role.ALUNO }
+          data: { role: Role.ALUNO },
         });
       }
     });
 
     revalidatePath("/admin/alunos");
     return { success: true, message: "Privilégios atualizados com sucesso." };
-
   } catch {
-    return { success: false, message: "Ocorreu um erro ao alterar os privilégios." };
+    return {
+      success: false,
+      message: "Ocorreu um erro ao alterar os privilégios.",
+    };
   }
 }
