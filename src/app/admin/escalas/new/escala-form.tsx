@@ -517,12 +517,12 @@ function UserCombobox({ users, value, onChange }: { users: UserComDados[], value
   const selectedUser = users.find(u => u.id === value);
 
   const formatUserDisplay = (user: UserComDados) => {
-    const perfil = user.perfilAluno;
-    if (perfil) {
-      return `${perfil.cargo?.abreviacao || ''} ${user.nomeDeGuerra || user.nome}`.trim();
-    }
-    return user.nome;
-  };
+  const perfil = user.perfilAluno;
+  if (perfil) {
+    return `${perfil.cargo?.abreviacao || ''} GM ${user.nomeDeGuerra || user.nome}`.trim();
+  }
+  return user.nome;
+};
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
