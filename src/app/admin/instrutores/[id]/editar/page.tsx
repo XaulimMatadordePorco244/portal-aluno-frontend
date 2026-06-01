@@ -11,7 +11,7 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
   const instrutor = await prisma.instrutor.findUnique({
     where: { id },
     include: {
-      alunos: { select: { id: true } }
+      alunos: { select: { alunoId: true } } 
     }
   })
 
@@ -41,7 +41,8 @@ export default async function EditarInstrutorPage({ params }: { params: Promise<
   const initialData = {
     id: instrutor.id,
     nome: instrutor.nome,
-    alunosIds: instrutor.alunos.map(a => a.id)
+    // Mapeia extraindo o 'alunoId' dos registros da tabela pivô
+    alunosIds: instrutor.alunos.map(pivot => pivot.alunoId) 
   }
 
   return (

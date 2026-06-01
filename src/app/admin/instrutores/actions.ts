@@ -20,17 +20,23 @@ export async function salvarInstrutor(formData: FormData) {
       data: { 
         nome,
         alunos: {
-          set: alunosIds.map(alunoId => ({ id: alunoId }))
+          deleteMany: {},
+          create: alunosIds.map(alunoId => ({
+            alunoId: alunoId 
+          }))
         }
       }
     })
   } else {
+
     await prisma.instrutor.create({
       data: { 
         nome, 
         ativo: true,
         alunos: {
-          connect: alunosIds.map(alunoId => ({ id: alunoId }))
+          create: alunosIds.map(alunoId => ({
+            alunoId: alunoId 
+          }))
         }
       }
     })

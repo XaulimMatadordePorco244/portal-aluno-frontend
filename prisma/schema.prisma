@@ -208,9 +208,8 @@ model PerfilAluno {
   modalidadeUltimaPromocao      String?
   turmaEscolar                  String?
   turmaId                       String?
-  instrutorId                   String?
   dataIngresso                  DateTime?            @db.Date
-  instrutor                     Instrutor?           @relation(fields: [instrutorId], references: [id])
+  instrutores    AlunoInstrutor[]
   escola                        Escola?              @relation(fields: [escolaId], references: [id])
   turma                         Turma?               @relation("AlunosDaTurma", fields: [turmaId], references: [id], map: "fk_perfil_aluno_turma")
   anotacoesRecebidas            Anotacao[]           @relation("AnotacoesDoAluno")
@@ -849,7 +848,23 @@ model Instrutor {
   updatedAt DateTime @updatedAt
 
   frequencias Frequencia[]
-  alunos      PerfilAluno[]
+  alunos         AlunoInstrutor[]
+}
+
+model AlunoInstrutor {
+  id          String      @id @default(cuid())
+  alunoId     String
+  instrutorId String
+  
+  aluno       PerfilAluno @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  instrutor   Instrutor   @relation(fields: [instrutorId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime    @default(now())
+
+  @@unique([alunoId, instrutorId])
+  @@index([alunoId])
+  @@index([instrutorId])
+  @@map("aluno_instrutores")
 }
 
 enum Role {
