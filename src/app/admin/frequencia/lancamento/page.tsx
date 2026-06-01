@@ -5,14 +5,16 @@ import { ORDEM_ANTIGUIDADE } from '@/lib/regras'
 const prisma = new PrismaClient()
 
 export default async function LancamentoFrequenciaPage() {
-  const alunos = await prisma.perfilAluno.findMany({
+  const alunosRaw = await prisma.perfilAluno.findMany({
     where: {
       usuario: { status: 'ATIVO' },
       status: 'ATIVO' 
     },
     select: {
       id: true,
-      instrutorId: true, 
+      instrutores: { 
+        select: { instrutorId: true }
+      },
       numero: true,
       usuario: {
         select: { nome: true, nomeDeGuerra: true }
@@ -23,6 +25,14 @@ export default async function LancamentoFrequenciaPage() {
     },
     orderBy: ORDEM_ANTIGUIDADE
   })
+
+  const alunos = alunosRaw.map(aluno => ({
+    id: aluno.id,
+    numero: aluno.numero,
+    usuario: aluno.usuario,
+    cargo: aluno.cargo,
+    instrutoresIds: aluno.instrutores.map(i => i.instrutorId)
+  }))
 
   const instrutores = await prisma.instrutor.findMany({
     where: { ativo: true },

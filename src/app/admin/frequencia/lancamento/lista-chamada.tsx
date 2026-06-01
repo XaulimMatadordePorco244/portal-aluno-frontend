@@ -22,7 +22,7 @@ interface ListaChamadaProps {
 
 export type AlunoChamada = {
   id: string;
-  instrutorId: string | null;
+  instrutoresIds: string[]; 
   numero: string | null;
   usuario: { nome: string; nomeDeGuerra: string | null };
   cargo: { abreviacao: string } | null;
@@ -122,7 +122,7 @@ export function ListaChamada({ alunos, instrutores }: ListaChamadaProps) {
   }
 
   const alunosFiltrados = alunos.filter(aluno => {
-    if (tipo !== 'GERAL' && aluno.instrutorId !== tipo) {
+    if (tipo !== 'GERAL' && !aluno.instrutoresIds.includes(tipo)) {
       return false;
     }
 
