@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface SearchAnotacoesProps {
   defaultValue: string;
@@ -14,10 +14,17 @@ export default function SearchAnotacoes({ defaultValue }: SearchAnotacoesProps) 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [text, setText] = useState(defaultValue);
+  
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const delayDebounceFn = setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
+      const params = new URLSearchParams(searchParams.toString());
       
       if (text) {
         params.set("q", text);
@@ -31,7 +38,8 @@ export default function SearchAnotacoes({ defaultValue }: SearchAnotacoesProps) 
     }, 400);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [text, pathname, router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]); 
 
   return (
     <div className="relative flex-1 max-w-md">

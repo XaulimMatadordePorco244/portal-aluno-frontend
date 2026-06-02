@@ -10,6 +10,7 @@ import {
   Filter,
   Clock,
   History,
+  ChevronDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -70,6 +71,7 @@ type AnotacaoWithRelations = Prisma.AnotacaoGetPayload<{
 
 type SearchParams = {
   page?: string;
+  limit?: string; // NOVO: parâmetro para limite de itens
   q?: string;
   tipo?: string;
   responsavel?: string;
@@ -106,7 +108,11 @@ export default async function AnotacoesDashboardPage({
   const q = params.q || "";
   const sentido = params.sentido || "";
   const page = Number(params.page) || 1;
-  const pageSize = 15;
+  
+  // NOVO: Pega o limite da URL, garante que é válido ou usa 15 como padrão
+  const limitParam = Number(params.limit);
+  const opcoesDePagina = [10, 15, 25, 50];
+  const pageSize = opcoesDePagina.includes(limitParam) ? limitParam : 15;
 
   const whereCondition: WhereCondition = {
     blocoCargo: {
@@ -119,11 +125,11 @@ export default async function AnotacoesDashboardPage({
     whereCondition.AND?.push({
       aluno: {
         usuario: {
-          nomeDeGuerra: { 
-            contains: q, 
-          }
-        }
-      }
+          nomeDeGuerra: {
+            contains: q,
+          },
+        },
+      },
     });
   }
 
@@ -170,7 +176,7 @@ export default async function AnotacoesDashboardPage({
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
-      take: pageSize,
+      take: pageSize, // Usa o limite escolhido pelo usuário
     }),
     prisma.anotacao.count({
       where: whereCondition as Prisma.AnotacaoWhereInput,
@@ -194,6 +200,24 @@ export default async function AnotacoesDashboardPage({
     return u?.nome || "Sistema";
   };
 
+  // ATUALIZADO: Construtores de URL agora suportam o limit
+  const buildPageUrl = (newPage: number, newLimit: number = pageSize) => {
+    const urlParams = new URLSearchParams();
+    urlParams.set("page", newPage.toString());
+    urlParams.set("limit", newLimit.toString());
+    if (q) urlParams.set("q", q);
+    if (sentido) urlParams.set("sentido", sentido);
+    return `/admin/anotacoes?${urlParams.toString()}`;
+  };
+
+  const buildFilterUrl = (newSentido?: string) => {
+    const urlParams = new URLSearchParams();
+    if (q) urlParams.set("q", q); 
+    if (newSentido) urlParams.set("sentido", newSentido);
+    urlParams.set("limit", pageSize.toString()); // Preserva o limite ao filtrar
+    return `/admin/anotacoes?${urlParams.toString()}`;
+  };
+
   return (
     <TooltipProvider>
       <div className="container mx-auto space-y-6">
@@ -214,7 +238,6 @@ export default async function AnotacoesDashboardPage({
         </div>
 
         <div className="flex items-center gap-3">
-          
           <SearchAnotacoes defaultValue={q} />
 
           <DropdownMenu>
@@ -233,12 +256,12 @@ export default async function AnotacoesDashboardPage({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="?sentido=pos" className="w-full cursor-pointer">
+                <Link href={buildFilterUrl("pos")} className="w-full cursor-pointer">
                   Apenas Positivas
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="?sentido=neg" className="w-full cursor-pointer">
+                <Link href={buildFilterUrl("neg")} className="w-full cursor-pointer">
                   Apenas Negativas
                 </Link>
               </DropdownMenuItem>
@@ -407,22 +430,55 @@ export default async function AnotacoesDashboardPage({
             </TableBody>
           </Table>
 
-          <div className="px-6 py-4 flex items-center justify-between border-t border-border/40 bg-muted/10">
-            <span className="text-xs text-muted-foreground font-normal">
-              Página {page} de {totalPages || 1}
-            </span>
+          {/* RODAPÉ E PAGINAÇÃO */}
+          <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/40 bg-muted/10">
+            
+            {/* SELETOR E TEXTO DE PÁGINA */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground font-normal">
+              <span>
+                Página {page} de {totalPages || 1}
+              </span>
+
+              <div className="h-4 w-px bg-border"></div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs font-medium border-muted-foreground/20 cursor-pointer text-muted-foreground"
+                  >
+                    {pageSize} por página
+                    <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-32">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Listar por página</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {opcoesDePagina.map(size => (
+                    <DropdownMenuItem key={size} asChild>
+                      {/* Ao trocar o limit, a gente sempre reseta a página para 1 */}
+                      <Link href={buildPageUrl(1, size)} className="cursor-pointer flex justify-between">
+                        <span>{size} itens</span>
+                        {pageSize === size && <UserCheck className="h-3 w-3 text-primary" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* BOTÕES ANTERIOR E PRÓXIMA */}
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-xs font-medium border-muted-foreground/20"
+                className="h-8 px-3 text-xs font-medium border-muted-foreground/20 cursor-pointer"
                 disabled={page <= 1}
                 asChild={page > 1}
               >
                 {page > 1 ? (
-                  <Link href={`?page=${page - 1}&q=${q}&sentido=${sentido}`}>
-                    Anterior
-                  </Link>
+                  <Link href={buildPageUrl(page - 1)}>Anterior</Link>
                 ) : (
                   <span>Anterior</span>
                 )}
@@ -430,20 +486,19 @@ export default async function AnotacoesDashboardPage({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-xs font-medium border-muted-foreground/20"
+                className="h-8 px-3 text-xs font-medium border-muted-foreground/20 cursor-pointer"
                 disabled={page >= totalPages}
                 asChild={page < totalPages}
               >
                 {page < totalPages ? (
-                  <Link href={`?page=${page + 1}&q=${q}&sentido=${sentido}`}>
-                    Próxima
-                  </Link>
+                  <Link href={buildPageUrl(page + 1)}>Próxima</Link>
                 ) : (
                   <span>Próxima</span>
                 )}
               </Button>
             </div>
           </div>
+
         </div>
       </div>
     </TooltipProvider>
