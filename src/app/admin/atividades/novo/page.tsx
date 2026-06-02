@@ -3,32 +3,47 @@ import { AtividadeForm } from "./atividade-form";
 
 export const dynamic = 'force-dynamic';
 
-async function getAlunosAtivos() {
-  const alunos = await prisma.usuario.findMany({
-    where: {
-      role: 'ALUNO',
-      status: 'ATIVO',
-    },
-    include: {
-      perfilAluno: true
-    },
-    orderBy: {
-      nome: 'asc'
-    }
-  });
+async function getData() {
+  const [alunosRaw, cargos, companhias] = await Promise.all([
+    prisma.usuario.findMany({
+      where: {
+        role: 'ALUNO',
+        status: 'ATIVO',
+      },
+      include: {
+        perfilAluno: {
+          include: {
+            cargo: true,
+            companhia: true
+          }
+        }
+      },
+      orderBy: {
+        nome: 'asc'
+      }
+    }),
+    prisma.cargo.findMany({ orderBy: { precedencia: 'desc' } }),
+    prisma.companhia.findMany({ orderBy: { nome: 'asc' } })
+  ]);
 
-  return alunos.map(aluno => ({
+  const alunosAtivos = alunosRaw.map(aluno => ({
     id: aluno.id,
     nome: aluno.nome,
     nomeDeGuerra: aluno.nomeDeGuerra || null,
+    anoIngresso: aluno.perfilAluno?.anoIngresso || null,
+    cargoId: aluno.perfilAluno?.cargoId || null,
+    cargoAbreviacao: aluno.perfilAluno?.cargo?.abreviacao || 'S/C',
+    companhiaId: aluno.perfilAluno?.companhiaId || null,
   }));
+
+  return { alunosAtivos, cargos, companhias };
 }
 
 export default async function NovaAtividadePage() {
-  const alunosAtivos = await getAlunosAtivos();
+  const { alunosAtivos, cargos, companhias } = await getData();
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div>
           <h1 className="text-3xl font-bold">Nova Atividade</h1>
@@ -36,7 +51,11 @@ export default async function NovaAtividadePage() {
         </div>
       </div>
 
-      <AtividadeForm alunosAtivos={alunosAtivos} />
+      <AtividadeForm 
+        alunosAtivos={alunosAtivos} 
+        cargos={cargos} 
+        companhias={companhias} 
+      />
     </div>
   );
 }
