@@ -12,7 +12,7 @@ import { RotateCcw } from "lucide-react";
 
 export function ReversalDialog({ parteId }: { parteId: string }) {
     const [open, setOpen] = useState(false);
-    const [novoResultado, setNovoResultado] = useState<ResultadoAnalise | ''>('');
+    const [novoResultado, setNovoResultado] = useState<ResultadoAnalise | "">("");
     const [justificativa, setJustificativa] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -28,19 +28,18 @@ export function ReversalDialog({ parteId }: { parteId: string }) {
 
         try {
             const response = await fetch(`/api/partes/${parteId}/reverter`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ novoResultado, justificativa }),
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Falha ao reverter a decisão.');
+                throw new Error(data.error || "Falha ao reverter a decisão.");
             }
 
             setOpen(false);
             router.refresh();
-
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);

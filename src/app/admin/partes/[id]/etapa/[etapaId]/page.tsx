@@ -1,5 +1,5 @@
-import prisma from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -13,15 +13,10 @@ async function getEtapaDetails(processoId: string, etapaId: string) {
     return etapa;
 }
 
-export default async function EtapaParecerPage({ 
-    params 
-}: { 
-    params: Promise<{ id: string, etapaId: string }> 
-}) {
-  
+export default async function EtapaParecerPage({ params }: { params: Promise<{ id: string, etapaId: string }> }) {
     const { id, etapaId } = await params;
-
     const etapa = await getEtapaDetails(id, etapaId);
+    
     if (!etapa) notFound();
 
     return (

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProcessoCompleto } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Circle, MoreHorizontal, User, Users} from "lucide-react";
-
+import { CheckCircle2, Circle, MoreHorizontal, User, Users } from "lucide-react";
 
 function InitialActions({ processoId }: { processoId: string }) {
     const router = useRouter();
@@ -17,12 +16,12 @@ function InitialActions({ processoId }: { processoId: string }) {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/partes/${processoId}/start`, { method: 'POST' });
+            const response = await fetch(`/api/partes/${processoId}/start`, { method: "POST" });
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Falha ao iniciar apuração.');
+                throw new Error(data.error || "Falha ao iniciar apuração.");
             }
-            router.refresh(); 
+            router.refresh();
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -48,17 +47,16 @@ function InitialActions({ processoId }: { processoId: string }) {
                 <Button onClick={handleIniciarApuracao} disabled={isLoading}>
                     {isLoading ? "Sorteando..." : "Sortear Oficial para Parecer"}
                 </Button>
-                 {error && <p className="text-sm text-destructive mt-2">{error}</p>}
+                {error && <p className="text-sm text-destructive mt-2">{error}</p>}
             </CardContent>
         </Card>
     );
 }
 
-
 function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
     const getStatusIcon = (status: string) => {
-        if (status === 'CONCLUIDA') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-        if (status === 'EM_ANALISE' || status === 'PENDENTE') return <MoreHorizontal className="h-5 w-5 text-yellow-500" />;
+        if (status === "CONCLUIDA") return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        if (status === "EM_ANALISE" || status === "PENDENTE") return <MoreHorizontal className="h-5 w-5 text-yellow-500" />;
         return <Circle className="h-5 w-5 text-muted-foreground" />;
     };
 
@@ -74,27 +72,26 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
                         const responsavelNome = etapa.responsavel?.nomeDeGuerra || etapa.responsavel?.nome || (etapa.status === "EM_ANALISE" ? "Aguardando" : "Coordenação");
                         
                         return (
-                        <div key={etapa.id} className="flex items-start gap-4">
-                            <div className="flex flex-col items-center">
-                                {getStatusIcon(etapa.status)}
-                                <div className="w-px h-12 bg-border mt-2"></div>
-                            </div>
-                            <div>
-                                <p className="font-semibold">{etapa.titulo}</p>
-                                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                    {etapa.responsavel ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-                                    <span>
-                                        Responsável: {responsavelNome}
-                                    </span>
+                            <div key={etapa.id} className="flex items-start gap-4">
+                                <div className="flex flex-col items-center">
+                                    {getStatusIcon(etapa.status)}
+                                    <div className="w-px h-12 bg-border mt-2"></div>
                                 </div>
-                                {etapa.status === 'CONCLUIDA' && (
-                                     <p className="text-xs text-muted-foreground mt-1">
-                                        Concluído em: {etapa.dataConclusao ? new Date(etapa.dataConclusao).toLocaleDateString('pt-BR') : 'N/A'}
-                                     </p>
-                                )}
+                                <div>
+                                    <p className="font-semibold">{etapa.titulo}</p>
+                                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                        {etapa.responsavel ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                        <span>Responsável: {responsavelNome}</span>
+                                    </div>
+                                    {etapa.status === "CONCLUIDA" && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Concluído em: {etapa.dataConclusao ? new Date(etapa.dataConclusao).toLocaleDateString("pt-BR") : "N/A"}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )})}
+                        );
+                    })}
                 </div>
             </CardContent>
         </Card>
@@ -102,8 +99,7 @@ function ProcessTimeline({ processo }: { processo: ProcessoCompleto }) {
 }
 
 export function AtoDeBravuraProcessView({ processo }: { processo: ProcessoCompleto }) {
-
-    if (processo.etapas.length === 0 && processo.status === 'ENCAMINHADO') {
+    if (processo.etapas.length === 0 && processo.status === "ENCAMINHADO") {
         return <InitialActions processoId={processo.id} />;
     }
 

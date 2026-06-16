@@ -21,17 +21,15 @@ export function ParecerForm({ etapaId, processoId }: { etapaId: string, processo
         setIsSubmitting(true);
         setError(null);
         try {
-    
             const response = await fetch(`/api/etapas/${etapaId}/submeter-parecer`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ conteudo, decisao }),
             });
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Falha ao salvar parecer.');
+                throw new Error(data.error || "Falha ao salvar parecer.");
             }
-        
             router.push(`/admin/partes/${processoId}`);
             router.refresh();
         } catch (err: unknown) {
@@ -57,7 +55,7 @@ export function ParecerForm({ etapaId, processoId }: { etapaId: string, processo
                         <Label htmlFor="parecer">Parecer Descritivo</Label>
                         <Textarea id="parecer" className="min-h-[300px]" value={conteudo} onChange={(e) => setConteudo(e.target.value)} required />
                     </div>
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label>Decisão do Parecer</Label>
                         <Select onValueChange={(value: "DEFERIDO" | "INDEFERIDO" | "") => setDecisao(value)} value={decisao} required>
                             <SelectTrigger><SelectValue placeholder="Selecione sua decisão..." /></SelectTrigger>
@@ -67,7 +65,7 @@ export function ParecerForm({ etapaId, processoId }: { etapaId: string, processo
                             </SelectContent>
                         </Select>
                     </div>
-                     {error && <p className="text-sm text-destructive">{error}</p>}
+                    {error && <p className="text-sm text-destructive">{error}</p>}
                     <div className="flex justify-end">
                         <Button type="submit" disabled={isSubmitting}>
                             <Save className="mr-2 h-4 w-4" />
