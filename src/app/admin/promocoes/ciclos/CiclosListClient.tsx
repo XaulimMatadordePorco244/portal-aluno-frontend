@@ -32,7 +32,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
         const result = await criarCicloPromocao(nome);
 
         if (result.success) {
-            router.push(`/admin/promocoes/${result.cicloId}`);
+            router.push(`/admin/promocoes/ciclos/${result.cicloId}`);
         } else {
             alert(result.message);
         }
