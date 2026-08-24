@@ -138,18 +138,16 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
         }),
       );
 
-      operations.push(
+    operations.push(
         prisma.perfilAluno.update({
           where: { id: aluno.id },
           data: {
             cargoId: novoCargoId,
-            conceitoAtual: String(conceitoNovo),
+            conceitoAtual: String(conceitoNovo), 
             foraDeData: false,
-            ...(data.tipo === "PROMOCAO" && {
-              dataUltimaPromocao: dataReferencia,
-              modalidadeUltimaPromocao: data.motivo,
-              notaDesempatePromocao: notaDesempate,
-            }),
+            dataUltimaPromocao: dataReferencia, 
+            modalidadeUltimaPromocao: data.motivo,
+            notaDesempatePromocao: notaDesempate, 
           },
         }),
       );
