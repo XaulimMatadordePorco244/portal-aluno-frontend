@@ -1,279 +1,307 @@
-'use client';
+"use client";
+import { useState, useMemo, Fragment } from "react";
+import { useRouter } from "next/navigation";
+import { efetivarPromocoesDoCiclo } from "@/app/actions/transicoes";
+import { toast } from "sonner";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { efetivarPromocoesDoCiclo } from '@/app/actions/transicoes';
-
-export interface VagasDisponiveis {
-    superiores: number;
-    intermediarios: number;
-    subalternos: number;
-    subtenentes: number;
-    sargentos: number;
-    cabos: number;
-    soldados: number;
-    _debug?: unknown;
+export interface CargoListagem {
+  id: string;
+  nome: string;
+  abreviacao: string;
+  precedencia: number;
 }
 
-export interface Cargo {
+export interface CandidatoListagem {
+  id: string;
+  alunoId: string;
+  modalidade: string;
+  resultado: string | null;
+  conceitoSnapshot: number;
+  mediaEscolarSnapshot: number;
+  tafSnapshot: number;
+  motivoReprovacao: string | null;
+  aluno: {
     id: string;
-    nome: string;
-    abreviacao?: string;
-}
-
-interface Usuario {
-    nome: string;
-    dataNascimento: Date | string | null;
-}
-
-interface Boletim {
-    situacao: string | null;
-}
-
-interface Aluno {
-    createdAt: Date | string;
-    dataUltimaPromocao?: Date | string | null;
     cargoId: string | null;
-    cargo?: Cargo | null;
-    usuario: Usuario;
-    desempenhosEscolares?: Boletim[];
+    cargo: CargoListagem | null;
+    usuario: { id: string; nome: string; nomeDeGuerra: string | null };
+  };
 }
 
-export interface Candidato {
-    id: string;
-    alunoId: string;
-    resultado?: string | null;
-    conceitoSnapshot: number;
-    mediaEscolarSnapshot: number;
-    tafSnapshot: number;
-    aluno: Aluno;
+export interface CicloListagem {
+  id: string;
+  nome: string | null;
+  status: string;
+  candidatos: CandidatoListagem[];
 }
 
-export interface Ciclo {
-    id: string;
-    status: string;
-    candidatos: Candidato[];
+interface QuadroAcessoClientProps {
+  ciclo: CicloListagem;
+  cargos: CargoListagem[];
 }
 
+export default function QuadroAcessoClient({
+  ciclo,
+  cargos,
+}: QuadroAcessoClientProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState<
+    "ANTIGUIDADE" | "MERITO_ESCOLAR" | "HONRA_AO_MERITO"
+  >("ANTIGUIDADE");
+  const [statusFiltro, setStatusFiltro] = useState<"APTO" | "INAPTO">("APTO");
+  const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
 
-export default function QuadroAcessoClient({ ciclo, cargos }: { ciclo: Ciclo, cargos: Cargo[], vagas: VagasDisponiveis }) {
-    const router = useRouter();
-    const [abaAtiva, setAbaAtiva] = useState<'ANTIGUIDADE' | 'MERECIMENTO' | 'MERITO_ESCOLAR'>('ANTIGUIDADE');
-    const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
-    const [loading, setLoading] = useState(false);
+  const isFechado = ciclo.status === "FECHADO";
 
-    const getCandidatosOrdenados = (modalidade: string) => {
-        let lista = [...ciclo.candidatos];
-
-        if (modalidade === 'ANTIGUIDADE') {
-            lista = lista.filter(c => {
-                const isAlSd = c.aluno.cargo?.abreviacao === 'AL SD';
-                const boletim = c.aluno.desempenhosEscolares?.[0];
-                const estaAprovadoNaEscola = boletim?.situacao === 'APROVADO';
-
-                // Se for AL SD, TEM que ter 8.0 de conceito E estar APROVADO na escola!
-                if (isAlSd) {
-                    return c.conceitoSnapshot >= 8.0 && estaAprovadoNaEscola;
-                }
-
-                // Para os outros cargos, segue a regra normal (Conceito >= 8.0)
-                return c.conceitoSnapshot >= 8.0;
-            });
-
-            lista.sort((a, b) => {
-                const tempoA = new Date(a.aluno.dataUltimaPromocao || a.aluno.createdAt).getTime();
-                const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
-                if (tempoA !== tempoB) return tempoA - tempoB;
-                if (a.conceitoSnapshot !== b.conceitoSnapshot) return b.conceitoSnapshot - a.conceitoSnapshot;
-                const nascA = a.aluno.usuario.dataNascimento ? new Date(a.aluno.usuario.dataNascimento).getTime() : 0;
-                const nascB = b.aluno.usuario.dataNascimento ? new Date(b.aluno.usuario.dataNascimento).getTime() : 0;
-                return nascA - nascB;
-            });
-        }
-        else if (modalidade === 'MERECIMENTO') {
-            lista.sort((a, b) => {
-                const somaA = a.conceitoSnapshot + a.mediaEscolarSnapshot;
-                const somaB = b.conceitoSnapshot + b.mediaEscolarSnapshot;
-                if (somaA !== somaB) return somaB - somaA;
-                const tempoA = new Date(a.aluno.dataUltimaPromocao || a.aluno.createdAt).getTime();
-                const tempoB = new Date(b.aluno.dataUltimaPromocao || b.aluno.createdAt).getTime();
-                if (tempoA !== tempoB) return tempoA - tempoB;
-                const nascA = a.aluno.usuario.dataNascimento ? new Date(a.aluno.usuario.dataNascimento).getTime() : 0;
-                const nascB = b.aluno.usuario.dataNascimento ? new Date(b.aluno.usuario.dataNascimento).getTime() : 0;
-                return nascA - nascB;
-            });
-        }
-        else if (modalidade === 'MERITO_ESCOLAR') {
-            lista = lista.filter(c => c.conceitoSnapshot >= 20.0 && c.mediaEscolarSnapshot >= 7.0);
-            lista.sort((a, b) => b.conceitoSnapshot - a.conceitoSnapshot);
-        }
-
-        return lista;
-    };
-
-    const candidatosDaAba = getCandidatosOrdenados(abaAtiva);
-
-    const toggleSelecao = (alunoId: string) => {
-        setSelecionados(prev => ({ ...prev, [alunoId]: !prev[alunoId] }));
-    };
-
-    const getProximoCargo = (cargoAtualId: string | null) => {
-        if (!cargoAtualId) return null;
-
-        const currentIndex = cargos.findIndex(c => c.id === cargoAtualId);
-        const targetIndex = currentIndex - 1;
-        return targetIndex >= 0 ? cargos[targetIndex] : null;
-    };
-
-    const handleEfetivar = async () => {
-        const confirmacao = confirm(`Tem certeza que deseja promover os alunos selecionados na modalidade de ${abaAtiva}?`);
-        if (!confirmacao) return;
-
-        setLoading(true);
-
-        const payload = candidatosDaAba
-            .filter(c => selecionados[c.alunoId])
-            .map(c => {
-                const proximoCargo = getProximoCargo(c.aluno.cargoId);
-                return {
-                    alunoId: c.alunoId,
-                    novoCargoId: proximoCargo!.id,
-                    modalidade: abaAtiva
-                };
-            });
-
-        if (payload.length === 0) {
-            alert("Selecione pelo menos um aluno para promover.");
-            setLoading(false);
-            return;
-        }
-
-        const result = await efetivarPromocoesDoCiclo(ciclo.id, payload);
-
-        if (result.success) {
-            alert(result.message);
-            setSelecionados({});
-            router.refresh();
-        } else {
-            alert(result.message);
-        }
-        setLoading(false);
-    };
-
-    const isFechado = ciclo.status === 'FINALIZADO';
-
-    return (
-        <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="flex border-b border-border bg-muted/30">
-                {['ANTIGUIDADE', 'MERECIMENTO', 'MERITO_ESCOLAR'].map((aba) => (
-                    <button
-                        key={aba}
-                        onClick={() => {
-                            setAbaAtiva(aba as 'ANTIGUIDADE' | 'MERECIMENTO' | 'MERITO_ESCOLAR');
-                            setSelecionados({});
-                        }}
-                        className={`px-6 py-4 text-sm font-semibold transition-colors ${abaAtiva === aba
-                            ? 'border-b-2 border-primary text-primary bg-card'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                            }`}
-                    >
-                        Por {aba.replace('_', ' ')}
-                    </button>
-                ))}
-            </div>
-
-            <div className="p-0 overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-muted/50 text-muted-foreground border-b border-border">
-                        <tr>
-                            {!isFechado && <th className="p-4 w-12">Aprovar</th>}
-                            <th className="p-4">Aluno(a)</th>
-                            <th className="p-4">Patente Atual</th>
-                            <th className="p-4 text-primary font-bold">Promoção Para</th>
-                            <th className="p-4">Conceito</th>
-                            <th className="p-4">Média Escolar</th>
-                            <th className="p-4">Escola</th>
-                            <th className="p-4">TAF</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {candidatosDaAba.length === 0 && (
-                            <tr>
-                                <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                    Nenhum aluno atingiu os requisitos mínimos para esta modalidade.
-                                </td>
-                            </tr>
-                        )}
-                        {candidatosDaAba.map((candidato, index) => {
-                            const proximoCargo = getProximoCargo(candidato.aluno.cargoId);
-                            const isSelecionado = selecionados[candidato.alunoId] || false;
-                            const jaAprovado = candidato.resultado === 'APROVADO';
-
-                            return (
-                                <tr key={candidato.id} className={`transition-colors hover:bg-muted/30 ${isSelecionado ? 'bg-primary/5 dark:bg-primary/10' : ''}`}>
-                                    {!isFechado && (
-                                        <td className="p-4">
-                                            <input
-                                                type="checkbox"
-                                                disabled={jaAprovado || !proximoCargo}
-                                                checked={isSelecionado || jaAprovado}
-                                                onChange={() => toggleSelecao(candidato.alunoId)}
-                                                className="w-5 h-5 rounded border-input text-primary focus:ring-ring bg-background"
-                                            />
-                                        </td>
-                                    )}
-                                    <td className="p-4">
-                                        <div className="font-semibold text-foreground">{candidato.aluno.usuario.nome}</div>
-                                        <div className="text-xs text-muted-foreground mt-0.5">
-                                            Nasc: {candidato.aluno.usuario.dataNascimento ? new Date(candidato.aluno.usuario.dataNascimento).toLocaleDateString() : 'Não informada'}                                            <span className="ml-2 font-bold opacity-60">#{index + 1} da fila</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className="px-2.5 py-1 bg-secondary text-secondary-foreground rounded-md text-xs font-medium border border-border/50">
-                                            {candidato.aluno.cargo?.nome}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 font-bold text-primary">
-                                        {proximoCargo ? proximoCargo.nome : <span className="text-muted-foreground text-xs">Topo da Carreira</span>}
-                                    </td>
-                                    <td className="p-4 font-medium">{candidato.conceitoSnapshot.toFixed(1)}</td>
-                                    <td className="p-4 font-medium">{candidato.mediaEscolarSnapshot.toFixed(1)}</td>
-                                    <td className="p-4 font-medium">{candidato.tafSnapshot.toFixed(1)}</td>
-                                    <td className="p-4">
-                                        {(() => {
-                                            const boletim = candidato.aluno.desempenhosEscolares?.[0];
-                                            const situacao = boletim?.situacao || 'PENDENTE';
-
-                                            if (situacao === 'APROVADO') {
-                                                return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold rounded-md">Aprovado</span>;
-                                            } else if (situacao === 'REPROVADO') {
-                                                return <span className="px-2 py-1 bg-destructive/10 text-destructive text-xs font-bold rounded-md">Reprovado</span>;
-                                            } else {
-                                                return <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-bold rounded-md">{situacao}</span>;
-                                            }
-                                        })()}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            {!isFechado && (
-                <div className="p-6 bg-muted/30 border-t border-border flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground font-medium">
-                        {Object.values(selecionados).filter(Boolean).length} aluno(s) selecionado(s) para promoção.
-                    </span>
-                    <button
-                        onClick={handleEfetivar}
-                        disabled={loading || Object.values(selecionados).filter(Boolean).length === 0}
-                        className="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-bold py-2 px-6 rounded-lg shadow-sm transition-all"
-                    >
-                        {loading ? 'Processando...' : 'Efetivar Promoções'}
-                    </button>
-                </div>
-            )}
-        </div>
+  const candidatosExibidos = useMemo(() => {
+    const statusNoBanco = statusFiltro === "APTO" ? "PENDENTE" : "REPROVADO";
+    return ciclo.candidatos.filter(
+      (c) => c.modalidade === abaAtiva && c.resultado === statusNoBanco,
     );
+  }, [ciclo.candidatos, abaAtiva, statusFiltro]);
+
+  // Separação dos alunos por transição de cargos ordenados por antiguidade
+  const candidatosAgrupados = useMemo(() => {
+    const gruposMap = new Map<
+      string,
+      {
+        grupoNome: string;
+        precedencia: number;
+        listaAlunos: CandidatoListagem[];
+      }
+    >();
+
+    candidatosExibidos.forEach((cand) => {
+      const cargoAtual = cand.aluno.cargo;
+      const cargoDestino = cargoAtual
+        ? cargos
+            .filter((c) => c.precedencia < cargoAtual.precedencia)
+            .sort((a, b) => b.precedencia - a.precedencia)[0]
+        : null;
+
+      const chaveGrupo = cargoAtual
+        ? `${cargoAtual.nome} ➔ ${cargoDestino?.nome || "Fim de Quadro"}`
+        : "Sem Cargo Definido";
+
+      if (!gruposMap.has(chaveGrupo)) {
+        gruposMap.set(chaveGrupo, {
+          grupoNome: chaveGrupo,
+          precedencia: cargoAtual?.precedencia || 9999, // Ordenação pelo nível do cargo
+          listaAlunos: [],
+        });
+      }
+      gruposMap.get(chaveGrupo)!.listaAlunos.push(cand);
+    });
+
+    // Retorna um array ordenado pela precedência (antiguidade)
+    return Array.from(gruposMap.values()).sort(
+      (a, b) => a.precedencia - b.precedencia,
+    );
+  }, [candidatosExibidos, cargos]);
+
+  const handleToggleSelect = (id: string) => {
+    setSelecionados((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleEfetivar = async () => {
+    const promocoesParaEfetivar = Object.keys(selecionados)
+      .filter((id) => selecionados[id])
+      .map((id) => {
+        const cand = ciclo.candidatos.find((c) => c.id === id);
+        if (!cand) return null;
+        const cargoAtual = cand.aluno.cargo;
+        const cargoDestino = cargoAtual
+          ? cargos
+              .filter((c) => c.precedencia < cargoAtual.precedencia)
+              .sort((a, b) => b.precedencia - a.precedencia)[0]
+          : null;
+        return { alunoId: cand.alunoId, novoCargoId: cargoDestino?.id || "" };
+      })
+      .filter(
+        (p): p is { alunoId: string; novoCargoId: string } =>
+          p !== null && p.novoCargoId !== "",
+      );
+
+    if (promocoesParaEfetivar.length === 0) return;
+    setLoading(true);
+    try {
+      const res = await efetivarPromocoesDoCiclo(
+        ciclo.id,
+        promocoesParaEfetivar,
+      );
+      if (res.success) {
+        toast.success("Promoções efetivadas!");
+        setSelecionados({});
+        router.refresh();
+      } else {
+        toast.error(res.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex border-b border-border">
+        {(["ANTIGUIDADE", "MERITO_ESCOLAR", "HONRA_AO_MERITO"] as const).map(
+          (mod) => (
+            <button
+              key={mod}
+              onClick={() => {
+                setAbaAtiva(mod);
+                setSelecionados({});
+              }}
+              className={`py-3 px-6 font-semibold text-sm transition-all border-b-2 -mb-px ${
+                abaAtiva === mod
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {mod.replace(/_/g, " ")}
+            </button>
+          ),
+        )}
+      </div>
+
+      <div className="flex justify-between items-center bg-muted/40 p-3 rounded-lg border border-border">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setStatusFiltro("APTO")}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              statusFiltro === "APTO"
+                ? "bg-emerald-500 text-white shadow"
+                : "bg-transparent text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            Aptos (
+            {
+              ciclo.candidatos.filter(
+                (c) => c.modalidade === abaAtiva && c.resultado === "PENDENTE",
+              ).length
+            }
+            )
+          </button>
+          <button
+            onClick={() => setStatusFiltro("INAPTO")}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+              statusFiltro === "INAPTO"
+                ? "bg-destructive text-destructive-foreground shadow"
+                : "bg-transparent text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            Inaptos (
+            {
+              ciclo.candidatos.filter(
+                (c) => c.modalidade === abaAtiva && c.resultado === "REPROVADO",
+              ).length
+            }
+            )
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <table className="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted text-muted-foreground font-medium uppercase text-xs border-b border-border">
+              {!isFechado && statusFiltro === "APTO" && (
+                <th className="p-4 w-12">✔</th>
+              )}
+              <th className="p-4">Aluno</th>
+              <th className="p-4 text-center">Média Escolar</th>
+              <th className="p-4 text-center">Conceito</th>
+              <th className="p-4 text-center">Média TAF</th>
+              <th className="p-4 text-left w-2/5">Parecer / Comparativo</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {candidatosAgrupados.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="p-8 text-center text-muted-foreground"
+                >
+                  Nenhum aluno {statusFiltro.toLowerCase()} nesta modalidade.
+                </td>
+              </tr>
+            ) : (
+              candidatosAgrupados.map(({ grupoNome, listaAlunos }) => (
+                <Fragment key="{grupoNome}">
+                  <tr className="bg-muted/60 font-bold text-xs text-primary uppercase">
+                    <td colSpan={6} className="px-4 py-3 bg-primary/5">
+                      Promoção: {grupoNome} ({listaAlunos.length}{" "}
+                      {statusFiltro === "APTO" ? "aptos" : "inaptos"})
+                    </td>
+                  </tr>
+                  {listaAlunos.map((candidato) => (
+                    <tr key={candidato.id} className="hover:bg-muted/30">
+                      {!isFechado && statusFiltro === "APTO" && (
+                        <td className="p-4">
+                          <input
+                            type="checkbox"
+                            checked={!!selecionados[candidato.id]}
+                            onChange={() => handleToggleSelect(candidato.id)}
+                            className="h-4 w-4 rounded text-primary"
+                          />
+                        </td>
+                      )}
+                      <td className="p-4 font-medium uppercase text-xs">
+                        {candidato.aluno.cargo?.abreviacao || "AL"} GM{" "}
+                        {candidato.aluno.usuario.nomeDeGuerra ||
+                          candidato.aluno.usuario.nome}
+                      </td>
+                      <td className="p-4 text-center font-mono text-xs">
+                        {candidato.mediaEscolarSnapshot.toFixed(2)}
+                      </td>
+                      <td className="p-4 text-center font-mono text-xs text-blue-600 font-bold">
+                        {candidato.conceitoSnapshot.toFixed(2)}
+                      </td>
+                      <td className="p-4 text-center font-mono text-xs">
+                        {candidato.tafSnapshot.toFixed(2)}
+                      </td>
+                      <td className="p-4 text-left">
+                        <div
+                          className={`text-[11px] font-bold uppercase mb-1 ${statusFiltro === "APTO" ? "text-emerald-600" : "text-destructive"}`}
+                        >
+                          {statusFiltro === "APTO" ? "✔ APTO" : "✖ INAPTO"}
+                        </div>
+                        {candidato.motivoReprovacao && (
+                          <div className="text-[11px] text-muted-foreground leading-tight">
+                            {candidato.motivoReprovacao}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {statusFiltro === "APTO" && !isFechado && (
+        <div className="p-4 bg-muted/50 border border-border rounded-lg flex justify-between items-center shadow-sm">
+          <span className="text-sm text-muted-foreground">
+            <strong>
+              {Object.values(selecionados).filter(Boolean).length}
+            </strong>{" "}
+            aluno(s) selecionado(s).
+          </span>
+          <button
+            onClick={handleEfetivar}
+            disabled={
+              loading ||
+              Object.values(selecionados).filter(Boolean).length === 0
+            }
+            className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold py-2 px-6 rounded-lg transition-all"
+          >
+            {loading ? "Processando..." : "Efetivar Promoções"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

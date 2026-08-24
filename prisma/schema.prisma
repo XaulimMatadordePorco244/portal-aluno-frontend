@@ -425,6 +425,7 @@ model CandidatoCiclo {
   id      String @id @default(cuid())
   cicloId String
   alunoId String
+  modalidade String
 
   mediaEscolarSnapshot  Float
   conceitoSnapshot      Float
@@ -437,7 +438,7 @@ model CandidatoCiclo {
   ciclo CicloPromocao @relation(fields: [cicloId], references: [id])
   aluno PerfilAluno   @relation(fields: [alunoId], references: [id])
 
-  @@unique([cicloId, alunoId])
+  @@unique([cicloId, alunoId, modalidade])
   @@map("candidatos_ciclo")
 }
 

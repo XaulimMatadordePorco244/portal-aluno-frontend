@@ -32,7 +32,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
         const result = await criarCicloPromocao(nome);
 
         if (result.success) {
-            router.push(`/admin/promocoes/ciclos/${result.cicloId}`);
+            alert('Ciclo criado com sucesso!');
         } else {
             alert(result.message);
         }
@@ -47,7 +47,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
         const result = await gerarQuadroDeAcesso(cicloId);
 
         if (result.success) {
-            router.push(`/admin/promocoes/${cicloId}`);
+            router.push(`/admin/promocoes/ciclos/${cicloId}`);
         } else {
             alert(result.message);
         }
@@ -158,7 +158,7 @@ export default function CiclosListClient({ ciclosIniciais }: { ciclosIniciais: C
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => router.push(`/admin/promocoes/${ciclo.id}`)}
+                                        onClick={() => router.push(`/admin/promocoes/ciclos/${ciclo.id}`)}
                                         className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold py-2 px-4 rounded transition-colors border border-border"
                                     >
                                         Ver Quadro de Acesso

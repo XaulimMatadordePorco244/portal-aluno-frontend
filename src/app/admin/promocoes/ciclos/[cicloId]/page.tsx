@@ -1,7 +1,6 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import QuadroAcessoClient from './AlunosAptosClient';
-import { calcularVagasDisponiveis } from '@/app/actions/transicoes'; 
+import QuadroAcessoClient, { CicloListagem } from './AlunosAptosClient';
 
 export default async function CicloDetalhesPage({ 
     params 
@@ -16,10 +15,11 @@ export default async function CicloDetalhesPage({
             candidatos: {
                 include: {
                     aluno: {
-                        include: {
-                            usuario: true,
-                            cargo: true,
-                            desempenhosEscolares: { orderBy: { anoLetivo: 'desc' }, take: 1 }
+                        select: {
+                            id: true,
+                            cargoId: true,
+                            cargo: { select: { id: true, nome: true, abreviacao: true, precedencia: true } },
+                            usuario: { select: { id: true, nome: true, nomeDeGuerra: true } }
                         }
                     }
                 }
@@ -31,10 +31,40 @@ export default async function CicloDetalhesPage({
 
     const cargos = await prisma.cargo.findMany({
         where: { tipo: { not: 'CURSO' } },
-        orderBy: { precedencia: 'asc' }
+        orderBy: { precedencia: 'asc' },
+        select: { id: true, nome: true, abreviacao: true, precedencia: true }
     });
 
-    const vagas = await calcularVagasDisponiveis();
+    const cicloFormatado: CicloListagem = {
+        id: ciclo.id,
+        nome: ciclo.nome,
+        status: ciclo.status,
+        candidatos: ciclo.candidatos.map(c => ({
+            id: c.id,
+            alunoId: c.alunoId,
+            modalidade: c.modalidade,
+            resultado: c.resultado,
+            conceitoSnapshot: c.conceitoSnapshot,
+            mediaEscolarSnapshot: c.mediaEscolarSnapshot,
+            tafSnapshot: c.tafSnapshot,
+            motivoReprovacao: c.motivoReprovacao,
+            aluno: {
+                id: c.aluno.id,
+                cargoId: c.aluno.cargoId,
+                cargo: c.aluno.cargo ? {
+                    id: c.aluno.cargo.id,
+                    nome: c.aluno.cargo.nome,
+                    abreviacao: c.aluno.cargo.abreviacao,
+                    precedencia: c.aluno.cargo.precedencia
+                } : null,
+                usuario: {
+                    id: c.aluno.usuario.id,
+                    nome: c.aluno.usuario.nome,
+                    nomeDeGuerra: c.aluno.usuario.nomeDeGuerra
+                }
+            }
+        }))
+    };
 
     return (
         <div>
@@ -46,7 +76,7 @@ export default async function CicloDetalhesPage({
                 </p>
             </div>
 
-            <QuadroAcessoClient ciclo={ciclo} cargos={cargos} vagas={vagas} />
+            <QuadroAcessoClient ciclo={cicloFormatado} cargos={cargos} />
         </div>
     );
 }
