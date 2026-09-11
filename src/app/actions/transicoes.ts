@@ -57,10 +57,13 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
   }
 
   try {
+    // 1. Busca TODOS os cargos para saber a precedência real de todo mundo (incluindo cursos)
     const todosCargos = await prisma.cargo.findMany({
-      where: { tipo: { not: "CURSO" } },
       orderBy: { precedencia: "asc" },
     });
+
+    // 2. Cria uma lista apenas com a carreira real (exclui cursos)
+    const cargosDeCarreira = todosCargos.filter((c) => c.tipo !== "CURSO");
 
     const alunosBrutos = await prisma.perfilAluno.findMany({
       where: { id: { in: data.alunoIds } },
@@ -81,31 +84,37 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
       const conceitoNovo = 7.0;
       const notaDesempate = 10 - i * 0.01;
 
+      // Descobre o cargo atual do aluno na lista completa
+      const cargoAtualObj = todosCargos.find((c) => c.id === aluno.cargoId);
+      if (!cargoAtualObj) continue;
+
       if (data.tipo === "PROMOCAO") {
         if (data.cargoDestinoId) {
           novoCargoId = data.cargoDestinoId;
         } else {
-          const indexAtual = todosCargos.findIndex(
-            (c) => c.id === aluno.cargoId,
+          // Inverte a lista de carreira para buscar de baixo para cima (ex: 160, 150, 130...)
+          const carreiraInvertida = [...cargosDeCarreira].reverse();
+          
+          // Encontra o primeiro cargo de carreira com precedência menor (maior patente)
+          const proximo = carreiraInvertida.find(
+            (c) => c.precedencia < cargoAtualObj.precedencia
           );
-          if (indexAtual > 0) {
-            novoCargoId = todosCargos[indexAtual - 1].id;
-          }
+          if (proximo) novoCargoId = proximo.id;
         }
       } else {
         if (data.cargoDestinoId) {
           novoCargoId = data.cargoDestinoId;
         } else {
-          const indexAtual = todosCargos.findIndex(
-            (c) => c.id === aluno.cargoId,
+          // Busca de cima para baixo o primeiro cargo com precedência maior (menor patente)
+          const inferior = cargosDeCarreira.find(
+            (c) => c.precedencia > cargoAtualObj.precedencia
           );
-          if (indexAtual !== -1 && indexAtual < todosCargos.length - 1) {
-            novoCargoId = todosCargos[indexAtual + 1].id;
-          }
+          if (inferior) novoCargoId = inferior.id;
         }
       }
 
       if (!novoCargoId) continue;
+      
       const cargoNovoObj = todosCargos.find((c) => c.id === novoCargoId);
 
       operations.push(
@@ -138,16 +147,16 @@ export async function processarTransicaoEmMassa(data: TransicaoInput) {
         }),
       );
 
-    operations.push(
+      operations.push(
         prisma.perfilAluno.update({
           where: { id: aluno.id },
           data: {
             cargoId: novoCargoId,
-            conceitoAtual: String(conceitoNovo), 
+            conceitoAtual: String(conceitoNovo),
             foraDeData: false,
-            dataUltimaPromocao: dataReferencia, 
+            dataUltimaPromocao: dataReferencia,
             modalidadeUltimaPromocao: data.motivo,
-            notaDesempatePromocao: notaDesempate, 
+            notaDesempatePromocao: notaDesempate,
           },
         }),
       );
