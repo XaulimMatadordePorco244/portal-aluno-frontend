@@ -357,7 +357,25 @@ export async function updateAluno(
         },
       });
     });
-  } catch {
+  } catch (error: unknown) {
+    console.error("Erro interno no updateAluno:", error);
+
+    if (typeof error === "object" && error !== null && "code" in error) {
+      const prismaError = error as {
+        code: string;
+        meta?: { target?: string[] };
+      };
+      
+      if (prismaError.code === "P2002") {
+        if (prismaError.meta?.target?.includes("numero")) {
+          return { message: "Este número de matrícula já está em uso por outro aluno." };
+        }
+        if (prismaError.meta?.target?.includes("cpf")) {
+          return { message: "Já existe um usuário com este CPF no sistema." };
+        }
+      }
+    }
+
     return { message: "Erro ao atualizar dados." };
   }
 
