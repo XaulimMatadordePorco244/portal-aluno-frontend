@@ -104,6 +104,20 @@ export async function createAluno(
   }
 
   const data = validated.data;
+  
+  const numeroEmUso = await prisma.perfilAluno.findFirst({
+    where: {
+      numero: data.numero,
+      usuario: {
+        status: StatusUsuario.ATIVO,
+      },
+    },
+  });
+
+  if (numeroEmUso) {
+    return { message: "Este número de matrícula já está em uso por um aluno ativo." };
+  }
+
   const senhaPadrao =
     data.password && data.password.trim() !== "" ? data.password : data.cpf;
 
@@ -162,7 +176,6 @@ export async function createAluno(
           dataIngresso: dataIngressoDate,
           anoIngresso: anoIngressoInt,
           foraDeData: !!data.ingressoForaDeData,
-
           tipagemSanguinea: data.tipagemSanguinea
             ? (data.tipagemSanguinea as tipagemSanguinea)
             : null,
@@ -171,12 +184,10 @@ export async function createAluno(
             : AptidaoFisicaStatus.LIBERADO,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
-
           escolaId: data.escolaId || null,
           serieEscolar: data.serieEscolar
             ? (data.serieEscolar as SerieEscolar)
             : null,
-
           endereco: data.endereco || null,
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
@@ -234,14 +245,16 @@ export async function createAluno(
     if (typeof error === "object" && error !== null && "code" in error) {
       const prismaError = error as {
         code: string;
-        meta?: { target?: string[] };
+        meta?: { target?: string[] | string };
       };
+      
       if (prismaError.code === "P2002") {
-        if (prismaError.meta?.target?.includes("cpf")) {
+        const targetStr = Array.isArray(prismaError.meta?.target) 
+          ? prismaError.meta.target.join(",") 
+          : String(prismaError.meta?.target || "");
+
+        if (targetStr.includes("cpf")) {
           return { message: "Já existe um usuário com este CPF no sistema." };
-        }
-        if (prismaError.meta?.target?.includes("numero")) {
-          return { message: "Este número de matrícula já está em uso." };
         }
       }
     }
@@ -252,6 +265,7 @@ export async function createAluno(
   revalidatePath("/admin/alunos");
   redirect("/admin/alunos");
 }
+
 
 export async function updateAluno(
   prevState: AlunoState,
@@ -276,6 +290,22 @@ export async function updateAluno(
   }
 
   const data = validated.data;
+
+  if (data.numero) {
+    const numeroEmUso = await prisma.perfilAluno.findFirst({
+      where: {
+        numero: data.numero,
+        usuarioId: { not: id },
+        usuario: {
+          status: StatusUsuario.ATIVO,
+        },
+      },
+    });
+
+    if (numeroEmUso) {
+      return { message: "Este número de matrícula já está em uso por outro aluno ativo." };
+    }
+  }
 
   let dataIngressoDate: Date | null | undefined = undefined;
   let anoIngressoInt: number | null | undefined = undefined;
@@ -334,7 +364,6 @@ export async function updateAluno(
           ...(anoIngressoInt !== undefined
             ? { anoIngresso: anoIngressoInt }
             : {}),
-
           tipagemSanguinea: data.tipagemSanguinea
             ? (data.tipagemSanguinea as tipagemSanguinea)
             : null,
@@ -343,14 +372,11 @@ export async function updateAluno(
             : null,
           aptidaoFisicaObs: data.aptidaoFisicaObs || null,
           aptidaoFisicaLaudo: !!data.aptidaoFisicaLaudo,
-
           escolaId: data.escolaId || null,
           serieEscolar: data.serieEscolar
             ? (data.serieEscolar as SerieEscolar)
             : null,
-
           endereco: data.endereco || null,
-
           termoResponsabilidadeAssinado: !!data.termoResponsabilidadeAssinado,
           fazCursoExterno: !!data.fazCursoExterno,
           cursoExternoDescricao: data.cursoExternoDescricao || null,
@@ -358,19 +384,18 @@ export async function updateAluno(
       });
     });
   } catch (error: unknown) {
-    console.error("Erro interno no updateAluno:", error);
-
     if (typeof error === "object" && error !== null && "code" in error) {
       const prismaError = error as {
         code: string;
-        meta?: { target?: string[] };
+        meta?: { target?: string[] | string };
       };
       
       if (prismaError.code === "P2002") {
-        if (prismaError.meta?.target?.includes("numero")) {
-          return { message: "Este número de matrícula já está em uso por outro aluno." };
-        }
-        if (prismaError.meta?.target?.includes("cpf")) {
+        const targetStr = Array.isArray(prismaError.meta?.target) 
+          ? prismaError.meta.target.join(",") 
+          : String(prismaError.meta?.target || "");
+
+        if (targetStr.includes("cpf")) {
           return { message: "Já existe um usuário com este CPF no sistema." };
         }
       }

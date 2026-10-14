@@ -181,7 +181,7 @@ model Usuario {
 model PerfilAluno {
   id                            String               @id @default(cuid())
   usuarioId                     String               @unique
-  numero                        String?              @unique
+  numero                        String?             
   anoIngresso                   Int?
   tipagemSanguinea              tipagemSanguinea?
   aptidaoFisicaStatus           AptidaoFisicaStatus?
